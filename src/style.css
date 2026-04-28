@@ -1,10 +1,10 @@
 /* 设计系统 - 色彩体系 */
 :root {
   /* 主色调 */
-  --color-bg-primary: #1A1C20; /* 玄青 */
+  --color-bg-primary: #F7F3EB; /* 暖白/象牙白 */
   
   /* 辅助色 */
-  --color-text-primary: #F4F6F9; /* 月白 */
+  --color-text-primary: #2C241B; /* 更深的深褐/提供高对比度 */ /* 深褐/茶色 */
   
   /* 交互与状态色 */
   --color-warning: #FF4E3E; /* 朱砂 */
@@ -12,9 +12,9 @@
   --color-important: #E2A35A; /* 琉璃金 */
   
   /* 玻璃质感 */
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --glass-bg: rgba(230, 220, 205, 0.6);
+  --glass-border: rgba(230, 220, 205, 0.8);
+  --glass-shadow: 0 8px 32px rgba(160, 140, 120, 0.15);
   
   /* 字体 */
   --font-title: 'SimSun', serif;
@@ -35,7 +35,7 @@
 body {
   font-family: var(--font-body);
   background-color: var(--color-bg-primary);
-  color: var(--color-text-primary);
+  color: #2C241B;
   overflow-x: hidden;
   line-height: 1.6;
 }
@@ -46,7 +46,7 @@ body {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  border-radius: 20px;
   box-shadow: var(--glass-shadow);
 }
 
@@ -59,9 +59,9 @@ h1, h2, h3, h4, h5, h6 {
 
 /* 按钮样式 */
 .btn {
-  padding: 10px 20px;
+  padding: 12px 28px;
   border: none;
-  border-radius: 8px;
+  border-radius: 20px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -71,13 +71,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-important), #F2C94C);
-  color: #1A1C20;
+  background: linear-gradient(135deg, var(--color-important), #F4D08F);
+  color: #5C4B3A; /* 深木色 */
 }
 
 .btn-secondary {
   background: var(--glass-bg);
-  color: var(--color-text-primary);
+  color: #2C241B;
   border: 1px solid var(--glass-border);
 }
 
@@ -90,9 +90,9 @@ h1, h2, h3, h4, h5, h6 {
 .input {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 8px;
-  padding: 10px 15px;
-  color: var(--color-text-primary);
+  border-radius: 20px;
+  padding: 14px 20px;
+  color: #2C241B;
   font-size: 14px;
   transition: var(--transition-smooth);
 }
@@ -202,7 +202,7 @@ h1, h2, h3, h4, h5, h6 {
   width: 0;
   height: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(210,190,170,0.6);
   transform: translate(-50%, -50%);
   transition: width 0.6s, height 0.6s;
 }
@@ -220,4 +220,4 @@ h1, h2, h3, h4, h5, h6 {
   width: 100%;
   height: 100%;
   z-index: -1;
-}
+}\n.input::placeholder { color: rgba(44, 36, 27, 0.4); }\n

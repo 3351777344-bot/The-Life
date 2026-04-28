@@ -169,43 +169,49 @@
           
           <div class="tree-canvas" ref="treeCanvas">
             <!-- 3D树状结构将在这里渲染 -->
-            <div class="tree-nodes">
-              <!-- 主节点 -->
-              <div class="node main-node" :class="{ active: selectedNode === 'current' }" @click="selectNode('current')">
-                <div class="node-content">
-                  <h3>{{ treeNodes.find(n => n.id === 'current')?.title }}</h3>
-                  <p>{{ treeNodes.find(n => n.id === 'current')?.description }}</p>
-                  <div class="node-actions">
-                    <button class="btn btn-secondary small" @click="editNode('current')">编辑</button>
-                    <button class="btn btn-secondary small" @click="deleteNode('current')">删除</button>
-                    <button class="btn btn-secondary small" @click="extendBranch('current')">延伸分支</button>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 一级子节点 - 水平布局 -->
-              <div class="first-level-children">
-                <div v-for="childId in treeNodes.find(n => n.id === 'current')?.children" :key="childId" class="node branch-node" :class="{ active: selectedNode === childId }" @click="selectNode(childId)">
+            <div class="tree-org">
+              <div class="tree-org-node-group">
+                <!-- 主节点 -->
+                <div class="node main-node" :class="{ active: selectedNode === 'current' }" @click="selectNode('current')">
                   <div class="node-content">
-                    <h3>{{ treeNodes.find(n => n.id === childId)?.title }}</h3>
-                    <p>{{ treeNodes.find(n => n.id === childId)?.description }}</p>
+                    <h3>{{ treeNodes.find(n => n.id === 'current')?.title }}</h3>
+                    <p>{{ treeNodes.find(n => n.id === 'current')?.description }}</p>
                     <div class="node-actions">
-                      <button class="btn btn-secondary small" @click="editNode(childId)">编辑</button>
-                      <button class="btn btn-secondary small" @click="deleteNode(childId)">删除</button>
-                      <button class="btn btn-secondary small" @click="extendBranch(childId)">延伸分支</button>
+                      <button class="btn btn-secondary small" @click.stop="editNode('current')">编辑</button>
+                      <button class="btn btn-secondary small" @click.stop="deleteNode('current')">删除</button>
+                      <button class="btn btn-secondary small" @click.stop="extendBranch('current')">延伸分支</button>
                     </div>
                   </div>
-                  
-                  <!-- 二级子节点 -->
-                  <div v-if="treeNodes.find(n => n.id === childId)?.children && treeNodes.find(n => n.id === childId)?.children.length > 0" class="second-level-children">
-                    <div v-for="grandchildId in treeNodes.find(n => n.id === childId)?.children" :key="grandchildId" class="node branch-node small-node" :class="{ active: selectedNode === grandchildId }" @click="selectNode(grandchildId)">
+                </div>
+                
+                <!-- 一级子节点群 -->
+                <div class="tree-org-children" v-if="treeNodes.find(n => n.id === 'current')?.children && treeNodes.find(n => n.id === 'current')?.children.length > 0">
+                  <div v-for="childId in treeNodes.find(n => n.id === 'current')?.children" :key="childId" class="tree-org-node-group">
+                    <div class="node branch-node" :class="{ active: selectedNode === childId }" @click.stop="selectNode(childId)">
                       <div class="node-content">
-                        <h3>{{ treeNodes.find(n => n.id === grandchildId)?.title }}</h3>
-                        <p>{{ treeNodes.find(n => n.id === grandchildId)?.description }}</p>
+                        <h3>{{ treeNodes.find(n => n.id === childId)?.title }}</h3>
+                        <p>{{ treeNodes.find(n => n.id === childId)?.description }}</p>
                         <div class="node-actions">
-                          <button class="btn btn-secondary small" @click="editNode(grandchildId)">编辑</button>
-                          <button class="btn btn-secondary small" @click="deleteNode(grandchildId)">删除</button>
-                          <button class="btn btn-secondary small" @click="extendBranch(grandchildId)">延伸分支</button>
+                          <button class="btn btn-secondary small" @click.stop="editNode(childId)">编辑</button>
+                          <button class="btn btn-secondary small" @click.stop="deleteNode(childId)">删除</button>
+                          <button class="btn btn-secondary small" @click.stop="extendBranch(childId)">延伸分支</button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- 二级子节点群 -->
+                    <div class="tree-org-children" v-if="treeNodes.find(n => n.id === childId)?.children && treeNodes.find(n => n.id === childId)?.children.length > 0">
+                      <div v-for="grandchildId in treeNodes.find(n => n.id === childId)?.children" :key="grandchildId" class="tree-org-node-group">
+                        <div class="node branch-node small-node" :class="{ active: selectedNode === grandchildId }" @click.stop="selectNode(grandchildId)">
+                          <div class="node-content">
+                            <h3>{{ treeNodes.find(n => n.id === grandchildId)?.title }}</h3>
+                            <p>{{ treeNodes.find(n => n.id === grandchildId)?.description }}</p>
+                            <div class="node-actions">
+                              <button class="btn btn-secondary small" @click.stop="editNode(grandchildId)">编辑</button>
+                              <button class="btn btn-secondary small" @click.stop="deleteNode(grandchildId)">删除</button>
+                              <button class="btn btn-secondary small" @click.stop="extendBranch(grandchildId)">延伸分支</button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -252,12 +258,52 @@
               <div class="route-actions">
                 <button class="btn btn-secondary small" @click="refineRoute(index)">细化路线</button>
                 <button class="btn btn-secondary small" @click="replaceRoute(index)">替换路线</button>
+                <button class="btn btn-secondary small" @click="toggleCompare(route)">{{ compareRoutes.includes(route) ? '取消对比' : '加入对比' }}</button>
                 <button class="btn btn-primary small" @click="selectRoute(route)">选择路线</button>
               </div>
             </div>
             <button class="btn btn-primary" @click="generateAIRoutes" :disabled="isGenerating">
               {{ isGenerating ? '生成中...' : '重新生成路线' }}
             </button>
+          </div>
+          
+          <!-- 平行时空双窗对比 -->
+          <div class="parallel-compare-modal" v-if="compareRoutes.length === 2">
+            <div class="compare-overlay" @click="compareRoutes = []"></div>
+            <div class="compare-content glass-container">
+              <h2>平行时空双窗对比</h2>
+              <button class="btn btn-secondary close-compare" @click="compareRoutes = []">✖</button>
+              
+              <div class="compare-panes">
+                <div class="compare-pane" v-for="(route, index) in compareRoutes" :key="index">
+                  <div class="pane-header" :style="{ borderBottomColor: index === 0 ? 'var(--color-important)' : 'var(--color-success)' }">
+                    <h3>{{ route.title }}</h3>
+                    <div class="route-tag" :class="route.tagColor">{{ route.tag }}</div>
+                  </div>
+                  <div class="pane-body">
+                    <p class="desc">{{ route.description }}</p>
+                    <div class="compare-stat">
+                      <label>可行性</label>
+                      <div class="stat-bar">
+                        <div class="stat-fill" :style="{ width: route.feasibility + '%', background: index === 0 ? 'var(--color-important)' : 'var(--color-success)' }"></div>
+                      </div>
+                      <span>{{ route.feasibility }}%</span>
+                    </div>
+                    <div class="compare-stat">
+                      <label>难度评级</label>
+                      <span class="text-val">{{ route.difficulty }}</span>
+                    </div>
+                    <div class="compare-stat">
+                      <label>预期收益</label>
+                      <span class="text-val">{{ route.benefit }}</span>
+                    </div>
+                  </div>
+                  <div class="pane-footer">
+                    <button class="btn btn-primary" @click="selectRoute(route); compareRoutes = [];">选择此轨道</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           
           <div class="custom-route" v-else>
@@ -621,6 +667,7 @@ import { generateRoute, getAIAdvice, generateScenario, calculateRegret } from '.
 
 // 状态管理
 const currentView = ref('genesis')
+const compareRoutes = ref([])
 const userInfo = ref({
   age: '',
   education: '',
@@ -788,6 +835,18 @@ const selectOption = (option) => {
   console.log('Selected option:', option)
   userInfo.value.decisionStyle = option
   isCardFlipped.value = false
+}
+
+const toggleCompare = (route) => {
+  const index = compareRoutes.value.findIndex(r => r.title === route.title)
+  if (index !== -1) {
+    compareRoutes.value.splice(index, 1)
+  } else {
+    if (compareRoutes.value.length >= 2) {
+      compareRoutes.value.shift()
+    }
+    compareRoutes.value.push(route)
+  }
 }
 
 const selectNode = (node) => {
@@ -1200,7 +1259,7 @@ const initStarfield = () => {
   
   for (let i = 0; i < 1000; i++) {
     const geometry = new THREE.SphereGeometry(0.05, 8, 8)
-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff })
+    const material = new THREE.MeshBasicMaterial({ color: 0xD4B886 })
     const star = new THREE.Mesh(geometry, material)
     
     star.position.x = (Math.random() - 0.5) * 100
@@ -1250,7 +1309,7 @@ onUnmounted(() => {
 .main-content {
   position: relative;
   z-index: 1;
-  padding: 2rem;
+  padding: 3rem;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -1266,29 +1325,29 @@ onUnmounted(() => {
 .scroll-form {
   width: 100%;
   max-width: 800px;
-  padding: 2rem;
+  padding: 3rem;
   position: relative;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><pattern id="scroll-pattern" patternUnits="userSpaceOnUse" width="40" height="40"><path d="M0 20 L40 20" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23scroll-pattern)"/></svg>');
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><pattern id="scroll-pattern" patternUnits="userSpaceOnUse" width="40" height="40"><path d="M0 20 L40 20" stroke="rgba(230,220,205,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23scroll-pattern)"/></svg>');
 }
 
 .form-section {
-  margin-bottom: 2rem;
+  margin-bottom: 4rem;
 }
 
 .form-section h2 {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: var(--color-important);
 }
 
 .form-row {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 1.8rem;
+  margin-bottom: 1.5rem;
 }
 
 .form-group {
   flex: 1;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .form-group.full-width {
@@ -1299,7 +1358,7 @@ onUnmounted(() => {
   display: block;
   margin-bottom: 0.5rem;
   font-size: 14px;
-  color: rgba(244, 246, 249, 0.8);
+  color: rgba(44, 36, 27, 0.8);
 }
 
 .card-flip {
@@ -1309,7 +1368,7 @@ onUnmounted(() => {
 
 .card-front, .card-back {
   padding: 1.5rem;
-  border-radius: 12px;
+  border-radius: 20px;
   transition: transform 0.6s;
   backface-visibility: hidden;
   min-height: 200px;
@@ -1341,33 +1400,33 @@ onUnmounted(() => {
   padding: 0.8rem;
   margin: 0.5rem 0;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(230, 220, 205, 0.05);
   cursor: pointer;
   transition: var(--transition-smooth);
   width: 100%;
 }
 
 .option:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(230, 220, 205, 0.1);
   transform: translateX(10px);
 }
 
 .option small {
   display: block;
   font-size: 12px;
-  color: rgba(244, 246, 249, 0.6);
+  color: rgba(44, 36, 27, 0.6);
   margin-top: 0.3rem;
 }
 
 .privacy-section {
-  margin-top: 2rem;
+  margin-top: 3rem;
   padding-top: 1rem;
   border-top: 1px solid var(--glass-border);
 }
 
 .seal {
   text-align: center;
-  padding: 1rem;
+  padding: 1.5rem;
   background: rgba(81, 154, 115, 0.1);
   border-radius: 8px;
 }
@@ -1381,8 +1440,8 @@ onUnmounted(() => {
 
 .seal p {
   font-size: 12px;
-  color: rgba(244, 246, 249, 0.6);
-  margin-bottom: 1rem;
+  color: rgba(44, 36, 27, 0.6);
+  margin-bottom: 1.5rem;
 }
 
 .privacy-actions {
@@ -1399,53 +1458,117 @@ onUnmounted(() => {
 
 .tree-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 4rem;
 }
 
 .tree-actions {
   display: flex;
   justify-content: center;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 1.8rem;
+  margin-top: 1.5rem;
   flex-wrap: wrap;
 }
 
 .tree-canvas {
   position: relative;
   min-height: 500px;
-  margin-bottom: 2rem;
+  margin-bottom: 4rem;
 }
 
-.tree-nodes {
+.tree-org {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.tree-org-children {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  padding-top: 3rem;
+}
+
+.tree-org-children::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 3rem;
+  background: rgba(220, 200, 180, 0.8);
+  transform: translateX(-50%);
+}
+
+.tree-org-node-group {
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
+  padding: 3rem 1rem 0 1rem;
+}
+
+.tree-org > .tree-org-node-group {
+  padding-top: 0;
+}
+
+.tree-org-node-group::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 50%;
+  width: 50%;
+  height: 3rem;
+  border-top: 2px solid rgba(220, 200, 180, 0.8);
+}
+
+.tree-org-node-group::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 3rem;
+  border-top: 2px solid rgba(220, 200, 180, 0.8);
+  border-left: 2px solid rgba(220, 200, 180, 0.8);
+}
+
+.tree-org-children > .tree-org-node-group:first-child::before {
+  border-top: none;
+}
+
+.tree-org-children > .tree-org-node-group:last-child::after {
+  border-top: none;
+}
+
+.tree-org-children > .tree-org-node-group:last-child::before {
+  border-right: 2px solid rgba(220, 200, 180, 0.8);
+  border-radius: 0 12px 0 0;
+}
+
+.tree-org-children > .tree-org-node-group:first-child::after {
+  border-radius: 12px 0 0 0;
+}
+
+.tree-org-children > .tree-org-node-group:only-child::after {
+  border-top: none;
+}
+
+.tree-org-children > .tree-org-node-group:only-child::before {
+  border-top: none;
+  border-right: 2px solid rgba(220, 200, 180, 0.8);
+  border-radius: 0;
 }
 
 .node {
-  width: 200px;
-  padding: 1rem;
-  border-radius: 12px;
-  margin: 0.5rem 0;
+  width: 220px;
+  padding: 1.5rem;
+  border-radius: 20px;
+  margin: 0;
   cursor: pointer;
   transition: var(--transition-smooth);
   position: relative;
-}
-
-.node::before {
-  content: '';
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  width: 2px;
-  height: 10px;
-  background: var(--glass-border);
-  transform: translateX(-50%);
-}
-
-.node:first-child::before {
-  display: none;
+  z-index: 2;
 }
 
 .node-content {
@@ -1459,8 +1582,8 @@ onUnmounted(() => {
 
 .node-content p {
   font-size: 14px;
-  color: rgba(244, 246, 249, 0.8);
-  margin-bottom: 1rem;
+  color: rgba(44, 36, 27, 0.8);
+  margin-bottom: 1.5rem;
 }
 
 .node-actions {
@@ -1471,19 +1594,19 @@ onUnmounted(() => {
 }
 
 .main-node {
-  background: linear-gradient(135deg, var(--color-important), #F2C94C);
-  color: #1A1C20;
+  background: linear-gradient(135deg, var(--color-important), #F4D08F);
+  color: #2C241B;
   box-shadow: 0 4px 12px rgba(226, 163, 90, 0.3);
 }
 
 .main-node .node-content h3 {
-  color: #1A1C20;
+  color: #2C241B;
 }
 
 .branch-node {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  color: var(--color-text-primary);
+  background: rgba(255, 250, 240, 0.9);
+  border: 1px solid rgba(220, 200, 180, 0.6);
+  color: #2C241B;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
@@ -1496,21 +1619,7 @@ onUnmounted(() => {
   box-shadow: 0 0 20px rgba(226, 163, 90, 0.3);
 }
 
-.first-level-children {
-  display: flex;
-  justify-content: center;
-  gap: 2rem;
-  margin-top: 2rem;
-  flex-wrap: wrap;
-}
 
-.second-level-children {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
 
 .small-node {
   width: 150px;
@@ -1528,12 +1637,12 @@ onUnmounted(() => {
 .tree-controls {
   display: flex;
   justify-content: space-between;
-  margin-top: 2rem;
+  margin-top: 3rem;
 }
 
 /* 衍化界面 */
 .divergence-container {
-  padding: 2rem;
+  padding: 3rem;
   margin: 0 auto;
   max-width: 1000px;
 }
@@ -1542,8 +1651,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 2rem 0;
-  gap: 1rem;
+  margin: 3rem 0;
+  gap: 1.8rem;
 }
 
 .toggle {
@@ -1578,13 +1687,13 @@ onUnmounted(() => {
 .routes-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1rem;
-  margin: 2rem 0;
+  gap: 1.8rem;
+  margin: 3rem 0;
 }
 
 .route-card {
   padding: 1.5rem;
-  border-radius: 12px;
+  border-radius: 20px;
   position: relative;
   overflow: hidden;
 }
@@ -1603,12 +1712,12 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .route-tag {
   padding: 0.3rem 0.8rem;
-  border-radius: 12px;
+  border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
 }
@@ -1629,18 +1738,18 @@ onUnmounted(() => {
 }
 
 .route-description {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   font-size: 14px;
-  color: rgba(244, 246, 249, 0.8);
+  color: rgba(44, 36, 27, 0.8);
 }
 
 .route-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.8rem;
   font-size: 12px;
-  color: rgba(244, 246, 249, 0.6);
-  margin-bottom: 1rem;
+  color: rgba(44, 36, 27, 0.6);
+  margin-bottom: 1.5rem;
 }
 
 .route-actions {
@@ -1650,11 +1759,11 @@ onUnmounted(() => {
 }
 
 .custom-route {
-  margin: 2rem 0;
+  margin: 3rem 0;
 }
 
 .custom-route h3 {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: var(--color-important);
 }
 
@@ -1662,43 +1771,43 @@ onUnmounted(() => {
 .custom-route textarea,
 .custom-route select {
   width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .multimedia-section {
-  margin: 2rem 0;
+  margin: 3rem 0;
   padding: 1.5rem;
   background: rgba(226, 163, 90, 0.1);
-  border-radius: 12px;
+  border-radius: 20px;
 }
 
 .multimedia-section h3 {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: var(--color-important);
 }
 
 .multimedia-options {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 1.8rem;
+  margin-bottom: 1.5rem;
   flex-wrap: wrap;
 }
 
 .style-selector {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.8rem;
 }
 
 .style-selector label {
   font-size: 14px;
-  color: rgba(244, 246, 249, 0.8);
+  color: rgba(44, 36, 27, 0.8);
 }
 
 .divergence-controls {
   display: flex;
   justify-content: space-between;
-  margin-top: 2rem;
+  margin-top: 3rem;
 }
 
 /* 观心界面 */
@@ -1710,8 +1819,8 @@ onUnmounted(() => {
 }
 
 .compass {
-  padding: 2rem;
-  border-radius: 12px;
+  padding: 3rem;
+  border-radius: 20px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1720,11 +1829,11 @@ onUnmounted(() => {
 
 .compass-center {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 4rem;
 }
 
 .compass-center p {
-  color: rgba(244, 246, 249, 0.6);
+  color: rgba(44, 36, 27, 0.6);
   font-size: 14px;
 }
 
@@ -1746,7 +1855,7 @@ onUnmounted(() => {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1818,31 +1927,31 @@ onUnmounted(() => {
 
 .attribute-narrative {
   font-size: 12px;
-  color: rgba(244, 246, 249, 0.6);
+  color: rgba(44, 36, 27, 0.6);
   text-align: center;
 }
 
 .visualization-section {
-  padding: 2rem;
-  border-radius: 12px;
-  margin: 2rem 0;
+  padding: 3rem;
+  border-radius: 20px;
+  margin: 3rem 0;
 }
 
 .visualization-section h3 {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: var(--color-important);
 }
 
 .visualization-options {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 1.8rem;
+  margin-bottom: 1.5rem;
   flex-wrap: wrap;
 }
 
 .chart-container {
   height: 300px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(230, 220, 205, 0.05);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -1850,19 +1959,19 @@ onUnmounted(() => {
 }
 
 .social-sidebar {
-  padding: 2rem;
-  border-radius: 12px;
+  padding: 3rem;
+  border-radius: 20px;
 }
 
 .social-sidebar h3 {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: var(--color-important);
 }
 
 .social-item {
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: rgba(230, 220, 205, 0.05);
   border-radius: 8px;
   position: relative;
 }
@@ -1876,13 +1985,13 @@ onUnmounted(() => {
 
 .social-item p {
   font-size: 14px;
-  color: rgba(244, 246, 249, 0.8);
+  color: rgba(44, 36, 27, 0.8);
   margin-bottom: 0.5rem;
 }
 
 .update-time {
   font-size: 10px;
-  color: rgba(244, 246, 249, 0.4);
+  color: rgba(44, 36, 27, 0.4);
   position: absolute;
   top: 10px;
   right: 10px;
@@ -1892,12 +2001,12 @@ onUnmounted(() => {
   grid-column: 1 / -1;
   display: flex;
   justify-content: space-between;
-  margin-top: 2rem;
+  margin-top: 3rem;
 }
 
 /* 论道界面 */
 .mentorship-container {
-  padding: 2rem;
+  padding: 3rem;
   margin: 0 auto;
   max-width: 800px;
 }
@@ -1906,19 +2015,19 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 2rem 0;
+  margin: 3rem 0;
 }
 
 .avatar-placeholder {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-important), #F2C94C);
+  background: linear-gradient(135deg, var(--color-important), #F4D08F);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .avatar-glow {
@@ -1931,24 +2040,24 @@ onUnmounted(() => {
 }
 
 .ai-avatar p {
-  color: rgba(244, 246, 249, 0.6);
+  color: rgba(44, 36, 27, 0.6);
   font-size: 14px;
   margin-top: 0.5rem;
 }
 
 .chat-container {
-  margin: 2rem 0;
+  margin: 3rem 0;
   max-height: 400px;
   overflow-y: auto;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+  padding: 1.5rem;
+  background: rgba(230, 220, 205, 0.05);
+  border-radius: 20px;
   display: flex;
   flex-direction: column;
 }
 
 .chat-message {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   max-width: 80%;
 }
 
@@ -1962,8 +2071,8 @@ onUnmounted(() => {
 }
 
 .message-content {
-  padding: 1rem;
-  border-radius: 12px;
+  padding: 1.5rem;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1975,14 +2084,14 @@ onUnmounted(() => {
 }
 
 .user-message .message-content {
-  background: linear-gradient(135deg, var(--color-important), #F2C94C);
-  color: #1A1C20;
+  background: linear-gradient(135deg, var(--color-important), #F4D08F);
+  color: #2C241B;
 }
 
 .chat-input {
   display: flex;
-  gap: 1rem;
-  margin: 2rem 0;
+  gap: 1.8rem;
+  margin: 3rem 0;
 }
 
 .chat-input input {
@@ -1990,27 +2099,27 @@ onUnmounted(() => {
 }
 
 .ai-role-selector {
-  margin: 2rem 0;
+  margin: 3rem 0;
   padding: 1.5rem;
   background: rgba(226, 163, 90, 0.1);
-  border-radius: 12px;
+  border-radius: 20px;
 }
 
 .ai-role-selector h3 {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: var(--color-important);
 }
 
 .role-options {
   display: flex;
-  gap: 1rem;
+  gap: 1.8rem;
   flex-wrap: wrap;
 }
 
 .mentorship-controls {
   display: flex;
   justify-content: space-between;
-  margin-top: 2rem;
+  margin-top: 3rem;
 }
 
 /* 归途界面 */
@@ -2024,14 +2133,14 @@ onUnmounted(() => {
 .scroll-report {
   width: 100%;
   max-width: 800px;
-  padding: 2rem;
+  padding: 3rem;
   position: relative;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><pattern id="scroll-pattern" patternUnits="userSpaceOnUse" width="40" height="40"><path d="M0 20 L40 20" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23scroll-pattern)"/></svg>');
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><pattern id="scroll-pattern" patternUnits="userSpaceOnUse" width="40" height="40"><path d="M0 20 L40 20" stroke="rgba(230,220,205,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23scroll-pattern)"/></svg>');
   animation: fadeIn 1s ease-out;
 }
 
 .regret-meter {
-  margin: 2rem 0;
+  margin: 3rem 0;
   text-align: center;
 }
 
@@ -2059,24 +2168,24 @@ onUnmounted(() => {
 
 .regret-analysis {
   font-size: 14px;
-  color: rgba(244, 246, 249, 0.8);
+  color: rgba(44, 36, 27, 0.8);
   max-width: 600px;
   margin: 0 auto;
 }
 
 .report-content {
-  margin: 2rem 0;
+  margin: 3rem 0;
 }
 
 .attribute-comparison {
-  margin: 2rem 0;
+  margin: 3rem 0;
 }
 
 .attribute-item {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.8rem;
 }
 
 .attribute-item span:first-child {
@@ -2105,27 +2214,27 @@ onUnmounted(() => {
 }
 
 .ai-advice {
-  margin: 2rem 0;
+  margin: 3rem 0;
   padding: 1.5rem;
   background: rgba(226, 163, 90, 0.1);
-  border-radius: 12px;
+  border-radius: 20px;
 }
 
 .ai-advice h4 {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: var(--color-important);
 }
 
 .future-letter {
-  margin: 2rem 0;
+  margin: 3rem 0;
   padding: 1.5rem;
   background: rgba(81, 154, 115, 0.1);
-  border-radius: 12px;
+  border-radius: 20px;
   position: relative;
 }
 
 .future-letter h4 {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: var(--color-success);
 }
 
@@ -2135,10 +2244,10 @@ onUnmounted(() => {
 }
 
 .celebrity-simulation {
-  margin: 2rem 0;
+  margin: 3rem 0;
   padding: 1.5rem;
   background: rgba(255, 78, 62, 0.1);
-  border-radius: 12px;
+  border-radius: 20px;
 }
 
 .celebrity-simulation h3 {
@@ -2147,23 +2256,23 @@ onUnmounted(() => {
 }
 
 .celebrity-simulation p {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   font-size: 14px;
-  color: rgba(244, 246, 249, 0.8);
+  color: rgba(44, 36, 27, 0.8);
 }
 
 .celebrity-options {
   display: flex;
-  gap: 1rem;
+  gap: 1.8rem;
   flex-wrap: wrap;
 }
 
 .save-section {
-  margin: 2rem 0;
+  margin: 3rem 0;
 }
 
 .save-section h3 {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: var(--color-important);
   text-align: center;
 }
@@ -2171,19 +2280,19 @@ onUnmounted(() => {
 .save-actions {
   display: flex;
   justify-content: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 1.8rem;
+  margin-bottom: 4rem;
   flex-wrap: wrap;
 }
 
 .saved-paths {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(230, 220, 205, 0.05);
   border-radius: 8px;
-  padding: 1rem;
+  padding: 1.5rem;
 }
 
 .saved-paths h4 {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: var(--color-important);
   font-size: 14px;
 }
@@ -2194,7 +2303,7 @@ onUnmounted(() => {
   align-items: center;
   padding: 0.5rem;
   margin-bottom: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(230, 220, 205, 0.05);
   border-radius: 4px;
 }
 
@@ -2205,20 +2314,20 @@ onUnmounted(() => {
 
 .saved-path-item span:nth-child(2) {
   font-size: 12px;
-  color: rgba(244, 246, 249, 0.6);
+  color: rgba(44, 36, 27, 0.6);
   margin: 0 1rem;
 }
 
 .conclusion-controls {
   display: flex;
   justify-content: space-between;
-  margin-top: 2rem;
+  margin-top: 3rem;
 }
 
 /* 通用样式 */
 .title {
   font-size: 2.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   text-align: center;
   color: var(--color-important);
   text-shadow: 0 0 20px rgba(226, 163, 90, 0.3);
@@ -2232,7 +2341,7 @@ onUnmounted(() => {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .main-content {
-    padding: 1rem;
+    padding: 1.5rem;
   }
   
   .reflection-container {
@@ -2258,7 +2367,7 @@ onUnmounted(() => {
   .mentorship-controls,
   .conclusion-controls {
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.8rem;
   }
   
   .card-flip:hover .card-front,
@@ -2269,7 +2378,7 @@ onUnmounted(() => {
   .card-back {
     position: static;
     transform: none;
-    margin-top: 1rem;
+    margin-top: 1.5rem;
   }
   
   .chat-input {
@@ -2280,5 +2389,118 @@ onUnmounted(() => {
   .celebrity-options {
     justify-content: center;
   }
+}
+
+.parallel-compare-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.compare-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+}
+.compare-content {
+  position: relative;
+  width: 90%;
+  max-width: 1200px;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(26, 28, 32, 0.95);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  z-index: 10;
+  border-radius: 16px;
+  padding: 3rem;
+}
+.compare-content h2 {
+  text-align: center;
+  margin-bottom: 4rem;
+  color: #2C241B;
+  font-size: 24px;
+  letter-spacing: 2px;
+}
+.close-compare {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 18px;
+}
+.compare-panes {
+  display: flex;
+  flex: 1;
+  gap: 2rem;
+  overflow: hidden;
+}
+.compare-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: rgba(230,220,205,0.03);
+  border-radius: 20px;
+  padding: 3rem;
+  transition: var(--transition-smooth);
+}
+.pane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid;
+}
+.pane-body {
+  flex: 1;
+  overflow-y: auto;
+}
+.pane-body .desc {
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 4rem;
+  color: rgba(44,36,27,0.8);
+}
+.compare-stat {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.2rem;
+  gap: 1.8rem;
+}
+.compare-stat label {
+  min-width: 70px;
+  font-size: 14px;
+  color: rgba(44,36,27,0.6);
+}
+.stat-bar {
+  flex: 1;
+  height: 10px;
+  background: rgba(230,220,205,0.1);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.stat-fill {
+  height: 100%;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.text-val {
+  font-weight: 600;
+  min-width: 40px;
+  text-align: right;
+}
+.pane-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(230,220,205,0.1);
+  margin-top: auto;
 }
 </style>
