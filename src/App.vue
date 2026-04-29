@@ -2,9 +2,55 @@
   <div class="app">
     <!-- 星空背景 -->
     <div ref="starfield" class="starfield"></div>
+    <div class="ambient-haze" aria-hidden="true"></div>
     
     <!-- 主内容区域 -->
     <div class="main-content">
+      <div class="view-nav glass-container">
+        <div class="view-step" :class="{ active: currentView === 'genesis' }">
+          <span class="step-index">01</span>
+          <div>
+            <strong>入局</strong>
+            <small>基础建模</small>
+          </div>
+        </div>
+        <div class="view-step" :class="{ active: currentView === 'destiny' }">
+          <span class="step-index">02</span>
+          <div>
+            <strong>命轨</strong>
+            <small>树状分支</small>
+          </div>
+        </div>
+        <div class="view-step" :class="{ active: currentView === 'divergence' }">
+          <span class="step-index">03</span>
+          <div>
+            <strong>衍化</strong>
+            <small>路线生成</small>
+          </div>
+        </div>
+        <div class="view-step" :class="{ active: currentView === 'reflection' }">
+          <span class="step-index">04</span>
+          <div>
+            <strong>观心</strong>
+            <small>属性画像</small>
+          </div>
+        </div>
+        <div class="view-step" :class="{ active: currentView === 'mentorship' }">
+          <span class="step-index">05</span>
+          <div>
+            <strong>论道</strong>
+            <small>顾问互动</small>
+          </div>
+        </div>
+        <div class="view-step" :class="{ active: currentView === 'conclusion' }">
+          <span class="step-index">06</span>
+          <div>
+            <strong>归途</strong>
+            <small>终局报告</small>
+          </div>
+        </div>
+      </div>
+      <div v-if="statusMessage" class="status-toast">{{ statusMessage }}</div>
       <!-- 入局：人生基础建模界面 -->
       <div v-if="currentView === 'genesis'" class="genesis-view">
         <div class="scroll-form glass-container fade-in">
@@ -143,9 +189,9 @@
               <span>数据安全承诺</span>
               <p>我们将对您的个人信息进行脱敏加密处理，严格遵守《个人信息保护法》</p>
               <div class="privacy-actions">
-                <button class="btn btn-secondary small">修改信息</button>
-                <button class="btn btn-secondary small">删除数据</button>
-                <button class="btn btn-secondary small">本地备份</button>
+                <button class="btn btn-secondary small" @click="markDataEditable">修改信息</button>
+                <button class="btn btn-secondary small" @click="clearLocalData">删除数据</button>
+                <button class="btn btn-secondary small" @click="backupLocalData">本地备份</button>
               </div>
             </div>
           </div>
@@ -156,60 +202,81 @@
       
       <!-- 命轨：动态树状节点主界面 -->
       <div v-else-if="currentView === 'destiny'" class="destiny-view">
-        <div class="tree-container">
-          <div class="tree-header">
-            <h1 class="title">命轨</h1>
-            <p>你的人生轨迹</p>
-            <div class="tree-actions">
-              <button class="btn btn-secondary small" @click="addNode">添加节点</button>
-              <button class="btn btn-secondary small" @click="exportTree">导出图谱</button>
-              <button class="btn btn-secondary small" @click="resetTree">重置树状图</button>
+        <div class="tree-layout">
+          <div class="tree-container">
+            <div class="tree-header">
+              <h1 class="title">命轨</h1>
+              <p>你的人生轨迹</p>
+              <div class="tree-actions">
+                <button class="btn btn-secondary small" @click="addNode">添加节点</button>
+                <button class="btn btn-secondary small" @click="zoomIn">放大</button>
+                <button class="btn btn-secondary small" @click="zoomOut">缩小</button>
+                <button class="btn btn-secondary small" @click="resetView">重置视图</button>
+                <button class="btn btn-secondary small" @click="exportTree">导出图谱</button>
+                <button class="btn btn-secondary small" @click="resetTree">重置树状图</button>
+              </div>
             </div>
-          </div>
-          
-          <div class="tree-canvas" ref="treeCanvas">
-            <!-- 3D树状结构将在这里渲染 -->
-            <div class="tree-org">
-              <div class="tree-org-node-group">
-                <!-- 主节点 -->
-                <div class="node main-node" :class="{ active: selectedNode === 'current' }" @click="selectNode('current')">
-                  <div class="node-content">
-                    <h3>{{ treeNodes.find(n => n.id === 'current')?.title }}</h3>
-                    <p>{{ treeNodes.find(n => n.id === 'current')?.description }}</p>
-                    <div class="node-actions">
-                      <button class="btn btn-secondary small" @click.stop="editNode('current')">编辑</button>
-                      <button class="btn btn-secondary small" @click.stop="deleteNode('current')">删除</button>
-                      <button class="btn btn-secondary small" @click.stop="extendBranch('current')">延伸分支</button>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- 一级子节点群 -->
-                <div class="tree-org-children" v-if="treeNodes.find(n => n.id === 'current')?.children && treeNodes.find(n => n.id === 'current')?.children.length > 0">
-                  <div v-for="childId in treeNodes.find(n => n.id === 'current')?.children" :key="childId" class="tree-org-node-group">
-                    <div class="node branch-node" :class="{ active: selectedNode === childId }" @click.stop="selectNode(childId)">
-                      <div class="node-content">
-                        <h3>{{ treeNodes.find(n => n.id === childId)?.title }}</h3>
-                        <p>{{ treeNodes.find(n => n.id === childId)?.description }}</p>
-                        <div class="node-actions">
-                          <button class="btn btn-secondary small" @click.stop="editNode(childId)">编辑</button>
-                          <button class="btn btn-secondary small" @click.stop="deleteNode(childId)">删除</button>
-                          <button class="btn btn-secondary small" @click.stop="extendBranch(childId)">延伸分支</button>
+            
+            <div class="tree-canvas" ref="treeCanvas">
+              <div
+                class="tree-viewport"
+                ref="treeViewport"
+                :class="{ dragging: isPanning }"
+                @wheel.prevent="handleZoomWheel"
+                @mousedown="startPan"
+                @mousemove="onPanMove"
+                @mouseup="endPan"
+                @mouseleave="endPan"
+                @touchstart.prevent="onTouchStart"
+                @touchmove.prevent="onTouchMove"
+                @touchend="endPan"
+              >
+                <!-- 3D树状结构将在这里渲染 -->
+                <div class="tree-transform" :style="treeTransformStyle">
+                  <div class="tree-org">
+                    <div class="tree-org-node-group">
+                      <!-- 主节点 -->
+                      <div class="node main-node" :class="{ active: selectedNode === 'current' }" @click="selectNode('current')">
+                        <div class="node-content">
+                          <h3>{{ treeNodes.find(n => n.id === 'current')?.title }}</h3>
+                          <p>{{ treeNodes.find(n => n.id === 'current')?.description }}</p>
+                          <div class="node-actions">
+                            <button class="btn btn-secondary small" @click.stop="editNode('current')">编辑</button>
+                            <button class="btn btn-secondary small" @click.stop="deleteNode('current')">删除</button>
+                            <button class="btn btn-secondary small" @click.stop="extendBranch('current')">延伸分支</button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <!-- 二级子节点群 -->
-                    <div class="tree-org-children" v-if="treeNodes.find(n => n.id === childId)?.children && treeNodes.find(n => n.id === childId)?.children.length > 0">
-                      <div v-for="grandchildId in treeNodes.find(n => n.id === childId)?.children" :key="grandchildId" class="tree-org-node-group">
-                        <div class="node branch-node small-node" :class="{ active: selectedNode === grandchildId }" @click.stop="selectNode(grandchildId)">
-                          <div class="node-content">
-                            <h3>{{ treeNodes.find(n => n.id === grandchildId)?.title }}</h3>
-                            <p>{{ treeNodes.find(n => n.id === grandchildId)?.description }}</p>
-                            <div class="node-actions">
-                              <button class="btn btn-secondary small" @click.stop="editNode(grandchildId)">编辑</button>
-                              <button class="btn btn-secondary small" @click.stop="deleteNode(grandchildId)">删除</button>
-                              <button class="btn btn-secondary small" @click.stop="extendBranch(grandchildId)">延伸分支</button>
+                      
+                      <!-- 一级子节点群 -->
+                      <div class="tree-org-children" v-if="treeNodes.find(n => n.id === 'current')?.children && treeNodes.find(n => n.id === 'current')?.children.length > 0">
+                        <div v-for="childId in treeNodes.find(n => n.id === 'current')?.children" :key="childId" class="tree-org-node-group">
+                          <div class="node branch-node" :class="{ active: selectedNode === childId }" @click.stop="selectNode(childId)">
+                            <div class="node-content">
+                              <h3>{{ treeNodes.find(n => n.id === childId)?.title }}</h3>
+                              <p>{{ treeNodes.find(n => n.id === childId)?.description }}</p>
+                              <div class="node-actions">
+                                <button class="btn btn-secondary small" @click.stop="editNode(childId)">编辑</button>
+                                <button class="btn btn-secondary small" @click.stop="deleteNode(childId)">删除</button>
+                                <button class="btn btn-secondary small" @click.stop="extendBranch(childId)">延伸分支</button>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <!-- 二级子节点群 -->
+                          <div class="tree-org-children" v-if="treeNodes.find(n => n.id === childId)?.children && treeNodes.find(n => n.id === childId)?.children.length > 0">
+                            <div v-for="grandchildId in treeNodes.find(n => n.id === childId)?.children" :key="grandchildId" class="tree-org-node-group">
+                              <div class="node branch-node small-node" :class="{ active: selectedNode === grandchildId }" @click.stop="selectNode(grandchildId)">
+                                <div class="node-content">
+                                  <h3>{{ treeNodes.find(n => n.id === grandchildId)?.title }}</h3>
+                                  <p>{{ treeNodes.find(n => n.id === grandchildId)?.description }}</p>
+                                  <div class="node-actions">
+                                    <button class="btn btn-secondary small" @click.stop="editNode(grandchildId)">编辑</button>
+                                    <button class="btn btn-secondary small" @click.stop="deleteNode(grandchildId)">删除</button>
+                                    <button class="btn btn-secondary small" @click.stop="extendBranch(grandchildId)">延伸分支</button>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -218,13 +285,47 @@
                   </div>
                 </div>
               </div>
+              <div class="tree-scroll-hint">可横向/纵向拖动查看全局</div>
+            </div>
+            
+            <div class="tree-controls">
+              <button class="btn btn-secondary" @click="goToGenesis">返回</button>
+              <button class="btn btn-primary" @click="goToDivergence">衍生路线</button>
             </div>
           </div>
-          
-          <div class="tree-controls">
-            <button class="btn btn-secondary" @click="goToGenesis">返回</button>
-            <button class="btn btn-primary" @click="goToDivergence">衍生路线</button>
-          </div>
+          <aside class="tree-aside glass-container">
+            <div class="tree-aside-header">
+              <h2>节点面板</h2>
+              <span class="badge">已选</span>
+            </div>
+            <div class="node-preview">
+              <strong>{{ selectedNodeData?.title || '未选择节点' }}</strong>
+              <p>{{ selectedNodeData?.description || '请在树上选择节点，查看详情与操作' }}</p>
+            </div>
+            <div class="node-stats">
+              <div class="stat-card">
+                <span>节点总数</span>
+                <strong>{{ nodeCount }}</strong>
+              </div>
+              <div class="stat-card">
+                <span>叶子节点</span>
+                <strong>{{ leafCount }}</strong>
+              </div>
+              <div class="stat-card">
+                <span>当前层级</span>
+                <strong>{{ selectedDepth }}</strong>
+              </div>
+            </div>
+            <div class="node-quick">
+              <button class="btn btn-secondary small" @click="addNode">快速添加</button>
+              <button class="btn btn-secondary small" @click="extendBranch(selectedNode)">快速延伸</button>
+            </div>
+            <div class="tree-hints">
+              <h4>查看提示</h4>
+              <p>拖动滚动条可完整查看分支，点击节点后可用编辑按钮修改信息。</p>
+              <p>建议从主节点向外扩散，逐层细化关键选择。</p>
+            </div>
+          </aside>
         </div>
       </div>
       
@@ -348,6 +449,26 @@
               <input type="file" class="input" @change="handleFileUpload">
             </div>
             <button class="btn btn-primary" @click="addCustomRoute">添加路线</button>
+            <div class="custom-route-list" v-if="customRoutes.length">
+              <h4>我的路线</h4>
+              <div class="custom-route-card" v-for="(route, index) in customRoutes" :key="route.id">
+                <div class="custom-route-main">
+                  <div>
+                    <strong>{{ route.title }}</strong>
+                    <p>{{ route.description }}</p>
+                  </div>
+                  <div class="custom-route-meta">
+                    <span>可行性 {{ route.feasibility }}%</span>
+                    <span>难度 {{ route.difficulty }}</span>
+                    <span>收益 {{ route.benefit }}</span>
+                  </div>
+                </div>
+                <div class="custom-route-actions">
+                  <button class="btn btn-secondary small" @click="selectRoute(route)">选择</button>
+                  <button class="btn btn-secondary small" @click="removeCustomRoute(index)">删除</button>
+                </div>
+              </div>
+            </div>
           </div>
           
           <!-- 多模态素材生成 -->
@@ -365,6 +486,16 @@
                 <option value="写实">写实</option>
                 <option value="科幻">科幻</option>
               </select>
+            </div>
+            <div class="media-gallery" v-if="generatedMedia.length">
+              <div class="media-card" v-for="media in generatedMedia" :key="media.id">
+                <div class="media-thumb" :class="media.type"></div>
+                <div class="media-info">
+                  <strong>{{ media.title }}</strong>
+                  <p>{{ media.description }}</p>
+                  <span>{{ media.time }}</span>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -455,38 +586,61 @@
             <div class="chart-container">
               <!-- 图表将在这里渲染 -->
               <div v-if="currentChart === 'radar'" class="radar-chart">
-                <p>雷达图可视化</p>
+                <svg class="radar-svg" viewBox="0 0 240 240" aria-hidden="true">
+                  <g class="radar-grid">
+                    <circle cx="120" cy="120" r="90"></circle>
+                    <circle cx="120" cy="120" r="60"></circle>
+                    <circle cx="120" cy="120" r="30"></circle>
+                  </g>
+                  <g class="radar-axes">
+                    <line v-for="(axis, index) in radarAxes" :key="axis.key" :x1="120" :y1="120" :x2="radarAxisPoints[index].x" :y2="radarAxisPoints[index].y"></line>
+                  </g>
+                  <polygon class="radar-shape" :points="radarPolygon"></polygon>
+                  <g class="radar-labels">
+                    <text v-for="(axis, index) in radarAxes" :key="axis.key" :x="radarAxisPoints[index].lx" :y="radarAxisPoints[index].ly">{{ axis.label }}</text>
+                  </g>
+                </svg>
+                <div class="radar-legend">
+                  <span v-for="axis in radarAxes" :key="axis.key">{{ axis.label }} {{ attributes[axis.key] }}%</span>
+                </div>
               </div>
               <div v-else-if="currentChart === 'trend'" class="trend-chart">
-                <p>趋势曲线可视化</p>
+                <svg class="trend-svg" viewBox="0 0 440 220" aria-hidden="true">
+                  <g class="trend-grid">
+                    <line x1="20" y1="20" x2="20" y2="200"></line>
+                    <line x1="20" y1="200" x2="420" y2="200"></line>
+                    <line x1="20" y1="80" x2="420" y2="80"></line>
+                    <line x1="20" y1="140" x2="420" y2="140"></line>
+                  </g>
+                  <path v-for="axis in radarAxes" :key="axis.key" :d="getTrendPath(axis.key)" :class="['trend-line', axis.key]" />
+                </svg>
+                <div class="trend-legend">
+                  <span v-for="axis in radarAxes" :key="axis.key" :class="['legend-item', axis.key]">{{ axis.label }}</span>
+                </div>
               </div>
               <div v-else-if="currentChart === 'impact'" class="impact-chart">
-                <p>影响溯源可视化</p>
+                <div class="impact-list" v-if="impactHistory.length">
+                  <div class="impact-item" v-for="impact in impactHistory" :key="impact.id">
+                    <div class="impact-title">{{ impact.title }}</div>
+                    <div class="impact-meta">{{ impact.time }}</div>
+                    <div class="impact-tags">
+                      <span v-for="(value, key) in impact.changes" :key="key" :class="['impact-tag', value >= 0 ? 'positive' : 'negative']">
+                        {{ axisLabelMap[key] }} {{ value > 0 ? '+' : '' }}{{ value }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <p v-else class="impact-empty">尚未生成溯源记录，先选择一条路线。</p>
               </div>
             </div>
           </div>
           
           <div class="social-sidebar glass-container">
             <h3>天下志</h3>
-            <div class="social-item">
-              <span class="source">国家统计局</span>
-              <p>2026年第一季度GDP增长4.5%</p>
-              <span class="update-time">2026-04-27</span>
-            </div>
-            <div class="social-item">
-              <span class="source">教育部</span>
-              <p>2026年研究生招生计划公布</p>
-              <span class="update-time">2026-04-25</span>
-            </div>
-            <div class="social-item">
-              <span class="source">人社部</span>
-              <p>2026年平均工资水平上涨5.2%</p>
-              <span class="update-time">2026-04-20</span>
-            </div>
-            <div class="social-item">
-              <span class="source">住建部</span>
-              <p>2026年全国房价走势分析</p>
-              <span class="update-time">2026-04-18</span>
+            <div class="social-item" v-for="item in socialFeed" :key="item.id">
+              <span class="source">{{ item.source }}</span>
+              <p>{{ item.text }}</p>
+              <span class="update-time">{{ item.date }}</span>
             </div>
             <button class="btn btn-secondary small" @click="refreshSocialData">刷新数据</button>
           </div>
@@ -533,7 +687,7 @@
           <div class="chat-input">
             <input type="text" v-model="chatInput" class="input" placeholder="输入你的问题...">
             <button class="btn btn-primary" @click="sendMessage" :disabled="isGeneratingAIResponse">发送</button>
-            <button class="btn btn-secondary" @click="toggleVoiceInput">语音输入</button>
+            <button class="btn btn-secondary" @click="toggleVoiceInput">{{ isListening ? '停止语音' : '语音输入' }}</button>
           </div>
           
           <div class="ai-role-selector">
@@ -661,14 +815,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import * as THREE from 'three'
 import { generateRoute, getAIAdvice, generateScenario, calculateRegret } from './services/ollamaService'
 
 // 状态管理
 const currentView = ref('genesis')
 const compareRoutes = ref([])
-const userInfo = ref({
+const statusMessage = ref('')
+const createDefaultUserInfo = () => ({
   age: '',
   education: '',
   occupation: '',
@@ -683,6 +838,7 @@ const userInfo = ref({
   decisionStyle: '',
   lifeGoals: ''
 })
+const userInfo = ref(createDefaultUserInfo())
 const isCardFlipped = ref(false)
 const selectedNode = ref('current')
 const mode = ref('ai')
@@ -767,16 +923,104 @@ const currentChart = ref('radar')
 const currentAI角色 = ref('职场导师')
 const currentAIDescription = ref('拥有丰富的职场经验，能够为你提供职业发展建议')
 const isGeneratingAIResponse = ref(false)
-const savedPaths = ref([
-  {
-    name: '职业发展路线',
-    date: '2026-04-20'
-  },
-  {
-    name: '创业路线',
-    date: '2026-04-15'
-  }
+const savedPaths = ref([])
+const customRoutes = ref([])
+const generatedMedia = ref([])
+const attributeHistory = ref([])
+const impactHistory = ref([])
+const isListening = ref(false)
+const socialFeed = ref([
+  { id: 'social_1', source: '国家统计局', text: '2026年第一季度GDP增长4.5%', date: '2026-04-27' },
+  { id: 'social_2', source: '教育部', text: '2026年研究生招生计划公布', date: '2026-04-25' },
+  { id: 'social_3', source: '人社部', text: '2026年平均工资水平上涨5.2%', date: '2026-04-20' },
+  { id: 'social_4', source: '住建部', text: '2026年全国房价走势分析', date: '2026-04-18' }
 ])
+const axisLabelMap = {
+  career: '职业',
+  finance: '财务',
+  relationship: '人际',
+  health: '健康',
+  growth: '成长'
+}
+const radarAxes = [
+  { key: 'career', label: '职业' },
+  { key: 'finance', label: '财务' },
+  { key: 'relationship', label: '人际' },
+  { key: 'health', label: '健康' },
+  { key: 'growth', label: '成长' }
+]
+const radarAxisPoints = computed(() => {
+  const center = 120
+  const radius = 90
+  const labelRadius = 110
+  return radarAxes.map((axis, index) => {
+    const angle = (Math.PI * 2 / radarAxes.length) * index - Math.PI / 2
+    return {
+      x: center + Math.cos(angle) * radius,
+      y: center + Math.sin(angle) * radius,
+      lx: center + Math.cos(angle) * labelRadius,
+      ly: center + Math.sin(angle) * labelRadius
+    }
+  })
+})
+const radarPolygon = computed(() => {
+  const center = 120
+  const radius = 90
+  return radarAxes.map((axis, index) => {
+    const angle = (Math.PI * 2 / radarAxes.length) * index - Math.PI / 2
+    const value = (attributes.value[axis.key] || 0) / 100
+    const x = center + Math.cos(angle) * radius * value
+    const y = center + Math.sin(angle) * radius * value
+    return `${x},${y}`
+  }).join(' ')
+})
+
+
+const setStatusMessage = (message) => {
+  statusMessage.value = message
+  if (message) {
+    window.setTimeout(() => {
+      statusMessage.value = ''
+    }, 2500)
+  }
+}
+
+const recordAttributeHistory = () => {
+  attributeHistory.value.push({
+    ...attributes.value,
+    time: new Date().toISOString()
+  })
+  if (attributeHistory.value.length > 12) {
+    attributeHistory.value.shift()
+  }
+}
+
+const recordImpact = (title, changes) => {
+  impactHistory.value.unshift({
+    id: `impact_${Date.now()}`,
+    title,
+    changes,
+    time: new Date().toLocaleString('zh-CN')
+  })
+  if (impactHistory.value.length > 6) {
+    impactHistory.value.pop()
+  }
+}
+
+const getTrendPath = (key) => {
+  const points = attributeHistory.value
+  if (!points.length) return ''
+  const width = 420
+  const height = 200
+  const padding = 20
+  const step = points.length > 1 ? (width - padding * 2) / (points.length - 1) : 0
+  return points.map((point, index) => {
+    const value = Math.max(0, Math.min(100, point[key] || 0))
+    const x = padding + step * index
+    const y = height - padding - (value / 100) * (height - padding * 2)
+    return `${index === 0 ? 'M' : 'L'}${x},${y}`
+  }).join(' ')
+}
 
 // 视图切换
 const goToDestinyTree = () => {
@@ -890,7 +1134,33 @@ const fetchScenario = async () => {
 
 const skipScenario = () => {
   // 使用默认模型
-  console.log('Using default model')
+  setStatusMessage('已使用默认模型')
+}
+
+const markDataEditable = () => {
+  setStatusMessage('你可以直接修改表单信息')
+}
+
+const backupLocalData = () => {
+  const payload = {
+    userInfo: userInfo.value,
+    treeNodes: treeNodes.value,
+    attributes: attributes.value,
+    routes: aiRoutes.value
+  }
+  localStorage.setItem('life_local_backup', JSON.stringify(payload))
+  setStatusMessage('已备份到本地')
+}
+
+const clearLocalData = () => {
+  localStorage.removeItem('life_local_backup')
+  localStorage.removeItem('life_saved_paths')
+  userInfo.value = createDefaultUserInfo()
+  savedPaths.value = []
+  customRoutes.value = []
+  generatedMedia.value = []
+  resetTree()
+  setStatusMessage('本地数据已清除')
 }
 
 // 树状节点数据
@@ -923,6 +1193,113 @@ const treeNodes = ref([
     children: []
   }
 ])
+
+const selectedNodeData = computed(() => treeNodes.value.find(node => node.id === selectedNode.value))
+const nodeCount = computed(() => treeNodes.value.length)
+const leafCount = computed(() => treeNodes.value.filter(node => !node.children || node.children.length === 0).length)
+const selectedDepth = computed(() => {
+  let depth = 1
+  let node = treeNodes.value.find(item => item.id === selectedNode.value)
+  while (node?.parent) {
+    depth += 1
+    node = treeNodes.value.find(item => item.id === node.parent)
+  }
+  return depth
+})
+
+const treeViewport = ref(null)
+const zoomLevel = ref(1)
+const panOffset = ref({ x: 0, y: 0 })
+const isPanning = ref(false)
+const panStart = ref({ x: 0, y: 0 })
+const panOrigin = ref({ x: 0, y: 0 })
+const lastPinchDistance = ref(null)
+const minZoom = 0.6
+const maxZoom = 1.8
+
+const treeTransformStyle = computed(() => ({
+  transform: `translate(${panOffset.value.x}px, ${panOffset.value.y}px) scale(${zoomLevel.value})`
+}))
+
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+
+const zoomAtPoint = (delta, clientX, clientY) => {
+  const viewport = treeViewport.value
+  if (!viewport) return
+  const rect = viewport.getBoundingClientRect()
+  const nextZoom = clamp(zoomLevel.value + delta, minZoom, maxZoom)
+  if (nextZoom === zoomLevel.value) return
+  const scale = nextZoom / zoomLevel.value
+  const vx = clientX - rect.left
+  const vy = clientY - rect.top
+  panOffset.value = {
+    x: vx - (vx - panOffset.value.x) * scale,
+    y: vy - (vy - panOffset.value.y) * scale
+  }
+  zoomLevel.value = nextZoom
+}
+
+const handleZoomWheel = (event) => {
+  const delta = event.deltaY > 0 ? -0.08 : 0.08
+  zoomAtPoint(delta, event.clientX, event.clientY)
+}
+
+const startPan = (event) => {
+  if (event.button !== 0) return
+  isPanning.value = true
+  panStart.value = { x: event.clientX, y: event.clientY }
+  panOrigin.value = { ...panOffset.value }
+}
+
+const onPanMove = (event) => {
+  if (!isPanning.value) return
+  panOffset.value = {
+    x: panOrigin.value.x + (event.clientX - panStart.value.x),
+    y: panOrigin.value.y + (event.clientY - panStart.value.y)
+  }
+}
+
+const endPan = () => {
+  isPanning.value = false
+  lastPinchDistance.value = null
+}
+
+const onTouchStart = (event) => {
+  if (event.touches.length === 1) {
+    const touch = event.touches[0]
+    isPanning.value = true
+    panStart.value = { x: touch.clientX, y: touch.clientY }
+    panOrigin.value = { ...panOffset.value }
+  } else if (event.touches.length === 2) {
+    const [a, b] = event.touches
+    lastPinchDistance.value = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+  }
+}
+
+const onTouchMove = (event) => {
+  if (event.touches.length === 1 && isPanning.value) {
+    const touch = event.touches[0]
+    panOffset.value = {
+      x: panOrigin.value.x + (touch.clientX - panStart.value.x),
+      y: panOrigin.value.y + (touch.clientY - panStart.value.y)
+    }
+  } else if (event.touches.length === 2) {
+    const [a, b] = event.touches
+    const distance = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+    if (lastPinchDistance.value) {
+      const delta = (distance - lastPinchDistance.value) / 200
+      zoomAtPoint(delta, (a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2)
+    }
+    lastPinchDistance.value = distance
+  }
+}
+
+const zoomIn = () => zoomAtPoint(0.12, window.innerWidth / 2, window.innerHeight / 2)
+const zoomOut = () => zoomAtPoint(-0.12, window.innerWidth / 2, window.innerHeight / 2)
+const resetView = () => {
+  zoomLevel.value = 1
+  panOffset.value = { x: 0, y: 0 }
+}
 
 const addNode = () => {
   const newNode = {
@@ -1075,13 +1452,33 @@ const generateAIRoutes = async () => {
 }
 
 const refineRoute = (index) => {
-  console.log('Refining route:', index)
-  // 实现细化路线逻辑
+  const route = aiRoutes.value[index]
+  if (!route) return
+  route.description = `${route.description} 进一步细化：补充关键里程碑、资源投入与风险缓冲方案。`
+  route.feasibility = Math.min(100, (route.feasibility || 0) + 5)
+  route.tag = route.feasibility > 70 ? '高可行性' : route.feasibility > 40 ? '中等可行性' : '低可行性'
+  route.tagColor = route.feasibility > 70 ? 'success' : route.feasibility > 40 ? 'important' : 'warning'
+  setStatusMessage('路线已细化')
 }
 
-const replaceRoute = (index) => {
-  console.log('Replacing route:', index)
-  // 实现替换路线逻辑
+const replaceRoute = async (index) => {
+  isGenerating.value = true
+  try {
+    const result = await generateRoute(userInfo.value, '替换一条人生路线')
+    const candidate = result.routes?.[0]
+    if (candidate) {
+      aiRoutes.value.splice(index, 1, {
+        ...candidate,
+        tag: candidate.feasibility > 70 ? '高可行性' : candidate.feasibility > 40 ? '中等可行性' : '低可行性',
+        tagColor: candidate.feasibility > 70 ? 'success' : candidate.feasibility > 40 ? 'important' : 'warning'
+      })
+      setStatusMessage('路线已替换')
+    }
+  } catch (error) {
+    setStatusMessage('替换失败，已保留原路线')
+  } finally {
+    isGenerating.value = false
+  }
 }
 
 const selectRoute = (route) => {
@@ -1099,6 +1496,8 @@ const selectRoute = (route) => {
   Object.keys(attributeChanges).forEach(key => {
     attributes.value[key] = Math.max(0, Math.min(100, attributes.value[key] + attributeChanges[key]))
   })
+  recordImpact(route.title || '自定义路线', attributeChanges)
+  recordAttributeHistory()
   
   console.log('Selected route:', route)
   console.log('Attribute changes:', attributeChanges)
@@ -1106,29 +1505,99 @@ const selectRoute = (route) => {
 }
 
 const addCustomRoute = () => {
-  console.log('Adding custom route:', customRoute.value)
-  // 实现添加自定义路线逻辑
+  const title = customRoute.value.title.trim()
+  const description = customRoute.value.description.trim()
+  if (!title || !description) {
+    setStatusMessage('请完善路线名称与描述')
+    return
+  }
+  const newRoute = {
+    id: `custom_${Date.now()}`,
+    title,
+    description,
+    feasibility: Number(customRoute.value.feasibility) || 50,
+    difficulty: customRoute.value.difficulty || '中等',
+    benefit: customRoute.value.benefit || '中等',
+    tag: '自定义',
+    tagColor: 'important'
+  }
+  customRoutes.value.unshift(newRoute)
+  selectRoute(newRoute)
+  customRoute.value = {
+    title: '',
+    description: '',
+    feasibility: '',
+    difficulty: '',
+    benefit: ''
+  }
+  setStatusMessage('路线已添加')
+}
+
+const removeCustomRoute = (index) => {
+  customRoutes.value.splice(index, 1)
 }
 
 const handleFileUpload = (event) => {
   const file = event.target.files[0]
-  console.log('Uploaded file:', file)
-  // 实现文件上传处理逻辑
+  if (!file) return
+  const isText = file.type.startsWith('text/') || file.name.endsWith('.txt') || file.name.endsWith('.md')
+  if (!isText) {
+    setStatusMessage('仅支持文本类规划文档（.txt/.md）')
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = () => {
+    const text = String(reader.result || '').trim()
+    if (text) {
+      customRoute.value.description = text.slice(0, 300)
+      setStatusMessage('已导入规划内容')
+    } else {
+      setStatusMessage('未读取到有效内容')
+    }
+  }
+  reader.readAsText(file)
 }
 
 const generateComic = () => {
-  console.log('Generating comic with style:', contentStyle.value)
-  // 实现生成漫画逻辑
+  const title = `${selectedRoute.value?.title || '人生路线'} · 漫画`
+  generatedMedia.value.unshift({
+    id: `media_${Date.now()}`,
+    type: 'comic',
+    title,
+    description: `风格：${contentStyle.value}，主题聚焦路线关键节点。`,
+    time: new Date().toLocaleString('zh-CN')
+  })
+  if (generatedMedia.value.length > 6) {
+    generatedMedia.value.pop()
+  }
 }
 
 const generateVideo = () => {
-  console.log('Generating video with style:', contentStyle.value)
-  // 实现生成短视频逻辑
+  const title = `${selectedRoute.value?.title || '人生路线'} · 短视频`
+  generatedMedia.value.unshift({
+    id: `media_${Date.now()}`,
+    type: 'video',
+    title,
+    description: `15-60秒叙事版，风格：${contentStyle.value}。`,
+    time: new Date().toLocaleString('zh-CN')
+  })
+  if (generatedMedia.value.length > 6) {
+    generatedMedia.value.pop()
+  }
 }
 
 const generatePoster = () => {
-  console.log('Generating poster with style:', contentStyle.value)
-  // 实现生成海报逻辑
+  const title = `${selectedRoute.value?.title || '人生路线'} · 海报`
+  generatedMedia.value.unshift({
+    id: `media_${Date.now()}`,
+    type: 'poster',
+    title,
+    description: `时间轴与属性趋势混合展示，风格：${contentStyle.value}。`,
+    time: new Date().toLocaleString('zh-CN')
+  })
+  if (generatedMedia.value.length > 6) {
+    generatedMedia.value.pop()
+  }
 }
 
 const getLevelClass = (value) => {
@@ -1193,13 +1662,57 @@ const showImpactTrace = () => {
 }
 
 const refreshSocialData = () => {
-  console.log('Refreshing social data')
-  // 实现刷新社会数据逻辑
+  const pool = [
+    { source: '国家统计局', text: '全国就业景气指数保持在景气区间。' },
+    { source: '教育部', text: '高等教育数字化课程覆盖率继续提升。' },
+    { source: '人社部', text: '重点行业紧缺岗位名单发布。' },
+    { source: '发改委', text: '新一轮产业扶持政策落地。' },
+    { source: '住建部', text: '重点城市租赁市场指标更新。' },
+    { source: '智库报告', text: '未来三年热门职业趋势解读。' }
+  ]
+  const today = new Date().toISOString().split('T')[0]
+  socialFeed.value = pool.sort(() => 0.5 - Math.random()).slice(0, 4).map((item, index) => ({
+    ...item,
+    date: today,
+    id: `social_${Date.now()}_${index}`
+  }))
+  setStatusMessage('已刷新社会数据')
 }
 
+let speechRecognition
+
 const toggleVoiceInput = () => {
-  console.log('Toggling voice input')
-  // 实现语音输入逻辑
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+  if (!SpeechRecognition) {
+    setStatusMessage('当前浏览器不支持语音输入')
+    return
+  }
+  if (!speechRecognition) {
+    speechRecognition = new SpeechRecognition()
+    speechRecognition.lang = 'zh-CN'
+    speechRecognition.interimResults = false
+    speechRecognition.onresult = (event) => {
+      const transcript = event.results?.[0]?.[0]?.transcript
+      if (transcript) {
+        chatInput.value = transcript
+        setStatusMessage('语音已转文字')
+      }
+    }
+    speechRecognition.onerror = () => {
+      isListening.value = false
+      setStatusMessage('语音识别失败')
+    }
+    speechRecognition.onend = () => {
+      isListening.value = false
+    }
+  }
+  if (isListening.value) {
+    speechRecognition.stop()
+    isListening.value = false
+  } else {
+    speechRecognition.start()
+    isListening.value = true
+  }
 }
 
 const selectAIRole = (role) => {
@@ -1214,32 +1727,127 @@ const selectAIRole = (role) => {
 }
 
 const saveCurrentPath = () => {
+  const today = new Date().toISOString().split('T')[0]
   const newPath = {
-    name: `人生轨迹_${new Date().toISOString().split('T')[0]}`,
-    date: new Date().toISOString().split('T')[0]
+    name: `人生轨迹_${today}_${savedPaths.value.length + 1}`,
+    date: today,
+    data: {
+      userInfo: userInfo.value,
+      treeNodes: treeNodes.value,
+      attributes: attributes.value,
+      routes: aiRoutes.value,
+      selectedRoute: selectedRoute.value,
+      regret: {
+        level: regretLevel.value,
+        text: regretText.value,
+        analysis: regretAnalysis.value,
+        advice: aiAdvice.value
+      }
+    }
   }
-  savedPaths.value.push(newPath)
-  console.log('Saved current path:', newPath)
+  savedPaths.value.unshift(newPath)
+  localStorage.setItem('life_saved_paths', JSON.stringify(savedPaths.value))
+  setStatusMessage('轨迹已保存')
 }
 
 const loadSavedPath = () => {
-  console.log('Loading saved path')
-  // 实现加载存档逻辑
+  if (!savedPaths.value.length) {
+    setStatusMessage('暂无可用存档')
+    return
+  }
+  loadPath(0)
 }
 
 const loadPath = (index) => {
-  console.log('Loading path:', index)
-  // 实现加载指定存档逻辑
+  const payload = savedPaths.value[index]?.data
+  if (!payload) {
+    setStatusMessage('存档数据不存在')
+    return
+  }
+  userInfo.value = { ...payload.userInfo }
+  treeNodes.value = JSON.parse(JSON.stringify(payload.treeNodes || treeNodes.value))
+  attributes.value = { ...payload.attributes }
+  aiRoutes.value = JSON.parse(JSON.stringify(payload.routes || aiRoutes.value))
+  selectedRoute.value = payload.selectedRoute || null
+  regretLevel.value = payload.regret?.level || regretLevel.value
+  regretText.value = payload.regret?.text || regretText.value
+  regretAnalysis.value = payload.regret?.analysis || regretAnalysis.value
+  aiAdvice.value = payload.regret?.advice || aiAdvice.value
+  recordAttributeHistory()
+  setStatusMessage('存档已加载')
 }
 
 const exportReport = () => {
-  console.log('Exporting report')
-  // 实现导出报告逻辑
+  const report = {
+    userInfo: userInfo.value,
+    attributes: attributes.value,
+    selectedRoute: selectedRoute.value,
+    regret: {
+      level: regretLevel.value,
+      text: regretText.value,
+      analysis: regretAnalysis.value,
+      advice: aiAdvice.value
+    },
+    generatedMedia: generatedMedia.value,
+    exportedAt: new Date().toISOString()
+  }
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'life_report.json'
+  a.click()
+  URL.revokeObjectURL(url)
+  setStatusMessage('报告已导出')
 }
 
 const simulateCelebrity = (celebrity) => {
-  console.log('Simulating celebrity:', celebrity)
-  // 实现名人模拟逻辑
+  const profiles = {
+    '马云': {
+      occupation: '创业者',
+      city: '杭州',
+      riskPreference: 'risk-seeking',
+      decisionStyle: 'intuitive'
+    },
+    '任正非': {
+      occupation: '企业管理者',
+      city: '深圳',
+      riskPreference: 'moderate',
+      decisionStyle: 'analytical'
+    },
+    '比尔·盖茨': {
+      occupation: '科技企业家',
+      city: '西雅图',
+      riskPreference: 'moderate',
+      decisionStyle: 'analytical'
+    },
+    '乔布斯': {
+      occupation: '产品领袖',
+      city: '旧金山',
+      riskPreference: 'risk-seeking',
+      decisionStyle: 'intuitive'
+    }
+  }
+  const profile = profiles[celebrity]
+  if (!profile) return
+  userInfo.value = {
+    ...createDefaultUserInfo(),
+    age: '22',
+    education: 'bachelor',
+    income: '0',
+    skills: '创新/组织/技术洞察',
+    investment: '10000',
+    ...profile
+  }
+  attributes.value = {
+    career: 82,
+    finance: 58,
+    relationship: 70,
+    health: 65,
+    growth: 88
+  }
+  recordAttributeHistory()
+  setStatusMessage(`已进入${celebrity}模拟轨迹`)
 }
 
 // 星空背景
@@ -1292,11 +1900,25 @@ const handleResize = () => {
 onMounted(() => {
   initStarfield()
   window.addEventListener('resize', handleResize)
+  const saved = localStorage.getItem('life_saved_paths')
+  if (saved) {
+    try {
+      savedPaths.value = JSON.parse(saved)
+    } catch (error) {
+      savedPaths.value = []
+    }
+  }
+  recordAttributeHistory()
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
-  renderer.dispose()
+  if (speechRecognition) {
+    speechRecognition.stop()
+  }
+  if (renderer) {
+    renderer.dispose()
+  }
 })
 </script>
 
@@ -1306,12 +1928,70 @@ onUnmounted(() => {
   position: relative;
 }
 
+.ambient-haze {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(226, 163, 90, 0.18), transparent 45%),
+    radial-gradient(circle at 80% 30%, rgba(81, 154, 115, 0.18), transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(255, 78, 62, 0.12), transparent 45%);
+  z-index: -1;
+  pointer-events: none;
+}
+
 .main-content {
   position: relative;
   z-index: 1;
-  padding: 3rem;
-  max-width: 1200px;
+  padding: 2.5rem;
+  max-width: 1280px;
   margin: 0 auto;
+}
+
+.view-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.view-step {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.8rem 1rem;
+  border-radius: 14px;
+  color: rgba(44, 36, 27, 0.65);
+  transition: var(--transition-smooth);
+}
+
+.view-step strong {
+  display: block;
+  font-size: 14px;
+}
+
+.view-step small {
+  display: block;
+  font-size: 11px;
+}
+
+.view-step.active {
+  background: rgba(226, 163, 90, 0.2);
+  color: #2C241B;
+  box-shadow: 0 6px 16px rgba(226, 163, 90, 0.25);
+}
+
+.step-index {
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  background: rgba(44, 36, 27, 0.1);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 /* 入局界面 */
@@ -1330,8 +2010,22 @@ onUnmounted(() => {
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><pattern id="scroll-pattern" patternUnits="userSpaceOnUse" width="40" height="40"><path d="M0 20 L40 20" stroke="rgba(230,220,205,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23scroll-pattern)"/></svg>');
 }
 
+.status-toast {
+  position: sticky;
+  top: 1rem;
+  margin: 0 auto 1.5rem;
+  max-width: 520px;
+  text-align: center;
+  padding: 0.6rem 1.2rem;
+  border-radius: 16px;
+  background: rgba(81, 154, 115, 0.12);
+  color: var(--color-success);
+  font-size: 14px;
+  z-index: 5;
+}
+
 .form-section {
-  margin-bottom: 4rem;
+  margin-bottom: 3rem;
 }
 
 .form-section h2 {
@@ -1456,9 +2150,16 @@ onUnmounted(() => {
   min-height: 80vh;
 }
 
+.tree-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 2rem;
+  align-items: start;
+}
+
 .tree-header {
   text-align: center;
-  margin-bottom: 4rem;
+  margin-bottom: 2.5rem;
 }
 
 .tree-actions {
@@ -1471,15 +2172,49 @@ onUnmounted(() => {
 
 .tree-canvas {
   position: relative;
-  min-height: 500px;
-  margin-bottom: 4rem;
+  min-height: 520px;
+  margin-bottom: 2.5rem;
+  border-radius: 24px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(230, 220, 205, 0.7);
+  box-shadow: 0 10px 30px rgba(160, 140, 120, 0.15);
+}
+
+.tree-viewport {
+  max-height: 520px;
+  overflow: auto;
+  padding: 1.5rem 1rem 2.5rem;
+  scrollbar-gutter: stable both-edges;
+  cursor: grab;
+  touch-action: none;
+}
+
+.tree-viewport.dragging {
+  cursor: grabbing;
+}
+
+.tree-transform {
+  transform-origin: 0 0;
+  transition: transform 0.08s ease-out;
+}
+
+.tree-viewport.dragging .tree-transform {
+  transition: none;
+}
+
+.tree-scroll-hint {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(44, 36, 27, 0.5);
+  margin-top: 0.5rem;
 }
 
 .tree-org {
-  display: flex;
+  display: inline-flex;
   justify-content: center;
-  padding: 1rem;
-  overflow-x: auto;
+  padding: 1rem 2rem;
+  min-width: max-content;
 }
 
 .tree-org-children {
@@ -1561,7 +2296,7 @@ onUnmounted(() => {
 }
 
 .node {
-  width: 220px;
+  width: 230px;
   padding: 1.5rem;
   border-radius: 20px;
   margin: 0;
@@ -1591,6 +2326,89 @@ onUnmounted(() => {
   justify-content: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.tree-aside {
+  padding: 2rem;
+  position: sticky;
+  top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tree-aside-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tree-aside-header h2 {
+  font-size: 20px;
+  color: var(--color-important);
+}
+
+.badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(81, 154, 115, 0.2);
+  color: var(--color-success);
+  font-size: 12px;
+}
+
+.node-preview {
+  padding: 1.2rem;
+  border-radius: 16px;
+  background: rgba(226, 163, 90, 0.12);
+}
+
+.node-preview p {
+  margin-top: 0.6rem;
+  font-size: 13px;
+  color: rgba(44, 36, 27, 0.7);
+}
+
+.node-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.stat-card {
+  padding: 0.8rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  border: 1px solid rgba(230, 220, 205, 0.7);
+}
+
+.stat-card span {
+  display: block;
+  font-size: 11px;
+  color: rgba(44, 36, 27, 0.5);
+}
+
+.stat-card strong {
+  font-size: 18px;
+  color: #2C241B;
+}
+
+.node-quick {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.tree-hints h4 {
+  font-size: 14px;
+  color: var(--color-important);
+  margin-bottom: 0.5rem;
+}
+
+.tree-hints p {
+  font-size: 12px;
+  color: rgba(44, 36, 27, 0.6);
+  line-height: 1.5;
 }
 
 .main-node {
@@ -1762,6 +2580,43 @@ onUnmounted(() => {
   margin: 3rem 0;
 }
 
+.custom-route-list {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(230, 220, 205, 0.05);
+  border-radius: 20px;
+}
+
+.custom-route-card {
+  padding: 1.2rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.custom-route-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.custom-route-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 12px;
+  color: rgba(44, 36, 27, 0.6);
+}
+
+.custom-route-actions {
+  display: flex;
+  gap: 0.8rem;
+}
+
 .custom-route h3 {
   margin-bottom: 1.5rem;
   color: var(--color-important);
@@ -1779,6 +2634,54 @@ onUnmounted(() => {
   padding: 1.5rem;
   background: rgba(226, 163, 90, 0.1);
   border-radius: 20px;
+}
+
+.media-gallery {
+  margin-top: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.media-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+}
+
+.media-thumb {
+  width: 70px;
+  height: 70px;
+  border-radius: 12px;
+  background: rgba(226, 163, 90, 0.2);
+  position: relative;
+}
+
+.media-thumb::after {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border-radius: 8px;
+  border: 1px dashed rgba(44, 36, 27, 0.2);
+}
+
+.media-thumb.comic {
+  background: linear-gradient(135deg, rgba(226, 163, 90, 0.4), rgba(255, 255, 255, 0.6));
+}
+
+.media-thumb.video {
+  background: linear-gradient(135deg, rgba(81, 154, 115, 0.4), rgba(255, 255, 255, 0.6));
+}
+
+.media-thumb.poster {
+  background: linear-gradient(135deg, rgba(255, 78, 62, 0.3), rgba(255, 255, 255, 0.6));
+}
+
+.media-info span {
+  font-size: 12px;
+  color: rgba(44, 36, 27, 0.5);
 }
 
 .multimedia-section h3 {
@@ -1956,6 +2859,155 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.radar-chart,
+.trend-chart,
+.impact-chart {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.radar-svg {
+  width: 240px;
+  height: 240px;
+}
+
+.radar-grid circle,
+.radar-axes line {
+  fill: none;
+  stroke: rgba(44, 36, 27, 0.15);
+  stroke-width: 1;
+}
+
+.radar-shape {
+  fill: rgba(226, 163, 90, 0.25);
+  stroke: rgba(226, 163, 90, 0.8);
+  stroke-width: 2;
+}
+
+.radar-labels text {
+  font-size: 12px;
+  fill: rgba(44, 36, 27, 0.7);
+  text-anchor: middle;
+}
+
+.radar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.2rem;
+  font-size: 12px;
+  color: rgba(44, 36, 27, 0.6);
+}
+
+.trend-svg {
+  width: 100%;
+  max-width: 420px;
+  height: 200px;
+}
+
+.trend-grid line {
+  stroke: rgba(44, 36, 27, 0.15);
+  stroke-width: 1;
+}
+
+.trend-line {
+  fill: none;
+  stroke-width: 2;
+}
+
+.trend-line.career { stroke: #E2A35A; }
+.trend-line.finance { stroke: #519A73; }
+.trend-line.relationship { stroke: #FF4E3E; }
+.trend-line.health { stroke: #7AAE8A; }
+.trend-line.growth { stroke: #C8893C; }
+
+.trend-legend {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.legend-item {
+  position: relative;
+  padding-left: 14px;
+  color: rgba(44, 36, 27, 0.7);
+}
+
+.legend-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: rgba(44, 36, 27, 0.4);
+}
+
+.legend-item.career::before { background: #E2A35A; }
+.legend-item.finance::before { background: #519A73; }
+.legend-item.relationship::before { background: #FF4E3E; }
+.legend-item.health::before { background: #7AAE8A; }
+.legend-item.growth::before { background: #C8893C; }
+
+.impact-list {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.impact-item {
+  padding: 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.impact-title {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.impact-meta {
+  font-size: 12px;
+  color: rgba(44, 36, 27, 0.5);
+  margin-bottom: 0.8rem;
+}
+
+.impact-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.impact-tag {
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.impact-tag.positive {
+  background: rgba(81, 154, 115, 0.2);
+  color: #2d6b50;
+}
+
+.impact-tag.negative {
+  background: rgba(255, 78, 62, 0.2);
+  color: #a83d32;
+}
+
+.impact-empty {
+  font-size: 14px;
+  color: rgba(44, 36, 27, 0.6);
 }
 
 .social-sidebar {
@@ -2342,6 +3394,18 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .main-content {
     padding: 1.5rem;
+  }
+
+  .view-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tree-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .tree-aside {
+    position: static;
   }
   
   .reflection-container {
