@@ -57,8 +57,8 @@ defineEmits(['navigate'])
 
 <style scoped>
 /* 组件内可复用的样式保持与 App.vue 视图一致 */
-.view-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; padding: 1rem 1.5rem; margin-bottom: 2rem; border-radius: 18px; background: rgba(255,255,255,0.6); }
-.view-step { display:flex; align-items:center; gap:0.8rem; padding:0.8rem 1rem; border-radius:14px; color: rgba(44,36,27,0.65); transition: var(--transition-smooth); cursor: pointer; }
-.view-step.active { background: rgba(226,163,90,0.2); color:#2C241B; box-shadow:0 6px 16px rgba(226,163,90,0.25); }
-.step-index { width:32px; height:32px; border-radius:12px; background: rgba(44,36,27,0.1); display:grid; place-items:center; font-size:12px; font-weight:600; }
+.view-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-md); padding: 1.25rem 1.5rem; margin-bottom: 2.5rem; border-radius: 20px; background: rgba(255,255,255,0.6); }
+.view-step { display:flex; align-items:center; gap:1rem; padding:1rem 1.25rem; border-radius:16px; color: rgba(44,36,27,0.75); transition: var(--transition-smooth); cursor: pointer; }
+.view-step.active { background: rgba(226,163,90,0.22); color:#2C241B; box-shadow:0 8px 20px rgba(226,163,90,0.22); }
+.step-index { width:36px; height:36px; border-radius:10px; background: rgba(44,36,27,0.08); display:grid; place-items:center; font-size:13px; font-weight:700; }
 </style>

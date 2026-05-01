@@ -98,7 +98,7 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   attributes: { type: Object, required: true },
   attributeHistory: { type: Array, required: true },
   impactHistory: { type: Array, required: true },
@@ -111,6 +111,22 @@ defineProps({
 })
 
 const emit = defineEmits(['show-radar','show-trend','show-impact','refresh-social','go-to-divergence','go-to-mentorship'])
+
+const getTrendPath = (key) => {
+  const records = props.attributeHistory || []
+  if (!records.length) return ''
+  const width = 400
+  const height = 180
+  const xStep = records.length > 1 ? width / (records.length - 1) : width
+  return records
+    .map((item, idx) => {
+      const value = Math.max(0, Math.min(100, Number(item?.[key] ?? 0)))
+      const x = 20 + idx * xStep
+      const y = 200 - (value / 100) * height
+      return `${idx === 0 ? 'M' : 'L'}${x},${y}`
+    })
+    .join(' ')
+}
 
 const getLevelClass = (value) => {
   if (value >= 80) return 'level-high'

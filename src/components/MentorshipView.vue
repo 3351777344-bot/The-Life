@@ -53,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 const props = defineProps([
   'chatMessages',
@@ -79,7 +79,7 @@ const onSend = () => {
   localInput.value = ''
 }
 
-const currentAIDisplay = props['currentAI角色'] || 'AI顾问'
+const currentAIDisplay = computed(() => props['currentAI角色'] || 'AI顾问')
 </script>
 
 <style scoped>

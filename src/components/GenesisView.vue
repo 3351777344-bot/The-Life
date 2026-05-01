@@ -161,10 +161,16 @@ watch(local, (nv) => {
 
 <style scoped>
 /* 组件可复用的样式依赖全局样式，局部微调 */
-.genesis-view { display:flex; justify-content:center; }
-.scroll-form { width: 100%; max-width: 920px; padding: 24px; }
-.form-section { margin-bottom: 18px; }
-.form-row { display:flex; gap:12px; margin-top:12px; }
+.genesis-view { display:flex; justify-content:center; padding: 8px; }
+.scroll-form { width: 100%; max-width: 960px; padding: 32px; }
+.form-section { margin-bottom: 24px; }
+.form-row { display:flex; gap:16px; margin-top:16px; }
 .form-group { flex:1; }
 .full-width { flex:1 1 100%; }
+
+.card-flip { margin: 12px 0; }
+.card-front, .card-back { padding: 18px; border-radius: 14px; }
+.card-back .option { display:flex; justify-content:space-between; gap:12px; padding: 10px; margin-bottom: 8px; border-radius: 10px; cursor: pointer; }
+.privacy-section { margin-top: 18px; }
+.privacy-actions { display:flex; gap: 12px; margin-top: 12px; flex-wrap:wrap; }
 </style>
