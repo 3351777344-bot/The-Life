@@ -126,18 +126,6 @@
         <button class="btn btn-secondary" @click="$emit('skip-scenario')">跳过使用默认模型</button>
       </div>
 
-      <div class="privacy-section">
-        <div class="seal">
-          <span>数据安全承诺</span>
-          <p>我们将对您的个人信息进行脱敏加密处理，严格遵守《个人信息保护法》</p>
-          <div class="privacy-actions">
-            <button class="btn btn-secondary small" @click="$emit('mark-edit')">修改信息</button>
-            <button class="btn btn-secondary small" @click="$emit('clear')">删除数据</button>
-            <button class="btn btn-secondary small" @click="$emit('backup')">本地备份</button>
-          </div>
-        </div>
-      </div>
-
       <button class="btn btn-primary" @click="$emit('start-destiny')">开始探索</button>
     </div>
   </div>
@@ -171,6 +159,4 @@ watch(local, (nv) => {
 .card-flip { margin: 12px 0; }
 .card-front, .card-back { padding: 18px; border-radius: 14px; }
 .card-back .option { display:flex; justify-content:space-between; gap:12px; padding: 10px; margin-bottom: 8px; border-radius: 10px; cursor: pointer; }
-.privacy-section { margin-top: 18px; }
-.privacy-actions { display:flex; gap: 12px; margin-top: 12px; flex-wrap:wrap; }
 </style>
