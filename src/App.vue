@@ -6,6 +6,16 @@
 
       <div v-if="statusMessage" class="status-toast">{{ statusMessage }}</div>
 
+      <InputDialog
+        :show="showInputDialog"
+        :title="inputDialog.title"
+        :message="inputDialog.message"
+        :placeholder="inputDialog.placeholder"
+        :defaultValue="inputDialog.defaultValue"
+        @confirm="handleInputConfirm"
+        @cancel="showInputDialog = false"
+      />
+
       <div v-if="currentView === 'genesis'">
         <GenesisView
           :userInfo="userInfo"
@@ -138,26 +148,37 @@ import DivergenceView from './components/DivergenceView.vue'
 import ReflectionView from './components/ReflectionView.vue'
 import MentorshipView from './components/MentorshipView.vue'
 import ConclusionView from './components/ConclusionView.vue'
+import InputDialog from './components/InputDialog.vue'
 import { generateRoute, getAIAdvice, generateScenario } from './services/ollamaService'
 
 // Minimal reactive state to keep components running
 const currentView = ref('genesis')
 const statusMessage = ref('')
 
+// Dialog state
+const showInputDialog = ref(false)
+const inputDialog = ref({
+  title: '输入信息',
+  message: '请输入',
+  placeholder: '',
+  defaultValue: '',
+  onConfirm: null
+})
+
 const userInfo = ref({
-  age: '',
-  education: '',
-  occupation: '',
-  city: '',
-  income: '',
-  family: '',
-  skills: '',
-  investment: '',
-  riskPreference: '',
-  delayGratification: '',
-  stressResistance: '',
-  decisionStyle: '',
-  lifeGoals: ''
+  age: '28',
+  education: 'bachelor',
+  occupation: '互联网产品经理',
+  city: '北京',
+  income: '15000',
+  family: 'single',
+  skills: '产品设计、数据分析、团队管理',
+  investment: '50000',
+  riskPreference: 'moderate',
+  delayGratification: 'high',
+  stressResistance: 'medium',
+  decisionStyle: 'analytical',
+  lifeGoals: '在5年内成为资深产品负责人，建立个人品牌；长期实现财务自由和生活灵活性'
 })
 const isCardFlipped = ref(false)
 const currentScenario = ref({
@@ -176,6 +197,87 @@ const treeNodes = ref([
     title: '当前人生节点',
     description: '从你的基础建模出发，展开关键选择。',
     depth: 1,
+    timeline: new Date().toISOString(),
+    children: ['branch-stay', 'branch-jump', 'branch-startup']
+  },
+  {
+    id: 'branch-stay',
+    parentId: 'current',
+    title: '在现公司继续深耕',
+    description: '稳定发展路线，逐步积累管理经验和行业影响力',
+    depth: 2,
+    timeline: new Date(Date.now() - 7*24*60*60*1000).toISOString(),
+    children: ['stay-promote', 'stay-transfer']
+  },
+  {
+    id: 'branch-jump',
+    parentId: 'current',
+    title: '跳槽到大厂或创业公司',
+    description: '追求更大平台或更大挑战，快速成长',
+    depth: 2,
+    timeline: new Date(Date.now() - 5*24*60*60*1000).toISOString(),
+    children: ['jump-tech', 'jump-startup']
+  },
+  {
+    id: 'branch-startup',
+    parentId: 'current',
+    title: '独立创业或自由职业',
+    description: '创造个人品牌，获得更高的上升潜力和收入',
+    depth: 2,
+    timeline: new Date(Date.now() - 3*24*60*60*1000).toISOString(),
+    children: ['startup-own', 'startup-invest']
+  },
+  {
+    id: 'stay-promote',
+    parentId: 'branch-stay',
+    title: '争取晋升为总监',
+    description: '专注于团队建设和战略规划',
+    depth: 3,
+    timeline: new Date().toISOString(),
+    children: []
+  },
+  {
+    id: 'stay-transfer',
+    parentId: 'branch-stay',
+    title: '转向策略或运营方向',
+    description: '拓宽职业边界，增强竞争力',
+    depth: 3,
+    timeline: new Date().toISOString(),
+    children: []
+  },
+  {
+    id: 'jump-tech',
+    parentId: 'branch-jump',
+    title: '加入科技大厂（BAT）',
+    description: '获得更优的薪资和平台机会',
+    depth: 3,
+    timeline: new Date().toISOString(),
+    children: []
+  },
+  {
+    id: 'jump-startup',
+    parentId: 'branch-jump',
+    title: '加入高成长创业公司',
+    description: '获得期权和更多话语权',
+    depth: 3,
+    timeline: new Date().toISOString(),
+    children: []
+  },
+  {
+    id: 'startup-own',
+    parentId: 'branch-startup',
+    title: '创办自己的公司',
+    description: '打造产品和团队',
+    depth: 3,
+    timeline: new Date().toISOString(),
+    children: []
+  },
+  {
+    id: 'startup-invest',
+    parentId: 'branch-startup',
+    title: '成为天使投资人/顾问',
+    description: '通过投资和咨询获得收益',
+    depth: 3,
     timeline: new Date().toISOString(),
     children: []
   }
@@ -197,7 +299,44 @@ const treeTransformStyle = computed(() => ({
 }))
 const isPanning = ref(false)
 
-const aiRoutes = ref([])
+const aiRoutes = ref([
+  {
+    id: 'route-growth',
+    title: '快速成长路线',
+    description: '在3-5年内成为行业资深专家，追求职业高度',
+    keyMilestones: ['6个月：确定方向', '1年：升任主管', '3年：升任总监', '5年：成为行业专家'],
+    requiredCapital: '50000-100000',
+    riskLevel: 'medium',
+    impactFactors: { career: 85, growth: 90, health: 60, relationship: 65, finance: 75 }
+  },
+  {
+    id: 'route-balanced',
+    title: '平衡发展路线',
+    description: '在保持工作稳定性的同时，发展副业和个人品牌',
+    keyMilestones: ['3个月：启动副业', '1年：月收入5000', '3年：客户突破100', '5年：年收入翻倍'],
+    requiredCapital: '20000-50000',
+    riskLevel: 'low',
+    impactFactors: { career: 70, growth: 75, health: 80, relationship: 85, finance: 65 }
+  },
+  {
+    id: 'route-entrepreneurship',
+    title: '创业突破路线',
+    description: '在2年内启动创业项目，争取融资和高估值',
+    keyMilestones: ['3个月：确定赛道', '6个月：产品上线', '1年：天使融资', '2年：A轮融资'],
+    requiredCapital: '200000-500000',
+    riskLevel: 'high',
+    impactFactors: { career: 100, growth: 100, health: 50, relationship: 60, finance: 90 }
+  },
+  {
+    id: 'route-freedom',
+    title: '自由职业路线',
+    description: '逐步建立个人品牌，成为行业顾问和讲师',
+    keyMilestones: ['6个月：积累1000粉丝', '1年：首次付费课程', '2年：月收入稳定', '3年：成为行业KOL'],
+    requiredCapital: '10000-30000',
+    riskLevel: 'medium',
+    impactFactors: { career: 80, growth: 85, health: 85, relationship: 75, finance: 70 }
+  }
+])
 const isGenerating = ref(false)
 const compareRoutes = ref([])
 const customRoutes = ref([])
@@ -206,9 +345,18 @@ const generatedMedia = ref([])
 const mode = ref('ai')
 const uploadedDocText = ref('')
 
-const attributes = ref({ career: 50, finance: 50, relationship: 50, health: 50, growth: 50 })
-const attributeHistory = ref([])
-const impactHistory = ref([])
+const attributes = ref({ career: 70, finance: 65, relationship: 75, health: 68, growth: 72 })
+const attributeHistory = ref([
+  { career: 60, finance: 55, relationship: 70, health: 65, growth: 60, time: new Date(Date.now() - 60*24*60*60*1000).toISOString() },
+  { career: 65, finance: 60, relationship: 72, health: 66, growth: 65, time: new Date(Date.now() - 30*24*60*60*1000).toISOString() },
+  { career: 68, finance: 63, relationship: 74, health: 67, growth: 70, time: new Date(Date.now() - 7*24*60*60*1000).toISOString() },
+  { career: 70, finance: 65, relationship: 75, health: 68, growth: 72, time: new Date().toISOString() }
+])
+const impactHistory = ref([
+  { id: 'impact_1', title: '完成大型项目交付', changes: { career: 5, growth: 10 }, time: new Date(Date.now() - 30*24*60*60*1000).toLocaleString() },
+  { id: 'impact_2', title: '获得年度奖金', changes: { finance: 8, relationship: 3 }, time: new Date(Date.now() - 15*24*60*60*1000).toLocaleString() },
+  { id: 'impact_3', title: '带队参加行业大会', changes: { career: 3, growth: 5 }, time: new Date(Date.now() - 7*24*60*60*1000).toLocaleString() }
+])
 const currentChart = ref('radar')
 const radarAxes = ref([
   { key: 'career', label: '职业' },
@@ -310,6 +458,14 @@ const getTrendPath = (key) => {
   return pairs.join(' ')
 }
 
+// Handle dialog input
+const handleInputConfirm = (value) => {
+  showInputDialog.value = false
+  if (inputDialog.value.onConfirm) {
+    inputDialog.value.onConfirm(value)
+  }
+}
+
 // simple heuristic regret computation
 const computeRegret = () => {
   if (!attributeHistory.value.length) {
@@ -379,6 +535,18 @@ const flipCard = () => isCardFlipped.value = !isCardFlipped.value
 const selectOption = (opt) => {
   userInfo.value.decisionStyle = opt
   isCardFlipped.value = false
+  
+  // Apply attribute changes based on selected style
+  const styleImpacts = {
+    '风险偏好型': { career: 10, finance: 5, growth: 15, health: -5 },
+    '风险规避型': { career: 0, finance: 5, health: 10, relationship: 5 },
+    '平衡型': { career: 5, finance: 8, relationship: 5, growth: 5, health: 5 }
+  }
+  
+  const impacts = styleImpacts[opt] || {}
+  recordImpact(`选择决策风格：${opt}`, impacts)
+  recordAttributeHistory()
+  
   setStatusMessage(`决策风格已记录：${opt}`)
 }
 const skipScenario = () => setStatusMessage('已跳过场景')
@@ -421,23 +589,47 @@ const addNode = () => {
   const parentId = selectedNode.value || 'current'
   const parent = findNode(parentId)
   if (!parent) return
-  const title = window.prompt('请输入节点标题：', `分支-${(parent.children?.length || 0) + 1}`)
-  if (!title) return
-  const desc = window.prompt('请输入节点描述：', '一次新的关键选择') || ''
-  const nodeId = `node_${Date.now()}`
-  const newNode = {
-    id: nodeId,
-    parentId,
-    title,
-    description: desc,
-    depth: (parent.depth || 1) + 1,
-    timeline: new Date().toISOString(),
-    children: []
+  
+  // Step 1: Get title
+  const defaultTitle = `分支-${(parent.children?.length || 0) + 1}`
+  inputDialog.value = {
+    title: '新增节点',
+    message: '请输入节点标题：',
+    placeholder: '例如：考虑创业',
+    defaultValue: defaultTitle,
+    onConfirm: (title) => {
+      if (!title) {
+        setStatusMessage('已取消')
+        return
+      }
+      // Step 2: Get description
+      inputDialog.value = {
+        title: '新增节点',
+        message: '请输入节点描述：',
+        placeholder: '例如：在现有工作基础上探索新方向',
+        defaultValue: '一次新的关键选择',
+        onConfirm: (desc) => {
+          const nodeId = `node_${Date.now()}`
+          const newNode = {
+            id: nodeId,
+            parentId,
+            title,
+            description: desc || '一次新的关键选择',
+            depth: (parent.depth || 1) + 1,
+            timeline: new Date().toISOString(),
+            children: []
+          }
+          parent.children = [...(parent.children || []), nodeId]
+          treeNodes.value.push(newNode)
+          selectedNode.value = nodeId
+          recordAttributeHistory()
+          setStatusMessage('已新增节点')
+        }
+      }
+      showInputDialog.value = true
+    }
   }
-  parent.children = [...(parent.children || []), nodeId]
-  treeNodes.value.push(newNode)
-  selectedNode.value = nodeId
-  setStatusMessage('已新增节点')
+  showInputDialog.value = true
 }
 const zoomIn = () => { treeScale.value = Math.min(2, +(treeScale.value + 0.1).toFixed(2)) }
 const zoomOut = () => { treeScale.value = Math.max(0.6, +(treeScale.value - 0.1).toFixed(2)) }
@@ -520,25 +712,36 @@ const deleteNode = (id) => {
 const extendBranch = (id) => {
   const parent = findNode(id)
   if (!parent) return
-  const count = Number(window.prompt('请输入要生成的分支数量（2-5）：', '2') || 2)
-  const branchCount = Number.isFinite(count) ? Math.max(2, Math.min(5, count)) : 2
-  const createdIds = []
-  for (let i = 1; i <= branchCount; i += 1) {
-    const nodeId = `node_${Date.now()}_${i}`
-    const node = {
-      id: nodeId,
-      parentId: id,
-      title: `${parent.title}-分支${i}`,
-      description: `基于 ${parent.title} 的分支方案 ${i}`,
-      depth: (parent.depth || 1) + 1,
-      timeline: new Date().toISOString(),
-      children: []
+  
+  inputDialog.value = {
+    title: '延伸分支',
+    message: '请输入要生成的分支数量（2-5）：',
+    placeholder: '输入数字',
+    defaultValue: '2',
+    onConfirm: (value) => {
+      const count = Number(value || 2)
+      const branchCount = Number.isFinite(count) ? Math.max(2, Math.min(5, count)) : 2
+      const createdIds = []
+      for (let i = 1; i <= branchCount; i += 1) {
+        const nodeId = `node_${Date.now()}_${i}`
+        const node = {
+          id: nodeId,
+          parentId: id,
+          title: `${parent.title}-分支${i}`,
+          description: `基于 ${parent.title} 的分支方案 ${i}`,
+          depth: (parent.depth || 1) + 1,
+          timeline: new Date().toISOString(),
+          children: []
+        }
+        treeNodes.value.push(node)
+        createdIds.push(nodeId)
+      }
+      parent.children = [...(parent.children || []), ...createdIds]
+      recordAttributeHistory()
+      setStatusMessage(`已延伸 ${branchCount} 个分支`)
     }
-    treeNodes.value.push(node)
-    createdIds.push(nodeId)
   }
-  parent.children = [...(parent.children || []), ...createdIds]
-  setStatusMessage(`已延伸 ${branchCount} 个分支`)
+  showInputDialog.value = true
 }
 
 // divergence implementations (lightweight but functional)
@@ -582,7 +785,24 @@ const selectRoute = (route) => {
   // persist chosen path
   savedPaths.value.unshift({ id: route.id || `path_${Date.now()}`, title: route.title, route })
   if (savedPaths.value.length > 12) savedPaths.value.pop()
-  applyAttributeChanges(route.title || '已选路线', route.impacts || {})
+  
+  // Apply route impacts to attributes
+  const impacts = route.impactFactors || {}
+  const changes = {}
+  Object.keys(impacts).forEach((k) => {
+    const targetValue = Number(impacts[k]) || 0
+    const before = attributes.value[k] || 0
+    const delta = Math.round(targetValue - before)
+    const after = Math.max(0, Math.min(100, before + delta))
+    attributes.value[k] = after
+    changes[k] = delta
+  })
+  
+  if (Object.keys(changes).length) {
+    recordImpact(`选择路线：${route.title}`, changes)
+    recordAttributeHistory()
+  }
+  
   setStatusMessage(`已选择路线：${route.title}`)
 }
 

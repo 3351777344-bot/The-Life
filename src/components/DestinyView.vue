@@ -137,13 +137,32 @@ const props = defineProps({
   isPanning: { type: Boolean, required: true }
 })
 
-defineEmits([])
+defineEmits([
+  'add-node',
+  'zoom-in',
+  'zoom-out',
+  'reset-view',
+  'export-tree',
+  'reset-tree',
+  'wheel',
+  'start-pan',
+  'pan-move',
+  'end-pan',
+  'touch-start',
+  'touch-move',
+  'select-node',
+  'edit-node',
+  'delete-node',
+  'extend-branch',
+  'go-to-genesis',
+  'go-to-divergence'
+])
 
 const NODE_WIDTH = 250
 const NODE_HEIGHT = 150
 const H_GAP = 300
-const V_GAP = 180
-const START_X = 140
+const V_GAP = 280
+const START_X = 200
 const START_Y = 110
 
 const formatNodeDate = (value) => {
@@ -155,9 +174,12 @@ const formatNodeDate = (value) => {
 
 const graphLayout = computed(() => {
   const nodes = Array.isArray(props.treeNodes) ? props.treeNodes : []
+  if (!nodes.length) return { nodes: [], edges: [], width: 1200, height: 720 }
+
   const nodeMap = new Map(nodes.map((node) => [node.id, node]))
   const childrenMap = new Map()
 
+  // 建立节点关系映射
   nodes.forEach((node) => {
     const children = Array.isArray(node.children)
       ? node.children.map((childId) => nodeMap.get(childId)).filter(Boolean)
@@ -165,54 +187,86 @@ const graphLayout = computed(() => {
     childrenMap.set(node.id, children)
   })
 
-  const roots = nodes.filter((node) => !node.parentId)
-  const positions = new Map()
+  const positions = new Map() // nodeId -> {x, y, depth}
   const edges = []
-  let leafIndex = 0
   let maxDepth = 0
+  let leafYStart = START_Y
+  let currentLeafY = START_Y
 
-  const placeNode = (node, depth) => {
+  // 第一步：按DFS顺序遍历，给所有叶子节点分配Y坐标
+  const assignLeafYs = (node) => {
     const children = childrenMap.get(node.id) || []
+    if (!children.length) {
+      // 叶子节点
+      positions.set(node.id, { y: currentLeafY, isLeaf: true })
+      currentLeafY += V_GAP
+    } else {
+      // 中间节点，递归处理子节点
+      children.forEach((child) => assignLeafYs(child))
+    }
+  }
+
+  // 第二步：递归计算所有节点的位置并生成边
+  const calculatePositions = (node, depth) => {
+    const children = childrenMap.get(node.id) || []
+    const x = START_X + depth * H_GAP
+
     maxDepth = Math.max(maxDepth, depth)
 
     if (!children.length) {
-      const y = START_Y + leafIndex * V_GAP
-      const x = START_X + depth * H_GAP
-      positions.set(node.id, { x, y, depth })
-      leafIndex += 1
-      return y
-    }
+      // 叶子节点已在第一步分配Y
+      const pos = positions.get(node.id)
+      positions.set(node.id, { ...pos, x, depth })
+    } else {
+      // 中间节点：计算所有叶子的平均Y
+      const leafYs = []
+      const collectLeafYs = (n) => {
+        const nChildren = childrenMap.get(n.id) || []
+        if (!nChildren.length) {
+          const np = positions.get(n.id)
+          if (np && np.isLeaf) leafYs.push(np.y)
+        } else {
+          nChildren.forEach((c) => collectLeafYs(c))
+        }
+      }
+      collectLeafYs(node)
 
-    const childYs = children.map((child) => placeNode(child, depth + 1))
-    const y = childYs.reduce((sum, value) => sum + value, 0) / childYs.length
-    const x = START_X + depth * H_GAP
-    positions.set(node.id, { x, y, depth })
+      const nodeY = leafYs.length ? leafYs.reduce((a, b) => a + b, 0) / leafYs.length : START_Y
+      positions.set(node.id, { x, y: nodeY, depth })
 
-    children.forEach((child) => {
-      const childPosition = positions.get(child.id)
-      if (!childPosition) return
-      const startX = x + NODE_WIDTH / 2
-      const startY = y
-      const endX = childPosition.x - NODE_WIDTH / 2
-      const endY = childPosition.y
-      const controlOffset = Math.max(84, (endX - startX) * 0.35)
-      edges.push({
-        from: node.id,
-        to: child.id,
-        depth: depth + 1,
-        targetX: endX,
-        targetY: endY,
-        path: `M ${startX} ${startY} C ${startX + controlOffset} ${startY}, ${endX - controlOffset} ${endY}, ${endX} ${endY}`
+      // 递归处理子节点
+      children.forEach((child) => calculatePositions(child, depth + 1))
+
+      // 添加到子节点的边
+      children.forEach((child) => {
+        const childPos = positions.get(child.id)
+        if (!childPos) return
+
+        const startX = x + NODE_WIDTH / 2
+        const startY = nodeY
+        const endX = childPos.x - NODE_WIDTH / 2
+        const endY = childPos.y
+        const controlOffset = Math.max(84, (endX - startX) * 0.35)
+
+        edges.push({
+          from: node.id,
+          to: child.id,
+          depth: depth + 1,
+          targetX: endX,
+          targetY: endY,
+          path: `M ${startX} ${startY} C ${startX + controlOffset} ${startY}, ${endX - controlOffset} ${endY}, ${endX} ${endY}`
+        })
       })
-    })
-
-    return y
+    }
   }
 
-  roots.forEach((root) => {
-    placeNode(root, 0)
-  })
+  const roots = nodes.filter((node) => !node.parentId)
 
+  // 执行两步计算
+  roots.forEach((root) => assignLeafYs(root))
+  roots.forEach((root) => calculatePositions(root, 0))
+
+  // 构建最终的节点列表
   const positionedNodes = nodes
     .map((node) => {
       const position = positions.get(node.id)
@@ -229,14 +283,18 @@ const graphLayout = computed(() => {
     })
     .filter(Boolean)
 
+  // 计算画布尺寸
   const maxX = START_X + maxDepth * H_GAP + NODE_WIDTH + 180
-  const maxY = Math.max(...positionedNodes.map((node) => node.y), START_Y) + 120
+  const allYs = positionedNodes.map((node) => node.y)
+  const minY = Math.min(...allYs, START_Y)
+  const maxY = Math.max(...allYs, START_Y) + 120
+  const totalHeight = maxY - minY
 
   return {
     nodes: positionedNodes,
     edges,
     width: Math.max(1200, maxX),
-    height: Math.max(720, maxY)
+    height: Math.max(720, totalHeight + 180)
   }
 })
 
