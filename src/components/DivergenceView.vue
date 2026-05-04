@@ -125,6 +125,7 @@
 
       <div class="divergence-controls">
         <button class="btn btn-secondary" @click="$emit('go-to-destiny')">返回</button>
+        <button v-if="compareRoutes.length >= 2" class="btn btn-primary" @click="$emit('go-to-comparison')">🔄 开启双窗对比</button>
         <button class="btn btn-primary" @click="$emit('go-to-reflection')">查看属性</button>
       </div>
     </div>
@@ -143,7 +144,7 @@ defineProps({
   mode: { type: String, required: true }
 })
 
-const emit = defineEmits(['generate-ai-routes','refine-route','replace-route','toggle-compare','select-route','add-custom-route','remove-custom-route','file-upload','generate-comic','generate-video','generate-poster','go-to-destiny','go-to-reflection','toggle-mode'])
+const emit = defineEmits(['generate-ai-routes','refine-route','replace-route','toggle-compare','select-route','add-custom-route','remove-custom-route','file-upload','generate-comic','generate-video','generate-poster','go-to-destiny','go-to-comparison','go-to-reflection','toggle-mode'])
 
 const localCustom = reactive({ title: '', description: '', feasibility: '', difficulty: '', benefit: '' })
 const localStyle = reactive('治愈')

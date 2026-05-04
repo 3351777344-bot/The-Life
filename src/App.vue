@@ -83,8 +83,18 @@
           @generate-video="generateVideo"
           @generate-poster="generatePoster"
           @go-to-destiny="goToDestinyTree"
+          @go-to-comparison="goToComparison"
           @go-to-reflection="goToReflection"
           @toggle-mode="toggleMode"
+        />
+      </div>
+
+      <div v-else-if="currentView === 'comparison'">
+        <ComparisonView
+          :routes="compareRoutes"
+          :attributes="attributes"
+          @go-back="() => currentView = 'divergence'"
+          @confirm-selection="goToReflection"
         />
       </div>
 
@@ -145,6 +155,7 @@ import ViewNav from './components/ViewNav.vue'
 import GenesisView from './components/GenesisView.vue'
 import DestinyView from './components/DestinyView.vue'
 import DivergenceView from './components/DivergenceView.vue'
+import ComparisonView from './components/ComparisonView.vue'
 import ReflectionView from './components/ReflectionView.vue'
 import MentorshipView from './components/MentorshipView.vue'
 import ConclusionView from './components/ConclusionView.vue'
@@ -519,6 +530,7 @@ const applyAttributeChanges = (title, impacts = {}) => {
 // Navigation
 const goToDestinyTree = () => currentView.value = 'destiny'
 const goToDivergence = () => currentView.value = 'divergence'
+const goToComparison = () => currentView.value = 'comparison'
 const goToReflection = () => currentView.value = 'reflection'
 const goToMentorship = () => currentView.value = 'mentorship'
 const goToConclusion = () => currentView.value = 'conclusion'

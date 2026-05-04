@@ -56,22 +56,14 @@
                   @click.stop="$emit('select-node', node.id)"
                 >
                   <div class="graph-node-glow"></div>
+                  <button 
+                    class="node-delete-btn"
+                    @click.stop="$emit('delete-node', node.id)"
+                    :title="`删除 ${node.title}`"
+                  >×</button>
                   <div class="graph-node-frame">
-                    <div class="graph-node-topline">
-                      <span class="node-badge">L{{ node.depth }}</span>
-                      <span class="node-date">{{ formatNodeDate(node.timeline) }}</span>
-                    </div>
                     <h3>{{ node.title }}</h3>
-                    <p>{{ node.description }}</p>
-                    <div class="graph-node-meta">
-                      <span>{{ node.childrenCount }} 个后续分支</span>
-                      <span v-if="node.parentTitle">来自 {{ node.parentTitle }}</span>
-                    </div>
-                    <div class="graph-node-actions">
-                      <button class="btn btn-secondary small" @click.stop="$emit('edit-node', node.id)">编辑</button>
-                      <button class="btn btn-secondary small" @click.stop="$emit('delete-node', node.id)">删除</button>
-                      <button class="btn btn-secondary small" @click.stop="$emit('extend-branch', node.id)">延伸分支</button>
-                    </div>
+                    <span v-if="node.childrenCount > 0" class="node-branch-count">{{ node.childrenCount }}</span>
                   </div>
                 </div>
               </div>
@@ -86,7 +78,7 @@
         </div>
       </div>
 
-      <aside class="tree-aside glass-container">
+      <aside class="tree-aside">
         <div class="tree-aside-header">
           <h2>节点面板</h2>
           <span class="badge">已选</span>
@@ -112,6 +104,11 @@
         <div class="node-quick">
           <button class="btn btn-secondary small" @click="$emit('add-node')">快速添加</button>
           <button class="btn btn-secondary small" @click="$emit('extend-branch', selectedNode)">快速延伸</button>
+          <button 
+            class="btn btn-secondary small btn-danger" 
+            @click="$emit('delete-node', selectedNode)"
+            :disabled="!selectedNode || selectedNode === 'root'"
+          >删除</button>
         </div>
         <div class="tree-hints">
           <h4>查看提示</h4>
@@ -158,12 +155,12 @@ defineEmits([
   'go-to-divergence'
 ])
 
-const NODE_WIDTH = 250
-const NODE_HEIGHT = 150
-const H_GAP = 300
-const V_GAP = 280
-const START_X = 200
-const START_Y = 110
+const NODE_WIDTH = 110
+const NODE_HEIGHT = 60
+const H_GAP = 130
+const V_GAP = 100
+const START_X = 80
+const START_Y = 50
 
 const formatNodeDate = (value) => {
   if (!value) return '暂无时间'
@@ -246,7 +243,7 @@ const graphLayout = computed(() => {
         const startY = nodeY
         const endX = childPos.x - NODE_WIDTH / 2
         const endY = childPos.y
-        const controlOffset = Math.max(84, (endX - startX) * 0.35)
+        const controlOffset = Math.max(60, (endX - startX) * 0.35)
 
         edges.push({
           from: node.id,
@@ -284,17 +281,17 @@ const graphLayout = computed(() => {
     .filter(Boolean)
 
   // 计算画布尺寸
-  const maxX = START_X + maxDepth * H_GAP + NODE_WIDTH + 180
+  const maxX = START_X + maxDepth * H_GAP + NODE_WIDTH + 100
   const allYs = positionedNodes.map((node) => node.y)
   const minY = Math.min(...allYs, START_Y)
-  const maxY = Math.max(...allYs, START_Y) + 120
+  const maxY = Math.max(...allYs, START_Y) + 80
   const totalHeight = maxY - minY
 
   return {
     nodes: positionedNodes,
     edges,
-    width: Math.max(1200, maxX),
-    height: Math.max(720, totalHeight + 180)
+    width: Math.max(800, maxX),
+    height: Math.max(600, totalHeight + 140)
   }
 })
 
@@ -308,50 +305,64 @@ const graphCanvasStyle = computed(() => ({
 /* 保持与 App.vue 中样式一致，局部调整 */
 .destiny-view {
   width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .tree-layout {
   display: flex;
-  gap: 20px;
-  align-items: flex-start;
+  gap: 16px;
+  align-items: stretch;
+  height: 100vh;
 }
 
 .tree-container {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .tree-header {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
+  padding: 8px 0 12px 0;
+  border-bottom: 1px solid var(--glass-border);
+  flex: 0 0 auto;
+}
+
+.tree-header .title {
+  font-size: 1.2rem;
+  margin: 0 0 4px 0;
+  color: var(--color-accent-gold);
+  font-weight: 700;
 }
 
 .tree-header p {
   margin-top: 6px;
-  color: rgba(44, 36, 27, 0.72);
+  color: var(--color-text-muted);
 }
 
 .tree-actions {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   flex-wrap: wrap;
-  margin-top: 12px;
+  margin-top: 6px;
 }
 
 .tree-canvas {
   position: relative;
   overflow: hidden;
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at top left, rgba(226, 163, 90, 0.14), transparent 34%),
-    radial-gradient(circle at 85% 20%, rgba(81, 154, 115, 0.1), transparent 26%),
-    linear-gradient(180deg, rgba(250, 246, 239, 0.96), rgba(244, 236, 226, 0.92));
-  border: 1px solid rgba(140, 115, 88, 0.12);
-  box-shadow: 0 20px 50px rgba(108, 85, 62, 0.08);
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .tree-viewport {
-  min-height: 720px;
-  padding: 20px 14px 28px;
+  min-height: auto;
+  flex: 1;
+  padding: 8px 4px 12px 4px;
   cursor: grab;
   overflow: hidden;
 }
@@ -368,7 +379,8 @@ const graphCanvasStyle = computed(() => ({
   position: relative;
   min-width: 100%;
   min-height: 100%;
-  border-radius: 18px;
+  border-radius: 0;
+  background: transparent;
 }
 
 .graph-links {
@@ -382,7 +394,7 @@ const graphCanvasStyle = computed(() => ({
 .graph-edge {
   fill: none;
   stroke: rgba(98, 79, 61, 0.18);
-  stroke-width: 2.2;
+  stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
 
@@ -398,13 +410,13 @@ const graphCanvasStyle = computed(() => ({
 }
 
 .graph-edge-dot {
-  fill: rgba(226, 163, 90, 0.72);
-  filter: drop-shadow(0 0 6px rgba(226, 163, 90, 0.26));
+  fill: var(--color-accent-gold);
+  filter: drop-shadow(0 0 10px rgba(212, 165, 116, 0.5));
 }
 
 .graph-node {
   position: absolute;
-  width: 250px;
+  width: 100px;
   transform: translate(-50%, -50%);
   cursor: pointer;
 }
@@ -420,26 +432,62 @@ const graphCanvasStyle = computed(() => ({
   pointer-events: none;
 }
 
+.node-delete-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-status-danger);
+  border: 2px solid rgba(53, 42, 32, 0.8);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 5;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+}
+
+.graph-node:hover .node-delete-btn {
+  opacity: 1;
+  transform: scale(1);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.5);
+}
+
+.node-delete-btn:hover {
+  background: #ff4444;
+  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.7);
+}
+
 .graph-node-frame {
   position: relative;
-  padding: 18px 18px 16px;
-  border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255, 253, 249, 0.96), rgba(243, 233, 220, 0.92));
-  border: 1px solid rgba(116, 92, 70, 0.12);
-  box-shadow:
-    0 18px 40px rgba(92, 72, 52, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(10px);
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(212, 165, 116, 0.15) 0%, rgba(53, 42, 32, 0.6) 100%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 215, 140, 0.1);
+  backdrop-filter: blur(20px);
   transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+  min-height: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .graph-node:hover .graph-node-frame {
-  transform: translateY(-4px) scale(1.01);
-  border-color: rgba(226, 163, 90, 0.24);
-  box-shadow:
-    0 22px 46px rgba(92, 72, 52, 0.18),
-    0 0 0 1px rgba(226, 163, 90, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.84);
+  transform: translateY(-4px) scale(1.08);
+  border-color: var(--glass-border-hover);
+  box-shadow: 0 10px 28px rgba(212, 165, 116, 0.3), var(--glow-gold), inset 0 1px 0 rgba(255, 215, 140, 0.2);
 }
 
 .graph-node:hover .graph-node-glow,
@@ -448,69 +496,67 @@ const graphCanvasStyle = computed(() => ({
 }
 
 .graph-node.active .graph-node-frame {
-  border-color: rgba(226, 163, 90, 0.42);
-  box-shadow:
-    0 24px 50px rgba(92, 72, 52, 0.2),
-    0 0 0 2px rgba(226, 163, 90, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  border-color: var(--color-accent-gold-bright);
+  background: linear-gradient(135deg, rgba(212, 165, 116, 0.3) 0%, rgba(53, 42, 32, 0.8) 100%);
+  box-shadow: 0 16px 40px rgba(212, 165, 116, 0.5), 0 0 30px rgba(212, 165, 116, 0.3), inset 0 1px 0 rgba(255, 215, 140, 0.2);
+  transform: translateY(-8px) scale(1.08);
 }
 
 .graph-node.root .graph-node-frame {
-  background: linear-gradient(180deg, rgba(255, 250, 242, 0.98), rgba(239, 225, 209, 0.94));
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(53, 42, 32, 0.7) 100%);
+  border-width: 2px;
+  border-color: var(--color-accent-gold);
 }
 
-.graph-node.depth-2 .graph-node-frame {
-  background: linear-gradient(180deg, rgba(251, 247, 241, 0.98), rgba(241, 229, 218, 0.92));
-}
-
+.graph-node.depth-2 .graph-node-frame,
 .graph-node.depth-3 .graph-node-frame,
 .graph-node.depth-4 .graph-node-frame,
 .graph-node.depth-5 .graph-node-frame,
 .graph-node.depth-6 .graph-node-frame {
-  background: linear-gradient(180deg, rgba(248, 244, 238, 0.98), rgba(239, 231, 223, 0.94));
+  background: linear-gradient(135deg, rgba(212, 165, 116, 0.12) 0%, rgba(53, 42, 32, 0.55) 100%);
 }
 
 .graph-node-topline {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
-  font-size: 12px;
-  color: rgba(44, 36, 27, 0.6);
+  display: none;
 }
 
 .node-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: rgba(226, 163, 90, 0.14);
-  color: rgba(92, 72, 52, 0.9);
-  font-weight: 600;
+  display: none;
 }
 
 .node-date {
-  white-space: nowrap;
+  display: none;
 }
 
 .graph-node h3 {
-  font-size: 1.1rem;
-  margin-bottom: 8px;
+  font-size: 0.7rem;
+  margin: 0;
+  color: var(--color-accent-gold-bright);
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  line-height: 1;
+  text-align: center;
+  word-break: break-word;
+}
+
+.node-branch-count {
+  display: block;
+  font-size: 9px;
+  color: var(--color-accent-gold);
+  margin-top: 1px;
+  font-weight: 600;
 }
 
 .graph-node p {
-  color: rgba(44, 36, 27, 0.78);
-  font-size: 0.93rem;
-  min-height: 2.7em;
+  display: none;
 }
 
 .graph-node-meta {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  font-size: 12px;
-  color: rgba(44, 36, 27, 0.66);
+  display: none;
+}
+
+.graph-node-actions {
+  display: none;
 }
 
 .graph-node-actions {
@@ -521,14 +567,170 @@ const graphCanvasStyle = computed(() => ({
 }
 
 .tree-scroll-hint {
-  margin-top: 10px;
-  color: rgba(44, 36, 27, 0.68);
-  font-size: 13px;
+  margin: 0 4px 8px 4px;
+  padding: 8px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  border-top: 1px solid var(--glass-border);
+  text-align: center;
+}
+
+.tree-controls {
+  display: flex;
+  gap: 8px;
+  padding: 8px 4px;
+  border-top: 1px solid var(--glass-border);
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
+
+.tree-controls .btn {
+  flex: 0 1 auto;
+}
+
+.tree-aside-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--glass-border);
+  position: sticky;
+  top: 0;
+  background: rgba(53, 42, 32, 0.95);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+.tree-aside-header h2 {
+  font-size: 1rem;
+  margin: 0;
+  color: var(--color-accent-gold);
+}
+
+.badge {
+  background: var(--color-status-info);
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.node-preview {
+  margin: 16px 16px 16px 16px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(53, 42, 32, 0.4);
+  border: 1px solid var(--glass-border);
+}
+
+.node-preview strong {
+  display: block;
+  color: var(--color-accent-gold-bright);
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.node-preview p {
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  margin: 0;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.node-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin: 0 16px 14px 16px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(212, 165, 116, 0.08);
+  border: 1px solid var(--glass-border);
+}
+
+.stat-card span {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-bottom: 3px;
+}
+
+.stat-card strong {
+  font-size: 1rem;
+  color: var(--color-accent-gold-bright);
+  font-weight: 700;
+}
+
+.node-quick {
+  display: flex;
+  gap: 6px;
+  margin: 0 16px 12px 16px;
+}
+
+.node-quick .btn {
+  flex: 1;
+  font-size: 0.8rem;
+  padding: 5px 6px;
+}
+
+.node-quick .btn-danger {
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.3) 0%, rgba(220, 53, 69, 0.2) 100%);
+  border-color: rgba(255, 107, 107, 0.5);
+  color: var(--color-status-danger);
+}
+
+.node-quick .btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.5) 0%, rgba(220, 53, 69, 0.4) 100%);
+  border-color: var(--color-status-danger);
+  box-shadow: 0 0 12px rgba(255, 107, 107, 0.4);
+}
+
+.node-quick .btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tree-hints {
+  margin: 0 16px 16px 16px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(53, 42, 32, 0.4);
+  border: 1px solid var(--glass-border);
+}
+
+.tree-hints h4 {
+  font-size: 0.85rem;
+  color: var(--color-accent-gold);
+  margin: 0 0 6px 0;
+  font-weight: 600;
+}
+
+.tree-hints p {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 3px 0;
+  line-height: 1.3;
 }
 
 .tree-aside {
   width: 320px;
+  height: 100%;
+  overflow-y: auto;
+  padding: 0;
   flex: 0 0 320px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  margin-top: 0;
 }
 
 @media (max-width: 1024px) {
@@ -539,24 +741,25 @@ const graphCanvasStyle = computed(() => ({
   .tree-aside {
     width: 100%;
     flex: 1 1 auto;
+    height: 400px;
   }
 
   .graph-node {
-    width: 232px;
+    width: 90px;
   }
 }
 
 @media (max-width: 768px) {
   .tree-viewport {
-    min-height: 620px;
+    min-height: 600px;
   }
 
   .graph-node {
-    width: 220px;
+    width: 80px;
   }
 
   .graph-node-actions {
-    gap: 6px;
+    gap: 4px;
   }
 }
 </style>
