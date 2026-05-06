@@ -9,7 +9,7 @@
         <p>{{ message }}</p>
         <input 
           v-model="inputValue" 
-          type="number" 
+          :type="inputType" 
           class="dialog-input" 
           :placeholder="placeholder"
           @keydown.enter="confirm"
@@ -32,7 +32,8 @@ const props = defineProps({
   title: { type: String, default: '输入信息' },
   message: { type: String, required: true },
   placeholder: { type: String, default: '' },
-  defaultValue: { type: String, default: '' }
+  defaultValue: { type: String, default: '' },
+  inputType: { type: String, default: 'text' }
 })
 
 const emit = defineEmits(['confirm', 'cancel'])

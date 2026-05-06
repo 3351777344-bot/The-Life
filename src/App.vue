@@ -12,6 +12,7 @@
         :message="inputDialog.message"
         :placeholder="inputDialog.placeholder"
         :defaultValue="inputDialog.defaultValue"
+        :inputType="inputDialog.inputType || 'text'"
         @confirm="handleInputConfirm"
         @cancel="showInputDialog = false"
       />
@@ -609,6 +610,7 @@ const addNode = () => {
     message: '请输入节点标题：',
     placeholder: '例如：考虑创业',
     defaultValue: defaultTitle,
+    inputType: 'text',
     onConfirm: (title) => {
       if (!title) {
         setStatusMessage('已取消')
@@ -620,6 +622,7 @@ const addNode = () => {
         message: '请输入节点描述：',
         placeholder: '例如：在现有工作基础上探索新方向',
         defaultValue: '一次新的关键选择',
+        inputType: 'text',
         onConfirm: (desc) => {
           const nodeId = `node_${Date.now()}`
           const newNode = {
@@ -730,6 +733,7 @@ const extendBranch = (id) => {
     message: '请输入要生成的分支数量（2-5）：',
     placeholder: '输入数字',
     defaultValue: '2',
+    inputType: 'number',
     onConfirm: (value) => {
       const count = Number(value || 2)
       const branchCount = Number.isFinite(count) ? Math.max(2, Math.min(5, count)) : 2

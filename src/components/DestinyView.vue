@@ -1,12 +1,31 @@
 <template>
   <div class="destiny-view">
+    <canvas ref="dnaCanvas" class="dna-helix-bg"></canvas>
+    <div class="dna-particles"></div>
     <div class="tree-layout">
       <div class="tree-container">
         <div class="tree-header">
-          <h1 class="title">命轨</h1>
-          <p>以图谱方式展开你的命轨分支</p>
+          <div class="header-content">
+            <div class="header-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="url(#headerGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs>
+                  <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffd700"/>
+                    <stop offset="50%" stop-color="#d4a574"/>
+                    <stop offset="100%" stop-color="#cd7f32"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <div class="header-text">
+              <h1 class="title">命轨</h1>
+              <p>以图谱方式展开你的命轨分支</p>
+            </div>
+          </div>
           <div class="tree-actions">
-            <button class="btn btn-secondary small" @click="$emit('add-node')">添加节点</button>
+            <button class="btn btn-secondary small" @click="$emit('add-node')">
+              <span class="btn-icon">+</span>添加节点</button>
             <button class="btn btn-secondary small" @click="$emit('zoom-in')">放大</button>
             <button class="btn btn-secondary small" @click="$emit('zoom-out')">缩小</button>
             <button class="btn btn-secondary small" @click="$emit('reset-view')">重置视图</button>
@@ -30,19 +49,37 @@
             <div class="tree-transform" :style="treeTransformStyle">
               <div class="tree-graph" :style="graphCanvasStyle">
                 <svg class="graph-links" :viewBox="`0 0 ${graphLayout.width} ${graphLayout.height}`" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="edgeGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#d4a574"/>
+                      <stop offset="100%" stop-color="#e8c49a"/>
+                    </linearGradient>
+                    <linearGradient id="edgeGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#cd7f32"/>
+                      <stop offset="100%" stop-color="#d4a574"/>
+                    </linearGradient>
+                    <filter id="glow">
+                      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                      <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                  </defs>
                   <path
                     v-for="edge in graphLayout.edges"
                     :key="`${edge.from}-${edge.to}`"
                     :d="edge.path"
                     class="graph-edge"
                     :class="`depth-${Math.min(edge.depth, 6)}`"
+                    filter="url(#glow)"
                   />
                   <circle
                     v-for="edge in graphLayout.edges"
                     :key="`${edge.from}-${edge.to}-dot`"
                     :cx="edge.targetX"
                     :cy="edge.targetY"
-                    r="3.5"
+                    r="4"
                     class="graph-edge-dot"
                   />
                 </svg>
@@ -55,15 +92,21 @@
                   :style="{ left: `${node.x}px`, top: `${node.y}px` }"
                   @click.stop="$emit('select-node', node.id)"
                 >
+                  <div class="crystal-shard crystal-shard-1"></div>
+                  <div class="crystal-shard crystal-shard-2"></div>
+                  <div class="crystal-shard crystal-shard-3"></div>
                   <div class="graph-node-glow"></div>
+                  <div class="node-hologram-ring"></div>
                   <button 
                     class="node-delete-btn"
                     @click.stop="$emit('delete-node', node.id)"
                     :title="`删除 ${node.title}`"
                   >×</button>
                   <div class="graph-node-frame">
+                    <div class="crystal-inner"></div>
                     <h3>{{ node.title }}</h3>
                     <span v-if="node.childrenCount > 0" class="node-branch-count">{{ node.childrenCount }}</span>
+                    <div class="node-scan-line"></div>
                   </div>
                 </div>
               </div>
@@ -121,7 +164,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import * as THREE from 'three'
 
 const props = defineProps({
   treeNodes: { type: Array, required: true },
@@ -155,6 +199,10 @@ defineEmits([
   'go-to-divergence'
 ])
 
+const dnaCanvas = ref(null)
+let dnaAnimationId = null
+let scene, camera, renderer, helixGroup, particleSystem
+
 const NODE_WIDTH = 110
 const NODE_HEIGHT = 60
 const H_GAP = 130
@@ -168,6 +216,181 @@ const formatNodeDate = (value) => {
   if (Number.isNaN(date.getTime())) return '暂无时间'
   return date.toLocaleDateString()
 }
+
+const initDNAHelix = () => {
+  if (!dnaCanvas.value) return
+  
+  try {
+    const canvas = dnaCanvas.value
+    const width = window.innerWidth
+    const height = window.innerHeight
+    
+    canvas.width = width
+    canvas.height = height
+    
+    scene = new THREE.Scene()
+    camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
+    camera.position.z = 50
+    
+    renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
+    renderer.setSize(width, height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    
+    helixGroup = new THREE.Group()
+    scene.add(helixGroup)
+    
+    const strandMaterial1 = new THREE.MeshBasicMaterial({
+      color: 0xffd700,
+      transparent: true,
+      opacity: 0.6
+    })
+    
+    const strandMaterial2 = new THREE.MeshBasicMaterial({
+      color: 0xd4a574,
+      transparent: true,
+      opacity: 0.6
+    })
+    
+    const basePairMaterial = new THREE.MeshBasicMaterial({
+      color: 0xcd7f32,
+      transparent: true,
+      opacity: 0.3
+    })
+    
+    const helixHeight = 200
+    const helixRadius = 15
+    const turns = 4
+    const pointsPerTurn = 20
+    
+    for (let i = 0; i < turns * pointsPerTurn; i++) {
+      const t = i / (turns * pointsPerTurn)
+      const angle = t * Math.PI * 2 * turns
+      const y = (t - 0.5) * helixHeight
+      
+      const x1 = Math.cos(angle) * helixRadius
+      const z1 = Math.sin(angle) * helixRadius
+      const sphere1 = new THREE.Mesh(
+        new THREE.SphereGeometry(1.5, 16, 16),
+        strandMaterial1
+      )
+      sphere1.position.set(x1, y, z1)
+      helixGroup.add(sphere1)
+      
+      const x2 = Math.cos(angle + Math.PI) * helixRadius
+      const z2 = Math.sin(angle + Math.PI) * helixRadius
+      const sphere2 = new THREE.Mesh(
+        new THREE.SphereGeometry(1.5, 16, 16),
+        strandMaterial2
+      )
+      sphere2.position.set(x2, y, z2)
+      helixGroup.add(sphere2)
+      
+      if (i % 3 === 0) {
+        const connectorGeometry = new THREE.CylinderGeometry(0.3, 0.3, helixRadius * 2, 8)
+        const connector = new THREE.Mesh(connectorGeometry, basePairMaterial)
+        connector.position.set(0, y, 0)
+        connector.rotation.z = Math.PI / 2
+        connector.rotation.y = -angle
+        helixGroup.add(connector)
+      }
+    }
+    
+    const particleCount = 500
+  const particleGeometry = new THREE.BufferGeometry()
+  const positions = new Float32Array(particleCount * 3)
+  const colors = new Float32Array(particleCount * 3)
+  
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 200
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 200
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 200
+    
+    const colorChoice = Math.random()
+    if (colorChoice < 0.33) {
+      colors[i * 3] = 1.0
+      colors[i * 3 + 1] = 0.84
+      colors[i * 3 + 2] = 0.0
+    } else if (colorChoice < 0.66) {
+      colors[i * 3] = 0.83
+      colors[i * 3 + 1] = 0.65
+      colors[i * 3 + 2] = 0.45
+    } else {
+      colors[i * 3] = 0.8
+      colors[i * 3 + 1] = 0.5
+      colors[i * 3 + 2] = 0.2
+    }
+  }
+  
+  particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+  particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+  
+  const particleMaterial = new THREE.PointsMaterial({
+    size: 1.5,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.6,
+    blending: THREE.AdditiveBlending
+  })
+  
+  particleSystem = new THREE.Points(particleGeometry, particleMaterial)
+    scene.add(particleSystem)
+    
+    animateDNA()
+  } catch (error) {
+    console.warn('DNA helix initialization failed:', error)
+    if (renderer) {
+      renderer.dispose()
+    }
+  }
+}
+
+const animateDNA = () => {
+  dnaAnimationId = requestAnimationFrame(animateDNA)
+  
+  if (helixGroup) {
+    helixGroup.rotation.y += 0.002
+    helixGroup.rotation.x = Math.sin(Date.now() * 0.0003) * 0.1
+  }
+  
+  if (particleSystem) {
+    particleSystem.rotation.y += 0.0005
+    const positions = particleSystem.geometry.attributes.position.array
+    for (let i = 0; i < positions.length; i += 3) {
+      positions[i + 1] += Math.sin(Date.now() * 0.001 + i) * 0.02
+    }
+    particleSystem.geometry.attributes.position.needsUpdate = true
+  }
+  
+  renderer.render(scene, camera)
+}
+
+const handleResize = () => {
+  if (!dnaCanvas.value || !renderer || !camera) return
+  
+  const width = window.innerWidth
+  const height = window.innerHeight
+  
+  camera.aspect = width / height
+  camera.updateProjectionMatrix()
+  renderer.setSize(width, height)
+}
+
+onMounted(() => {
+  if (dnaCanvas.value) {
+    initDNAHelix()
+    window.addEventListener('resize', handleResize)
+  }
+})
+
+onUnmounted(() => {
+  if (dnaAnimationId) {
+    cancelAnimationFrame(dnaAnimationId)
+  }
+  window.removeEventListener('resize', handleResize)
+  if (renderer) {
+    renderer.dispose()
+  }
+})
 
 const graphLayout = computed(() => {
   const nodes = Array.isArray(props.treeNodes) ? props.treeNodes : []
@@ -302,12 +525,36 @@ const graphCanvasStyle = computed(() => ({
 </script>
 
 <style scoped>
-/* 保持与 App.vue 中样式一致，局部调整 */
+.dna-helix-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+.dna-particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background: 
+    radial-gradient(ellipse at 20% 30%, rgba(255, 230, 150, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(255, 215, 100, 0.1) 0%, transparent 50%);
+}
+
 .destiny-view {
   width: 100%;
   height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .tree-layout {
@@ -315,6 +562,8 @@ const graphCanvasStyle = computed(() => ({
   gap: 16px;
   align-items: stretch;
   height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
 .tree-container {
@@ -326,37 +575,99 @@ const graphCanvasStyle = computed(() => ({
 
 .tree-header {
   margin-bottom: 8px;
-  padding: 8px 0 12px 0;
-  border-bottom: 1px solid var(--glass-border);
+  padding: 12px 0 16px 0;
+  border-bottom: 1px solid rgba(255, 215, 140, 0.4);
   flex: 0 0 auto;
+  background: linear-gradient(90deg, rgba(255, 230, 150, 0.1) 0%, rgba(255, 248, 235, 0.05) 50%, rgba(255, 215, 100, 0.08) 100%);
+  border-radius: 12px 12px 0 0;
+  backdrop-filter: blur(10px);
 }
 
-.tree-header .title {
-  font-size: 1.2rem;
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.header-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 230, 150, 0.25) 0%, rgba(255, 215, 100, 0.15) 100%);
+  border: 1px solid rgba(255, 215, 140, 0.5);
+  border-radius: 12px;
+  box-shadow: 0 0 30px rgba(255, 215, 100, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.header-text .title {
+  font-size: 1.4rem;
   margin: 0 0 4px 0;
   color: var(--color-accent-gold);
   font-weight: 700;
+  text-shadow: 0 0 30px rgba(255, 230, 150, 0.7);
+  background: linear-gradient(90deg, #ffe066, #ffd700, #ffe066);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .tree-header p {
-  margin-top: 6px;
+  margin: 6px 0 0 60px;
   color: var(--color-text-muted);
+  font-size: 0.85rem;
 }
 
 .tree-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-top: 6px;
+  margin-top: 10px;
+}
+
+.tree-actions .btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.tree-actions .btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.tree-actions .btn:hover::before {
+  left: 100%;
+}
+
+.btn-icon {
+  font-weight: 700;
+  margin-right: 4px;
 }
 
 .tree-canvas {
   position: relative;
   overflow: hidden;
   flex: 1;
-  background: transparent;
-  border: none;
-  border-radius: 0;
+  background: 
+    radial-gradient(ellipse at 50% 50%, rgba(212, 165, 116, 0.03) 0%, transparent 70%);
+  border: 1px solid rgba(212, 165, 116, 0.1);
+  border-radius: 8px;
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.3);
 }
 
 .tree-viewport {
@@ -393,25 +704,29 @@ const graphCanvasStyle = computed(() => ({
 
 .graph-edge {
   fill: none;
-  stroke: rgba(98, 79, 61, 0.18);
-  stroke-width: 1.5;
+  stroke: url(#edgeGrad1);
+  stroke-width: 2;
+  stroke-linecap: round;
   vector-effect: non-scaling-stroke;
+  opacity: 0.7;
 }
 
 .graph-edge.depth-2 {
-  stroke: rgba(98, 79, 61, 0.24);
+  stroke: url(#edgeGrad2);
+  opacity: 0.6;
 }
 
 .graph-edge.depth-3,
 .graph-edge.depth-4,
 .graph-edge.depth-5,
 .graph-edge.depth-6 {
-  stroke: rgba(98, 79, 61, 0.16);
+  stroke: rgba(205, 127, 50, 0.5);
+  opacity: 0.5;
 }
 
 .graph-edge-dot {
-  fill: var(--color-accent-gold);
-  filter: drop-shadow(0 0 10px rgba(212, 165, 116, 0.5));
+  fill: #ffd700;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
 }
 
 .graph-node {
@@ -421,28 +736,91 @@ const graphCanvasStyle = computed(() => ({
   cursor: pointer;
 }
 
+.crystal-shard {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.crystal-shard-1 {
+  top: -5px;
+  left: 10%;
+  width: 30%;
+  height: 8px;
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.4), transparent);
+  transform: rotate(-15deg);
+  filter: blur(2px);
+}
+
+.crystal-shard-2 {
+  bottom: -3px;
+  right: 15%;
+  width: 25%;
+  height: 6px;
+  background: linear-gradient(90deg, transparent, rgba(212, 165, 116, 0.5), transparent);
+  transform: rotate(10deg);
+  filter: blur(1px);
+}
+
+.crystal-shard-3 {
+  top: 50%;
+  left: -8px;
+  width: 6px;
+  height: 40%;
+  background: linear-gradient(180deg, rgba(255, 215, 0, 0.3), transparent);
+  transform: translateY(-50%);
+  filter: blur(2px);
+}
+
 .graph-node-glow {
   position: absolute;
-  inset: 10px 18px 18px 18px;
-  border-radius: 28px;
-  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.48), transparent 70%);
-  filter: blur(10px);
+  inset: -15px;
+  border-radius: 20px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 70%);
+  filter: blur(15px);
   opacity: 0;
-  transition: opacity 0.28s ease;
+  transition: opacity 0.4s ease;
   pointer-events: none;
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+.node-hologram-ring {
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.graph-node:hover .node-hologram-ring {
+  opacity: 1;
+  transform: scale(1.2);
+  animation: ring-rotate 4s linear infinite;
+}
+
+@keyframes ring-rotate {
+  from { transform: rotate(0deg) scale(1.2); }
+  to { transform: rotate(360deg) scale(1.2); }
 }
 
 .node-delete-btn {
   position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 24px;
-  height: 24px;
+  top: -10px;
+  right: -10px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: var(--color-status-danger);
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff4444 100%);
   border: 2px solid rgba(53, 42, 32, 0.8);
   color: white;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -451,43 +829,108 @@ const graphCanvasStyle = computed(() => ({
   padding: 0;
   opacity: 0;
   transform: scale(0.8);
-  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.68, -0.3, 0.265, 1.3);
   z-index: 5;
   line-height: 1;
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.5);
 }
 
 .graph-node:hover .node-delete-btn {
   opacity: 1;
   transform: scale(1);
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.5);
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.7);
 }
 
 .node-delete-btn:hover {
-  background: #ff4444;
-  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.7);
+  background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+  transform: scale(1.1) !important;
 }
 
 .graph-node-frame {
   position: relative;
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, rgba(212, 165, 116, 0.15) 0%, rgba(53, 42, 32, 0.6) 100%);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 215, 140, 0.1);
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, 
+    rgba(255, 215, 0, 0.12) 0%, 
+    rgba(212, 165, 116, 0.08) 30%,
+    rgba(205, 127, 50, 0.06) 70%,
+    rgba(53, 42, 32, 0.5) 100%);
+  border: 1px solid rgba(212, 165, 116, 0.4);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 215, 140, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 0 20px rgba(255, 215, 0, 0.1);
   backdrop-filter: blur(20px);
-  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
-  min-height: 32px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 36px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
+}
+
+.graph-node-frame::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.6), transparent);
+}
+
+.graph-node-frame::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(205, 127, 50, 0.3), transparent);
+}
+
+.crystal-inner {
+  position: absolute;
+  inset: 2px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.05) 0%, 
+    transparent 50%);
+  pointer-events: none;
+}
+
+.node-scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.8), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.graph-node:hover .node-scan-line {
+  opacity: 1;
+  animation: scan 1.5s ease-in-out infinite;
+}
+
+@keyframes scan {
+  0% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
 }
 
 .graph-node:hover .graph-node-frame {
-  transform: translateY(-4px) scale(1.08);
-  border-color: var(--glass-border-hover);
-  box-shadow: 0 10px 28px rgba(212, 165, 116, 0.3), var(--glow-gold), inset 0 1px 0 rgba(255, 215, 140, 0.2);
+  transform: translateY(-6px) scale(1.1);
+  border-color: rgba(255, 215, 0, 0.6);
+  box-shadow: 
+    0 16px 40px rgba(255, 215, 0, 0.25),
+    0 0 40px rgba(255, 215, 0, 0.2),
+    inset 0 1px 0 rgba(255, 215, 140, 0.3);
 }
 
 .graph-node:hover .graph-node-glow,
@@ -496,16 +939,34 @@ const graphCanvasStyle = computed(() => ({
 }
 
 .graph-node.active .graph-node-frame {
-  border-color: var(--color-accent-gold-bright);
-  background: linear-gradient(135deg, rgba(212, 165, 116, 0.3) 0%, rgba(53, 42, 32, 0.8) 100%);
-  box-shadow: 0 16px 40px rgba(212, 165, 116, 0.5), 0 0 30px rgba(212, 165, 116, 0.3), inset 0 1px 0 rgba(255, 215, 140, 0.2);
-  transform: translateY(-8px) scale(1.08);
+  border-color: #ffd700;
+  background: linear-gradient(135deg, 
+    rgba(255, 215, 0, 0.25) 0%, 
+    rgba(212, 165, 116, 0.15) 50%,
+    rgba(205, 127, 50, 0.1) 100%);
+  box-shadow: 
+    0 20px 50px rgba(255, 215, 0, 0.4),
+    0 0 50px rgba(255, 215, 0, 0.3),
+    inset 0 1px 0 rgba(255, 215, 140, 0.4);
+  transform: translateY(-10px) scale(1.12);
+}
+
+.graph-node.active .node-hologram-ring {
+  opacity: 1;
+  border-color: rgba(255, 215, 0, 0.4);
 }
 
 .graph-node.root .graph-node-frame {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(53, 42, 32, 0.7) 100%);
+  background: linear-gradient(135deg, 
+    rgba(255, 215, 0, 0.2) 0%, 
+    rgba(212, 165, 116, 0.15) 50%,
+    rgba(53, 42, 32, 0.6) 100%);
   border-width: 2px;
-  border-color: var(--color-accent-gold);
+  border-color: #ffd700;
+  box-shadow: 
+    0 0 30px rgba(255, 215, 0, 0.5),
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 215, 140, 0.3);
 }
 
 .graph-node.depth-2 .graph-node-frame,
@@ -513,57 +974,34 @@ const graphCanvasStyle = computed(() => ({
 .graph-node.depth-4 .graph-node-frame,
 .graph-node.depth-5 .graph-node-frame,
 .graph-node.depth-6 .graph-node-frame {
-  background: linear-gradient(135deg, rgba(212, 165, 116, 0.12) 0%, rgba(53, 42, 32, 0.55) 100%);
-}
-
-.graph-node-topline {
-  display: none;
-}
-
-.node-badge {
-  display: none;
-}
-
-.node-date {
-  display: none;
+  background: linear-gradient(135deg, 
+    rgba(212, 165, 116, 0.1) 0%, 
+    rgba(205, 127, 50, 0.06) 50%,
+    rgba(53, 42, 32, 0.45) 100%);
 }
 
 .graph-node h3 {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   margin: 0;
-  color: var(--color-accent-gold-bright);
+  color: #ffd700;
   font-weight: 700;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-  line-height: 1;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.8);
+  line-height: 1.2;
   text-align: center;
   word-break: break-word;
+  position: relative;
+  z-index: 1;
 }
 
 .node-branch-count {
   display: block;
-  font-size: 9px;
-  color: var(--color-accent-gold);
-  margin-top: 1px;
+  font-size: 10px;
+  color: #d4a574;
+  margin-top: 4px;
   font-weight: 600;
-}
-
-.graph-node p {
-  display: none;
-}
-
-.graph-node-meta {
-  display: none;
-}
-
-.graph-node-actions {
-  display: none;
-}
-
-.graph-node-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 14px;
+  text-shadow: 0 0 8px rgba(212, 165, 116, 0.5);
+  position: relative;
+  z-index: 1;
 }
 
 .tree-scroll-hint {
@@ -604,22 +1042,26 @@ const graphCanvasStyle = computed(() => ({
 
 .tree-aside-header h2 {
   font-size: 1rem;
+  font-weight: 700;
   margin: 0;
-  color: var(--color-accent-gold);
+  color: #c9b896;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  letter-spacing: 0.02em;
 }
 
 .badge {
-  background: var(--color-status-info);
-  color: #000;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 11px;
+  background: rgba(180, 165, 140, 0.25);
+  color: #c9b896;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
   font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
 .node-preview {
   margin: 16px 16px 16px 16px;
-  padding: 10px;
+  padding: 12px;
   border-radius: 8px;
   background: rgba(53, 42, 32, 0.4);
   border: 1px solid var(--glass-border);
@@ -627,17 +1069,18 @@ const graphCanvasStyle = computed(() => ({
 
 .node-preview strong {
   display: block;
-  color: var(--color-accent-gold-bright);
+  color: #d0c0a0;
   font-size: 0.95rem;
   margin-bottom: 6px;
-  font-weight: 700;
+  font-weight: 600;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .node-preview p {
-  color: var(--color-text-secondary);
+  color: rgba(212, 165, 116, 0.8);
   font-size: 0.85rem;
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.5;
   word-break: break-word;
 }
 
@@ -652,22 +1095,25 @@ const graphCanvasStyle = computed(() => ({
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px;
+  padding: 10px 6px;
   border-radius: 6px;
   background: rgba(212, 165, 116, 0.08);
   border: 1px solid var(--glass-border);
 }
 
 .stat-card span {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  margin-bottom: 3px;
+  font-size: 0.7rem;
+  color: rgba(212, 165, 116, 0.6);
+  margin-bottom: 4px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .stat-card strong {
   font-size: 1rem;
-  color: var(--color-accent-gold-bright);
+  color: #d0c0a0;
   font-weight: 700;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .node-quick {
@@ -679,7 +1125,9 @@ const graphCanvasStyle = computed(() => ({
 .node-quick .btn {
   flex: 1;
   font-size: 0.8rem;
-  padding: 5px 6px;
+  padding: 6px 8px;
+  font-weight: 500;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .node-quick .btn-danger {
@@ -701,7 +1149,7 @@ const graphCanvasStyle = computed(() => ({
 
 .tree-hints {
   margin: 0 16px 16px 16px;
-  padding: 10px;
+  padding: 12px;
   border-radius: 8px;
   background: rgba(53, 42, 32, 0.4);
   border: 1px solid var(--glass-border);
@@ -709,16 +1157,17 @@ const graphCanvasStyle = computed(() => ({
 
 .tree-hints h4 {
   font-size: 0.85rem;
-  color: var(--color-accent-gold);
-  margin: 0 0 6px 0;
+  color: #c9b896;
+  margin: 0 0 8px 0;
   font-weight: 600;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .tree-hints p {
   font-size: 0.8rem;
-  color: var(--color-text-muted);
-  margin: 3px 0;
-  line-height: 1.3;
+  color: rgba(212, 165, 116, 0.7);
+  margin: 4px 0;
+  line-height: 1.5;
 }
 
 .tree-aside {

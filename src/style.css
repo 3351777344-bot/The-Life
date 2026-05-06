@@ -24,7 +24,7 @@
   --glass-bg-hover: rgba(53, 42, 32, 0.85);
   --glass-border: rgba(212, 165, 116, 0.35);
   --glass-border-hover: rgba(212, 165, 116, 0.7);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 215, 140, 0.15), 0 2px 8px rgba(0, 0, 0, 0.2);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(212, 165, 116, 0.15), 0 2px 8px rgba(0, 0, 0, 0.2);
   --glass-shadow-glow: 0 0 80px rgba(212, 165, 116, 0.35), 0 8px 32px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.25);
 
   --glow-gold: 0 0 40px rgba(212, 165, 116, 0.7), 0 0 80px rgba(212, 165, 116, 0.4), 0 0 120px rgba(184, 134, 11, 0.2);
@@ -63,9 +63,8 @@ body {
   font-family: var(--font-body);
   background: 
     radial-gradient(ellipse at 10% 20%, rgba(212, 165, 116, 0.18) 0%, transparent 50%),
-    radial-gradient(ellipse at 90% 80%, rgba(184, 134, 11, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(205, 127, 50, 0.1) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(255, 191, 0, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 90% 80%, rgba(205, 127, 50, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(212, 165, 116, 0.1) 0%, transparent 60%),
     linear-gradient(135deg, #1a1510 0%, #2a2118 50%, #352a20 100%);
   color: var(--color-text-primary);
   overflow-x: hidden;
@@ -88,9 +87,9 @@ body {
   z-index: 0;
   background:
     radial-gradient(ellipse at 15% 25%, rgba(212, 165, 116, 0.25) 0%, transparent 55%),
-    radial-gradient(ellipse at 85% 75%, rgba(184, 134, 11, 0.2) 0%, transparent 55%),
-    radial-gradient(ellipse at 50% 50%, rgba(205, 127, 50, 0.15) 0%, transparent 65%),
-    radial-gradient(ellipse at 30% 70%, rgba(255, 191, 0, 0.12) 0%, transparent 50%);
+    radial-gradient(ellipse at 85% 75%, rgba(205, 127, 50, 0.2) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(212, 165, 116, 0.15) 0%, transparent 65%),
+    radial-gradient(ellipse at 30% 70%, rgba(205, 133, 63, 0.12) 0%, transparent 50%);
 }
 
 .starfield::before,
@@ -100,39 +99,39 @@ body {
   width: 100%;
   height: 100%;
   background-image:
-    radial-gradient(2px 2px at 10% 10%, rgba(212, 165, 116, 0.9), transparent),
-    radial-gradient(1.5px 1.5px at 20% 40%, rgba(255, 191, 0, 0.8), transparent),
-    radial-gradient(2px 2px at 30% 20%, rgba(184, 134, 11, 1), transparent),
-    radial-gradient(1.5px 1.5px at 40% 60%, rgba(205, 127, 50, 0.7), transparent),
-    radial-gradient(2.5px 2.5px at 50% 80%, rgba(212, 165, 116, 0.85), transparent),
-    radial-gradient(1.5px 1.5px at 60% 30%, rgba(255, 215, 0, 0.75), transparent),
-    radial-gradient(2px 2px at 70% 70%, rgba(184, 134, 11, 0.7), transparent),
+    radial-gradient(2px 2px at 10% 10%, rgba(232, 196, 154, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 20% 40%, rgba(212, 165, 116, 0.85), transparent),
+    radial-gradient(2px 2px at 30% 20%, rgba(232, 196, 154, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 40% 60%, rgba(212, 165, 116, 0.8), transparent),
+    radial-gradient(2.5px 2.5px at 50% 80%, rgba(232, 196, 154, 0.85), transparent),
+    radial-gradient(1.5px 1.5px at 60% 30%, rgba(212, 165, 116, 0.8), transparent),
+    radial-gradient(2px 2px at 70% 70%, rgba(232, 196, 154, 0.75), transparent),
     radial-gradient(2px 2px at 80% 50%, rgba(212, 165, 116, 0.9), transparent),
-    radial-gradient(1.5px 1.5px at 90% 90%, rgba(205, 127, 50, 0.7), transparent),
-    radial-gradient(2px 2px at 15% 75%, rgba(255, 191, 0, 0.8), transparent),
-    radial-gradient(2.5px 2.5px at 25% 55%, rgba(184, 134, 11, 0.9), transparent),
-    radial-gradient(1.5px 1.5px at 35% 85%, rgba(255, 215, 0, 0.65), transparent),
-    radial-gradient(2px 2px at 45% 15%, rgba(212, 165, 116, 0.8), transparent),
-    radial-gradient(2.5px 2.5px at 55% 45%, rgba(205, 127, 50, 1), transparent),
-    radial-gradient(1.5px 1.5px at 65% 95%, rgba(255, 191, 0, 0.7), transparent),
-    radial-gradient(2px 2px at 75% 25%, rgba(184, 134, 11, 0.8), transparent),
-    radial-gradient(2.5px 2.5px at 85% 65%, rgba(212, 165, 116, 0.85), transparent),
-    radial-gradient(1.5px 1.5px at 95% 35%, rgba(205, 127, 50, 0.7), transparent),
-    radial-gradient(3px 3px at 5% 50%, rgba(255, 215, 0, 1), transparent),
-    radial-gradient(3px 3px at 92% 8%, rgba(184, 134, 11, 0.9), transparent);
+    radial-gradient(1.5px 1.5px at 90% 90%, rgba(205, 127, 50, 0.8), transparent),
+    radial-gradient(2px 2px at 15% 75%, rgba(232, 196, 154, 0.85), transparent),
+    radial-gradient(2.5px 2.5px at 25% 55%, rgba(212, 165, 116, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 35% 85%, rgba(232, 196, 154, 0.75), transparent),
+    radial-gradient(2px 2px at 45% 15%, rgba(212, 165, 116, 0.85), transparent),
+    radial-gradient(2.5px 2.5px at 55% 45%, rgba(232, 196, 154, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 65% 95%, rgba(212, 165, 116, 0.8), transparent),
+    radial-gradient(2px 2px at 75% 25%, rgba(232, 196, 154, 0.85), transparent),
+    radial-gradient(2.5px 2.5px at 85% 65%, rgba(212, 165, 116, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 95% 35%, rgba(205, 127, 50, 0.8), transparent),
+    radial-gradient(3px 3px at 5% 50%, rgba(232, 196, 154, 0.9), transparent),
+    radial-gradient(3px 3px at 92% 8%, rgba(212, 165, 116, 0.9), transparent);
   animation: twinkle 6s ease-in-out infinite alternate;
 }
 
 .starfield::after {
   background-size: 200% 200%;
   animation: twinkle 12s ease-in-out infinite alternate-reverse;
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
 @keyframes twinkle {
-  0% { opacity: 0.3; transform: scale(1) translateY(0); }
-  50% { opacity: 0.7; transform: scale(1.02) translateY(-5px); }
-  100% { opacity: 0.4; transform: scale(0.98) translateY(3px); }
+  0% { opacity: 0.4; transform: scale(1) translateY(0); }
+  50% { opacity: 0.75; transform: scale(1.02) translateY(-5px); }
+  100% { opacity: 0.5; transform: scale(0.98) translateY(3px); }
 }
 
 @keyframes float-gentle {
@@ -249,9 +248,7 @@ body {
 }
 
 .glass-container {
-  background: 
-    linear-gradient(135deg, rgba(212, 165, 116, 0.15) 0%, rgba(53, 42, 32, 0.6) 50%, rgba(184, 134, 11, 0.1) 100%),
-    rgba(53, 42, 32, 0.5);
+  background: var(--glass-bg);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   border: 1px solid var(--glass-border);
@@ -259,7 +256,6 @@ body {
   box-shadow: var(--glass-shadow);
   transition: var(--transition-smooth);
   position: relative;
-  overflow: hidden;
 }
 
 .glass-container::before {
@@ -269,26 +265,13 @@ body {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(212, 165, 116, 0.8), rgba(255, 215, 0, 0.6), rgba(212, 165, 116, 0.8), transparent);
-}
-
-.glass-container::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 40%;
-  background: linear-gradient(180deg, rgba(255, 215, 140, 0.12) 0%, rgba(255, 215, 140, 0) 100%);
-  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--color-accent-gold), var(--color-accent-gold-light), transparent);
 }
 
 .glass-container:hover {
-  background: 
-    linear-gradient(135deg, rgba(212, 165, 116, 0.25) 0%, rgba(53, 42, 32, 0.75) 50%, rgba(184, 134, 11, 0.2) 100%),
-    rgba(53, 42, 32, 0.6);
+  background: var(--glass-bg-hover);
   border-color: var(--glass-border-hover);
-  box-shadow: var(--glass-shadow-glow), var(--glow-gold);
+  box-shadow: var(--glass-shadow-glow);
   transform: translateY(-3px);
 }
 
@@ -297,35 +280,20 @@ body {
 }
 
 .glass-card {
-  background: 
-    linear-gradient(135deg, rgba(212, 165, 116, 0.12) 0%, rgba(53, 42, 32, 0.55) 100%);
+  background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   border-radius: 24px;
   padding: var(--space-xl);
   transition: var(--transition-smooth);
-  position: relative;
-  overflow: hidden;
-}
-
-.glass-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 30%;
-  background: linear-gradient(180deg, rgba(255, 215, 140, 0.1) 0%, rgba(255, 215, 140, 0) 100%);
-  pointer-events: none;
 }
 
 .glass-card:hover {
-  background: 
-    linear-gradient(135deg, rgba(212, 165, 116, 0.2) 0%, rgba(53, 42, 32, 0.7) 100%);
+  background: var(--glass-bg-hover);
   border-color: var(--glass-border-hover);
-  transform: translateY(-6px) scale(1.01);
-  box-shadow: var(--glass-shadow-glow), var(--glow-gold);
+  transform: translateY(-4px);
+  box-shadow: var(--glass-shadow-glow);
 }
 
 .container {

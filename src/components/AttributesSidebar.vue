@@ -16,14 +16,18 @@
             <span class="attribute-value" :class="getValueClass(value)">{{ value }}</span>
           </div>
           <div class="attribute-bar">
-            <div class="attribute-fill" :style="{ width: value + '%' }" :class="getBarClass(value)"></div>
+            <div class="attribute-fill" :style="{ width: value + '%' }" :class="getBarClass(value)">
+              <div class="fill-shine"></div>
+            </div>
             <div class="attribute-threshold threshold-low"></div>
             <div class="attribute-threshold threshold-mid"></div>
-            <div class="attribute-threshold threshold-high"></div>
+            <div class="attribute-glow" :class="getBarClass(value)"></div>
           </div>
           <div class="attribute-markers">
             <span class="marker">0</span>
-            <span class="marker">50</span>
+            <span class="marker text-center">低</span>
+            <span class="marker text-center">中</span>
+            <span class="marker text-center">高</span>
             <span class="marker">100</span>
           </div>
         </div>
@@ -119,11 +123,11 @@ const props = defineProps({
 const isExpanded = ref(true)
 
 const attributeLabels = {
-  职业发展: '职业发展',
-  财务状况: '财务状况',
-  人际关系: '人际关系',
-  健康状态: '健康状态',
-  个人成长: '个人成长'
+  career: '职业发展',
+  finance: '财务状况',
+  relationship: '人际关系',
+  health: '健康状态',
+  growth: '个人成长'
 }
 
 // 计算属性
@@ -280,34 +284,96 @@ const refreshAdvice = () => {
 
 .attribute-bar {
   position: relative;
-  height: 10px;
+  height: 14px;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 5px;
-  overflow: hidden;
-  border: 1px solid rgba(212, 165, 116, 0.2);
+  border-radius: 7px;
+  overflow: visible;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .attribute-fill {
   height: 100%;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(90deg, #d4a574, #ffd700);
-  border-radius: 5px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.fill-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shine 2.5s ease-in-out infinite;
+}
+
+@keyframes shine {
+  0% { left: -100%; }
+  50%, 100% { left: 100%; }
 }
 
 .attribute-fill.bar-high {
-  background: linear-gradient(90deg, #00d084, #00ff88);
+  background: linear-gradient(90deg, #00c853, #00e676, #69f0ae);
+  box-shadow: 0 0 12px rgba(0, 200, 83, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .attribute-fill.bar-medium {
-  background: linear-gradient(90deg, #ffd700, #ffbf00);
+  background: linear-gradient(90deg, #ff8f00, #ffc107, #ffeb3b);
+  box-shadow: 0 0 12px rgba(255, 193, 7, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .attribute-fill.bar-low {
-  background: linear-gradient(90deg, #ff8c3a, #ffbf00);
+  background: linear-gradient(90deg, #e65100, #ff5722, #ff7043);
+  box-shadow: 0 0 12px rgba(255, 87, 34, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .attribute-fill.bar-critical {
-  background: linear-gradient(90deg, #ff6b6b, #ff8c8c);
+  background: linear-gradient(90deg, #c62828, #f44336, #ef5350);
+  box-shadow: 0 0 12px rgba(244, 67, 54, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  animation: pulse-critical 1s ease-in-out infinite;
+}
+
+@keyframes pulse-critical {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.attribute-glow {
+  position: absolute;
+  top: -4px;
+  left: 0;
+  height: 4px;
+  border-radius: 2px;
+  filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.attribute-bar:hover .attribute-glow {
+  opacity: 0.8;
+}
+
+.attribute-glow.bar-high {
+  background: #00e676;
+  box-shadow: 0 0 8px #00c853;
+}
+
+.attribute-glow.bar-medium {
+  background: #ffc107;
+  box-shadow: 0 0 8px #ff8f00;
+}
+
+.attribute-glow.bar-low {
+  background: #ff5722;
+  box-shadow: 0 0 8px #e65100;
+}
+
+.attribute-glow.bar-critical {
+  background: #f44336;
+  box-shadow: 0 0 8px #c62828;
 }
 
 .attribute-threshold {
@@ -315,7 +381,7 @@ const refreshAdvice = () => {
   top: 0;
   height: 100%;
   width: 2px;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.4);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -335,10 +401,19 @@ const refreshAdvice = () => {
 .attribute-markers {
   display: flex;
   justify-content: space-between;
-  margin-top: 4px;
-  font-size: 0.7rem;
+  margin-top: 6px;
+  font-size: 0.65rem;
   color: var(--color-text-muted);
-  opacity: 0.6;
+}
+
+.attribute-markers .marker {
+  min-width: 24px;
+  text-align: center;
+}
+
+.attribute-markers .text-center {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
 }
 
 /* 快速统计 */
