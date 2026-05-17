@@ -9,8 +9,13 @@
       <div class="beam-accent top-right"></div>
 
       <div class="divergence-header">
-        <h1 class="title">DIVERGENCE / 衍化路线数据包</h1>
-        <p class="subtitle">ROUTE PACKET GENERATOR · AI / MANUAL BRANCH SIMULATION</p>
+        <div>
+          <h1 class="title">DIVERGENCE / 衍化路线数据包</h1>
+          <p class="subtitle">ROUTE PACKET GENERATOR · AI / MANUAL BRANCH SIMULATION</p>
+        </div>
+        <button class="btn btn-secondary divergence-back-btn" @click="$emit('go-to-destiny')">
+          返回命轨 / BACK TO DESTINY
+        </button>
       </div>
 
       <div class="mode-switch">
@@ -170,7 +175,7 @@
       </div>
 
       <div class="divergence-controls">
-        <button class="btn btn-secondary" @click="$emit('go-to-destiny')">BACK TO GRAPH</button>
+        <button class="btn btn-secondary" @click="$emit('go-to-destiny')">返回命轨 / BACK TO DESTINY</button>
         <button v-if="compareRoutes.length >= 2" class="btn btn-primary" @click="$emit('go-to-comparison')">
           <span class="btn-icon">⇄</span>OPEN PARALLEL VIEW
         </button>
@@ -278,9 +283,18 @@ watch(() => localCustom, (v) => {}, { deep: true })
 }
 
 .divergence-header {
-  text-align: center;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  text-align: left;
   margin-bottom: 32px;
   position: relative;
+}
+
+.divergence-back-btn {
+  flex-shrink: 0;
+  margin-top: 8px;
 }
 
 .header-icon {
@@ -732,6 +746,16 @@ watch(() => localCustom, (v) => {}, { deep: true })
 
   .divergence-header .title {
     font-size: 1.8rem;
+  }
+
+  .divergence-header {
+    display: grid;
+    text-align: center;
+  }
+
+  .divergence-back-btn {
+    justify-self: center;
+    margin-top: 0;
   }
 
   .form-row {

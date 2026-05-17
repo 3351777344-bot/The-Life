@@ -271,7 +271,8 @@
             <span><i></i> SPX_0.048</span>
             <span><i></i> SIGNAL_STABLE</span>
             <button class="stage-nav" @click="$emit('go-to-genesis')">BACK GENESIS</button>
-            <button class="stage-nav primary" @click="$emit('go-to-divergence')">TO DIVERGENCE</button>
+            <button class="stage-nav primary" @click="$emit('start-divergence', selectedNode)">开启衍化</button>
+            <button class="stage-nav primary" @click="$emit('go-to-conclusion')">归途 / REPORT</button>
           </div>
         </section>
 
@@ -347,7 +348,7 @@ const props = defineProps({
   selectedDepth: { type: Number, required: true }
 })
 
-defineEmits(['select-node', 'commit-node', 'delete-node', 'go-to-genesis', 'go-to-divergence'])
+defineEmits(['select-node', 'commit-node', 'delete-node', 'go-to-genesis', 'go-to-divergence', 'start-divergence', 'go-to-conclusion'])
 
 const NODE_WIDTH = 156
 const NODE_HEIGHT = 76

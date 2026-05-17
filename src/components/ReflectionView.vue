@@ -90,7 +90,7 @@
       </div>
 
       <div class="reflection-controls">
-        <button class="btn btn-secondary" @click="$emit('go-to-divergence')">BACK TO ROUTES</button>
+        <button class="btn btn-secondary" @click="$emit('go-to-divergence')">BACK / 返回原界面</button>
         <button class="btn btn-primary" @click="$emit('go-to-mentorship')">OPEN MENTOR CHANNEL</button>
       </div>
     </div>

@@ -6,7 +6,6 @@
         :key="step.id"
         class="view-step"
         :class="{ active: currentView === step.id, completed: isCompleted(step.id) }"
-        @click="$emit('navigate', step.id)"
       >
         <div class="step-connector" v-if="index > 0"></div>
         <div class="step-orb">
@@ -32,8 +31,6 @@ const props = defineProps({
     required: true
   }
 })
-defineEmits(['navigate'])
-
 const steps = [
   { id: 'genesis', title: 'GENESIS', subtitle: '入局 / 建模' },
   { id: 'destiny', title: 'DESTINY', subtitle: '命轨 / 图谱' },
@@ -75,14 +72,14 @@ const isCompleted = (stepId) => {
   border-radius: 20px;
   color: var(--color-text-muted);
   transition: var(--transition-smooth);
-  cursor: pointer;
+  cursor: default;
   position: relative;
   min-width: 140px;
 }
 
 .view-step:hover {
-  color: var(--color-text-secondary);
-  background: var(--glass-bg);
+  color: var(--color-text-muted);
+  background: transparent;
 }
 
 .view-step.active {
@@ -142,11 +139,6 @@ const isCompleted = (stepId) => {
   transition: var(--transition-bounce);
   flex-shrink: 0;
   backdrop-filter: blur(10px);
-}
-
-.step-orb:hover {
-  transform: scale(1.15) rotate(8deg);
-  box-shadow: 0 0 28px rgba(56, 189, 248, 0.38);
 }
 
 .step-index {

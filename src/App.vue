@@ -17,7 +17,7 @@
         <h1 class="app-hero-title">LIFE DIVERGENCE OS</h1>
         <p class="app-hero-sub">人生分岔路 · 平行时空推演系统</p>
       </header>
-      <ViewNav :currentView="currentView" @navigate="(v) => currentView = v" />
+      <ViewNav :currentView="currentView" />
 
       <div v-if="statusMessage" class="status-toast">{{ statusMessage }}</div>
 
@@ -65,6 +65,8 @@
           @delete-node="deleteNode"
           @go-to-genesis="goToGenesis"
           @go-to-divergence="goToDivergence"
+          @start-divergence="startDivergenceFromNode"
+          @go-to-conclusion="goToConclusion"
         />
       </div>
 
@@ -123,7 +125,7 @@
           @show-trend="showTrendChart"
           @show-impact="showImpactTrace"
           @refresh-social="refreshSocialData"
-          @go-to-divergence="goToDivergence"
+          @go-to-divergence="returnToPreviousView"
           @go-to-mentorship="goToMentorship"
         />
       </div>
@@ -139,7 +141,7 @@
           @send-message="sendMessage"
           @select-ai-role="selectAIRole"
           @toggle-voice="toggleVoiceInput"
-          @go-to-reflection="goToReflection"
+          @go-to-reflection="returnToPreviousView"
           @go-to-conclusion="goToConclusion"
         />
       </div>
@@ -157,30 +159,16 @@
 
     </div>
 
-    <button
-      v-if="currentView !== 'mentorship' && currentView !== 'command'"
-      type="button"
-      class="ai-console-dock"
-      @click="goToMentorship"
-      aria-label="打开 AI 导师"
-    >
-      <span class="ai-console-avatar" aria-hidden="true">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="url(#dockG)" stroke-width="2" />
-          <path d="M8 14c1.5 2 6.5 2 8 0" stroke="url(#dockG)" stroke-width="1.5" stroke-linecap="round" />
-          <defs>
-            <linearGradient id="dockG" x1="0" y1="0" x2="24" y2="24">
-              <stop stop-color="#6366f1" />
-              <stop offset="1" stop-color="#a78bfa" />
-            </linearGradient>
-          </defs>
-        </svg>
-      </span>
-      <span class="ai-console-bubble">
-        <strong>AI 决策导师</strong>
-        <span class="ai-console-hint">人生模拟与路径建议已就绪，点此对话</span>
-      </span>
-    </button>
+    <div v-if="currentView !== 'command'" class="ai-console-actions" aria-label="快捷导航">
+      <button v-if="currentView !== 'reflection'" type="button" class="ai-console-btn" @click="openReflectionFromCurrent">
+        <strong>开启观心</strong>
+        <span>REFLECTION</span>
+      </button>
+      <button v-if="currentView !== 'mentorship'" type="button" class="ai-console-btn" @click="openMentorshipFromCurrent">
+        <strong>开启论道</strong>
+        <span>MENTOR</span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -201,6 +189,7 @@ import { generateRoute, getAIAdvice, generateScenario } from './services/ollamaS
 // Minimal reactive state to keep components running
 const currentView = ref('command')
 const statusMessage = ref('')
+const returnView = ref(null)
 
 // Dialog state
 const showInputDialog = ref(false)
@@ -507,12 +496,34 @@ const applyAttributeChanges = (title, impacts = {}) => {
 
 // Navigation
 const goToDestinyTree = () => currentView.value = 'destiny'
-const goToDivergence = () => currentView.value = 'divergence'
+const goToDivergence = () => startDivergenceFromNode(selectedNode.value)
 const goToComparison = () => currentView.value = 'comparison'
 const goToReflection = () => currentView.value = 'reflection'
 const goToMentorship = () => currentView.value = 'mentorship'
 const goToConclusion = () => currentView.value = 'conclusion'
 const goToGenesis = () => currentView.value = 'genesis'
+
+const rememberReturnView = () => {
+  if (!['reflection', 'mentorship', 'command'].includes(currentView.value)) {
+    returnView.value = currentView.value
+  }
+}
+
+const openReflectionFromCurrent = () => {
+  rememberReturnView()
+  currentView.value = 'reflection'
+}
+
+const openMentorshipFromCurrent = () => {
+  rememberReturnView()
+  currentView.value = 'mentorship'
+}
+
+const returnToPreviousView = () => {
+  const target = returnView.value || 'destiny'
+  returnView.value = null
+  currentView.value = target
+}
 
 // Genesis handlers
 const fetchScenario = async () => {
@@ -607,12 +618,81 @@ const createGeneratedBranch = (parent, index) => {
   }
 }
 
+const ensureNodeChildren = (node, count = 3) => {
+  if (!node) return []
+  const currentChildren = (node.children || []).map((id) => findNode(id)).filter(Boolean)
+  const missingCount = Math.max(0, count - currentChildren.length)
+  if (missingCount > 0) {
+    const createdNodes = Array.from({ length: missingCount }, (_, index) => createGeneratedBranch(node, currentChildren.length + index + 1))
+    node.children = [...(node.children || []), ...createdNodes.map((child) => child.id)]
+    treeNodes.value.push(...createdNodes)
+    currentChildren.push(...createdNodes)
+  }
+  return currentChildren.slice(0, count)
+}
+
 const extendSelectedBranch = (node) => {
   if (!node || (node.children || []).length) return
-  const count = node.depth >= 4 ? 2 : 3
-  const createdNodes = Array.from({ length: count }, (_, index) => createGeneratedBranch(node, index + 1))
-  node.children = createdNodes.map((child) => child.id)
-  treeNodes.value.push(...createdNodes)
+  ensureNodeChildren(node, 3)
+}
+
+const nodeSeedScore = (node, offset = 0) => {
+  const seed = Array.from(`${node?.id || ''}${node?.title || ''}${node?.description || ''}`)
+    .reduce((sum, char) => sum + char.charCodeAt(0), offset)
+  return seed
+}
+
+const nodeToRoutePacket = (parent, child, index) => {
+  const seed = nodeSeedScore(child, index * 17)
+  const feasibility = 58 + (seed % 31)
+  const difficulty = feasibility >= 78 ? '中等' : feasibility >= 66 ? '高' : '极高'
+  const benefit = (parent.depth || 1) >= 3 ? '极高' : index === 1 ? '高' : '中高'
+  const impacts = {
+    career: 4 + (seed % 12),
+    finance: (seed % 9) - 2,
+    relationship: ((seed + 3) % 8) - 2,
+    health: ((seed + 5) % 7) - 3,
+    growth: 6 + ((seed + 7) % 13)
+  }
+
+  return {
+    id: `route-${child.id}`,
+    sourceNodeId: child.id,
+    parentNodeId: parent.id,
+    title: child.title,
+    description: child.description,
+    feasibility,
+    difficulty,
+    benefit,
+    tag: 'NODE EXTENSION',
+    tagColor: feasibility >= 78 ? 'high' : feasibility >= 66 ? 'mid' : 'low',
+    impacts,
+    impactFactors: impacts,
+    requiredCapital: `${10000 + (seed % 9) * 5000}-${40000 + (seed % 10) * 8000}`,
+    keyMilestones: [
+      `阶段 1：锁定「${child.title}」的现实约束`,
+      '阶段 2：完成资源验证与风险复盘',
+      '阶段 3：进入下一命轨节点'
+    ]
+  }
+}
+
+const startDivergenceFromNode = (id = selectedNode.value) => {
+  const node = findNode(id) || selectedNodeData.value
+  if (!node) {
+    setStatusMessage('请先选择命轨节点')
+    return
+  }
+  selectedNode.value = node.id
+  committedNodeId.value = node.id
+  selectedPathIds.value = getAncestorPath(node.id)
+  const childNodes = ensureNodeChildren(node, 3)
+  aiRoutes.value = childNodes.map((child, index) => nodeToRoutePacket(node, child, index + 1))
+  compareRoutes.value = []
+  selectedRoute.value = null
+  mode.value = 'ai'
+  currentView.value = 'divergence'
+  setStatusMessage(`已开启「${node.title}」的衍化数据包`)
 }
 
 const commitNodeSelection = (id) => {
@@ -962,56 +1042,48 @@ onMounted(() => {
   }
 }
 
-.ai-console-dock {
+.ai-console-actions {
   position: fixed;
   right: max(16px, 2vw);
   bottom: max(16px, 2vh);
   z-index: 50;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px 10px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(224, 231, 255, 0.5), rgba(237, 233, 254, 0.45));
-  backdrop-filter: blur(18px) saturate(1.15);
-  box-shadow: 0 12px 40px rgba(49, 46, 129, 0.14), 0 0 34px rgba(99, 102, 241, 0.2);
-  cursor: pointer;
-  text-align: left;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.ai-console-dock:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 48px rgba(49, 46, 129, 0.18), 0 0 42px rgba(99, 102, 241, 0.3);
-}
-
-.ai-console-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
   display: grid;
-  place-items: center;
-  background: radial-gradient(circle at 30% 25%, #fff, rgba(199, 210, 254, 0.85));
-  box-shadow: inset 0 0 0 2px rgba(99, 102, 241, 0.4);
+  gap: 8px;
 }
 
-.ai-console-bubble {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  max-width: 220px;
+.ai-console-btn {
+  min-width: 132px;
+  padding: 10px 14px;
+  color: rgba(242, 255, 255, 0.94);
+  text-align: left;
+  background: rgba(0, 0, 0, 0.82);
+  border: 1px solid rgba(129, 217, 224, 0.36);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.12), inset 0 0 18px rgba(122, 226, 230, 0.05);
+  cursor: pointer;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
 }
 
-.ai-console-bubble strong {
-  font-size: 0.82rem;
-  color: var(--color-text-primary);
+.ai-console-btn strong,
+.ai-console-btn span {
+  display: block;
 }
 
-.ai-console-hint {
-  font-size: 0.72rem;
-  color: var(--color-text-muted);
-  line-height: 1.35;
+.ai-console-btn strong {
+  font-size: 0.88rem;
+  letter-spacing: 0.08em;
+}
+
+.ai-console-btn span {
+  margin-top: 3px;
+  color: rgba(122, 226, 230, 0.72);
+  font: 0.68rem "Share Tech Mono", monospace;
+  letter-spacing: 0.14em;
+}
+
+.ai-console-btn:hover {
+  border-color: rgba(202, 255, 255, 0.72);
+  box-shadow: 0 0 24px rgba(0, 243, 255, 0.22), inset 0 0 18px rgba(122, 226, 230, 0.1);
 }
 
 .status-toast {
