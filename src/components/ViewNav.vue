@@ -35,13 +35,13 @@ const props = defineProps({
 defineEmits(['navigate'])
 
 const steps = [
-  { id: 'genesis', title: '入局', subtitle: '基础建模' },
-  { id: 'destiny', title: '命轨', subtitle: '树状分支' },
-  { id: 'divergence', title: '衍化', subtitle: '路线生成' },
-  { id: 'comparison', title: '对比', subtitle: '双窗分析' },
-  { id: 'reflection', title: '观心', subtitle: '属性画像' },
-  { id: 'mentorship', title: '论道', subtitle: '顾问互动' },
-  { id: 'conclusion', title: '归途', subtitle: '终局报告' }
+  { id: 'genesis', title: 'GENESIS', subtitle: '入局 / 建模' },
+  { id: 'destiny', title: 'DESTINY', subtitle: '命轨 / 图谱' },
+  { id: 'divergence', title: 'DIVERGENCE', subtitle: '衍化 / 路线' },
+  { id: 'comparison', title: 'PARALLEL', subtitle: '对比 / 双窗' },
+  { id: 'reflection', title: 'REFLECTION', subtitle: '观心 / 属性' },
+  { id: 'mentorship', title: 'MENTOR', subtitle: '论道 / Agent' },
+  { id: 'conclusion', title: 'REPORT', subtitle: '归途 / 归档' }
 ]
 
 const viewOrder = ['genesis', 'destiny', 'divergence', 'comparison', 'reflection', 'mentorship', 'conclusion']
@@ -87,22 +87,22 @@ const isCompleted = (stepId) => {
 
 .view-step.active {
   color: var(--color-text-primary);
-  background: linear-gradient(135deg, rgba(212, 165, 116, 0.25), rgba(205, 127, 50, 0.15), rgba(184, 134, 11, 0.1));
-  box-shadow: 0 0 50px rgba(212, 165, 116, 0.4), 0 8px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 215, 140, 0.2);
+  background: linear-gradient(135deg, rgba(255, 251, 235, 0.95), rgba(254, 243, 199, 0.55), rgba(224, 242, 254, 0.45));
+  box-shadow: 0 0 40px rgba(56, 189, 248, 0.28), 0 10px 28px rgba(30, 58, 95, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.95);
   transform: translateY(-2px);
 }
 
 .view-step.active .step-orb {
-  background: linear-gradient(135deg, var(--color-accent-gold), var(--color-accent-gold-light), var(--color-accent-copper));
+  background: linear-gradient(135deg, var(--color-accent-gold), var(--color-accent-gold-light), var(--color-accent-sky));
   background-size: 200% 200%;
-  box-shadow: 0 0 40px rgba(212, 165, 116, 0.8), 0 0 80px rgba(212, 165, 116, 0.4);
+  box-shadow: 0 0 36px rgba(56, 189, 248, 0.55), 0 0 72px rgba(167, 139, 250, 0.35);
   animation: gradient-shift 3s ease infinite;
 }
 
 .view-step.active .step-index {
-  color: #1a1510;
+  color: #422006;
   font-weight: 900;
-  text-shadow: 0 0 10px rgba(255, 215, 140, 0.8);
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.9);
 }
 
 .view-step.active .step-glow {
@@ -111,13 +111,13 @@ const isCompleted = (stepId) => {
 }
 
 .view-step.completed .step-orb {
-  background: linear-gradient(135deg, var(--color-accent-copper), var(--color-accent-gold), var(--color-accent-gold-light));
-  box-shadow: 0 0 25px rgba(205, 127, 50, 0.5);
+  background: linear-gradient(135deg, var(--color-accent-gold-light), var(--color-accent-gold), var(--color-accent-amber));
+  box-shadow: 0 0 22px rgba(56, 189, 248, 0.45);
 }
 
 .view-step.completed .step-index {
-  color: #1a1510;
-  text-shadow: 0 0 5px rgba(255, 215, 140, 0.6);
+  color: #78350f;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.75);
 }
 
 .step-connector {
@@ -125,16 +125,16 @@ const isCompleted = (stepId) => {
   left: -0.5rem;
   width: 1rem;
   height: 3px;
-  background: linear-gradient(90deg, transparent, rgba(212, 165, 116, 0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.55), transparent);
   z-index: 0;
-  box-shadow: 0 0 10px rgba(212, 165, 116, 0.3);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.22);
 }
 
 .step-orb {
   width: 52px;
   height: 52px;
   border-radius: 18px;
-  background: linear-gradient(135deg, rgba(212, 165, 116, 0.15), rgba(53, 42, 32, 0.6));
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.75) 0%, rgba(254, 249, 231, 0.55) 100%);
   border: 2px solid var(--glass-border);
   display: grid;
   place-items: center;
@@ -146,7 +146,7 @@ const isCompleted = (stepId) => {
 
 .step-orb:hover {
   transform: scale(1.15) rotate(8deg);
-  box-shadow: 0 0 25px rgba(212, 165, 116, 0.4);
+  box-shadow: 0 0 28px rgba(56, 189, 248, 0.38);
 }
 
 .step-index {
@@ -208,7 +208,7 @@ const isCompleted = (stepId) => {
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: var(--color-accent-cyan);
+  background: var(--color-accent-gold);
   opacity: 0;
   animation: none;
 }
@@ -250,5 +250,22 @@ const isCompleted = (stepId) => {
   .step-content strong {
     font-size: 0.9rem;
   }
+}
+
+/* FUI theme: navigation highlight */
+.view-step.active {
+  background: rgba(255, 255, 255, 0.09) !important;
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+}
+
+.view-step.active .step-orb,
+.view-step.completed .step-orb {
+  background: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.16) !important;
+}
+
+.step-connector {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent) !important;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.16) !important;
 }
 </style>

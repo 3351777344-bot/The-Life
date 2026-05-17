@@ -77,8 +77,8 @@ const levelClass = computed(() => `level-${Math.min(props.level, 6)}`)
   left: 50%;
   width: 2px;
   height: 12px;
-  background: var(--glass-border);
-  opacity: 0.6;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.45), rgba(167, 139, 250, 0.25));
+  opacity: 0.85;
 }
 
 .tree-connector::after {
@@ -89,8 +89,8 @@ const levelClass = computed(() => `level-${Math.min(props.level, 6)}`)
   width: 16px;
   height: 2px;
   transform: translateX(-50%);
-  background: var(--glass-border);
-  opacity: 0.6;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.5), transparent);
+  opacity: 0.85;
 }
 
 .tree-node-card {
@@ -98,17 +98,18 @@ const levelClass = computed(() => `level-${Math.min(props.level, 6)}`)
   min-width: 140px;
   max-width: 160px;
   padding: 12px 16px;
-  background: linear-gradient(135deg, rgba(212, 165, 116, 0.15) 0%, rgba(53, 42, 32, 0.6) 100%);
-  backdrop-filter: blur(15px);
-  border: 1.5px solid var(--glass-border);
-  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.55) 0%, rgba(224, 242, 254, 0.38) 100%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 16px;
   cursor: pointer;
   transition: var(--transition-smooth);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 28px rgba(14, 116, 185, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.85);
   overflow: hidden;
 }
 
@@ -119,16 +120,16 @@ const levelClass = computed(() => `level-${Math.min(props.level, 6)}`)
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(212, 165, 116, 0.8), transparent);
+  background: linear-gradient(90deg, transparent, rgba(125, 211, 252, 0.95), rgba(167, 139, 250, 0.5), transparent);
   opacity: 0;
   transition: opacity 0.3s;
 }
 
 .tree-node-card:hover {
-  background: linear-gradient(135deg, rgba(180, 165, 140, 0.25) 0%, rgba(53, 42, 32, 0.75) 100%);
-  border-color: rgba(180, 165, 140, 0.5);
-  transform: translateY(-6px) scale(1.05);
-  box-shadow: 0 8px 24px rgba(180, 165, 140, 0.2), 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.72) 0%, rgba(224, 242, 254, 0.52) 100%);
+  border-color: rgba(125, 211, 252, 0.85);
+  transform: translateY(-6px) scale(1.04);
+  box-shadow: 0 14px 40px rgba(56, 189, 248, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
 .tree-node-card:hover::before {
@@ -136,9 +137,9 @@ const levelClass = computed(() => `level-${Math.min(props.level, 6)}`)
 }
 
 .tree-node-card.active {
-  border-color: rgba(200, 180, 140, 0.7);
-  background: linear-gradient(135deg, rgba(180, 165, 140, 0.25) 0%, rgba(53, 42, 32, 0.8) 100%);
-  box-shadow: 0 8px 24px rgba(180, 165, 140, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: rgba(56, 189, 248, 0.75);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.82) 0%, rgba(224, 242, 254, 0.58) 100%);
+  box-shadow: 0 16px 44px rgba(14, 165, 233, 0.22), 0 0 0 1px rgba(125, 211, 252, 0.45);
   transform: translateY(-8px);
 }
 
@@ -146,19 +147,19 @@ const levelClass = computed(() => `level-${Math.min(props.level, 6)}`)
   min-width: 160px;
   max-width: 180px;
   padding: 14px 18px;
-  border-width: 2px;
-  background: linear-gradient(135deg, rgba(180, 165, 140, 0.12) 0%, rgba(53, 42, 32, 0.65) 100%);
+  border-width: 1.5px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.62) 0%, rgba(224, 242, 254, 0.42) 100%);
 }
 
 .tree-node-card.level-1 .node-title {
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #d0c0a0;
+  color: #0c4a6e;
 }
 
 .tree-node-card.level-1:hover .node-title {
-  color: #e0d4b8;
+  color: #0369a1;
 }
 
 .tree-node-card.level-2 {
@@ -190,35 +191,36 @@ const levelClass = computed(() => `level-${Math.min(props.level, 6)}`)
 }
 
 .node-title {
-  color: #c9b896;
+  color: #1e3a5f;
   text-align: center;
   line-height: 1.5;
   word-break: break-word;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
   transition: color 0.3s, text-shadow 0.3s;
   display: block;
 }
 
 .tree-node-card:hover .node-title {
-  color: #d4c4a8;
-  text-shadow: 0 0 6px rgba(200, 180, 140, 0.3), 0 1px 3px rgba(0, 0, 0, 0.4);
+  color: #0369a1;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
 }
 
 .tree-node-card.active .node-title {
-  color: #e0d0b0;
-  text-shadow: 0 0 8px rgba(220, 200, 160, 0.4);
+  color: #075985;
+  text-shadow: 0 0 14px rgba(14, 165, 233, 0.35);
 }
 
 .node-branch-count {
   font-size: 0.7rem;
   font-weight: 500;
-  color: rgba(180, 165, 140, 0.7);
-  background: rgba(0, 0, 0, 0.25);
+  color: #0369a1;
+  background: rgba(224, 242, 254, 0.85);
   padding: 2px 8px;
   border-radius: 10px;
   min-width: 24px;
   text-align: center;
   letter-spacing: 0.02em;
+  border: 1px solid rgba(125, 211, 252, 0.45);
 }
 
 .tree-children {
@@ -239,8 +241,8 @@ const levelClass = computed(() => `level-${Math.min(props.level, 6)}`)
   width: calc(100% - 40px);
   height: 2px;
   transform: translateX(-50%);
-  background: var(--glass-border);
-  opacity: 0.4;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.35), transparent);
+  opacity: 0.75;
 }
 
 @media (max-width: 1024px) {

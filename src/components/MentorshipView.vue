@@ -1,41 +1,21 @@
 <template>
   <div class="mentorship-view">
-    <div class="dna-particles-mentorship"></div>
-    
     <div class="mentorship-header">
-      <div class="header-icon">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="url(#headerGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <defs>
-            <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#ffd700"/>
-              <stop offset="50%" stop-color="#d4a574"/>
-              <stop offset="100%" stop-color="#cd7f32"/>
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-      <h1 class="title">论道</h1>
-      <p class="subtitle">与AI顾问深度对话，探索人生更多可能</p>
+      <h1 class="title">MENTOR / AI Agent 通讯舱</h1>
+      <p class="subtitle">ASK / ANALYZE / SIMULATE / COMPARE</p>
     </div>
 
     <div class="mentorship-layout">
       <div class="mentorship-main">
-        <div class="crystal-avatar-section">
-          <div class="crystal-avatar-container">
-            <div class="crystal-halo-ring halo-ring-1"></div>
-            <div class="crystal-halo-ring halo-ring-2"></div>
-            <div class="crystal-halo-ring halo-ring-3"></div>
-            <div class="crystal-avatar">
-              <div class="crystal-core"></div>
-              <div class="crystal-shine"></div>
-              <div class="floating-particle p1"></div>
-              <div class="floating-particle p2"></div>
-              <div class="floating-particle p3"></div>
-              <div class="floating-particle p4"></div>
-              <div class="floating-particle p5"></div>
+        <div class="agent-comms-section">
+          <div class="agent-core-container">
+            <div class="agent-halo-ring ring-1"></div>
+            <div class="agent-halo-ring ring-2"></div>
+            <div class="agent-halo-ring ring-3"></div>
+            <div class="agent-core">
+              <span></span>
+              <i v-for="n in 8" :key="n"></i>
             </div>
-            <div class="avatar-ring-glow"></div>
           </div>
           
           <div class="ai-info">
@@ -54,6 +34,7 @@
         </div>
 
         <div class="chat-section">
+          <div class="chat-channel-label">NODE-BOUND CHAT ARCHIVE / CURRENT CHANNEL: {{ currentAIDisplay }}</div>
           <div class="chat-container" ref="chatContainer">
             <div class="chat-messages">
               <div 
@@ -91,7 +72,7 @@
                 type="text" 
                 v-model="localInput" 
                 class="chat-input" 
-                placeholder="输入你的问题..."
+                placeholder="ASK / ANALYZE / SIMULATE / COMPARE ..."
                 @keyup.enter="onSend"
               >
               <button class="voice-btn" :class="{ active: isListening }" @click="$emit('toggle-voice')">
@@ -115,7 +96,7 @@
 
       <aside class="mentorship-sidebar">
         <div class="role-selection-card">
-          <h3 class="sidebar-title">选择AI角色</h3>
+          <h3 class="sidebar-title">AI AGENT ROLES</h3>
           <div class="role-grid">
             <button 
               v-for="role in aiRoles" 
@@ -135,7 +116,7 @@
         </div>
 
         <div class="quick-prompts-card">
-          <h3 class="sidebar-title">快捷提示</h3>
+          <h3 class="sidebar-title">COMMAND PRESETS</h3>
           <div class="prompt-list">
             <button class="prompt-btn" @click="usePrompt(prompt)" v-for="prompt in quickPrompts" :key="prompt">
               {{ prompt }}
@@ -151,10 +132,10 @@
           <line x1="19" y1="12" x2="5" y2="12"/>
           <polyline points="12 19 5 12 12 5"/>
         </svg>
-        返回
+        BACK TO REFLECTION
       </button>
       <button class="btn btn-primary" @click="$emit('go-to-conclusion')">
-        终局报告
+        OPEN REPORT
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="5" y1="12" x2="19" y2="12"/>
           <polyline points="12 5 19 12 12 19"/>
@@ -262,10 +243,11 @@ const quickPrompts = [
   flex-direction: column;
   position: relative;
   padding: 24px;
-  background: 
-    radial-gradient(ellipse at 20% 20%, rgba(255, 230, 150, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(255, 215, 100, 0.08) 0%, transparent 50%),
-    linear-gradient(135deg, #0f0e0d 0%, #1a1510 100%);
+  background:
+    radial-gradient(ellipse 120% 90% at 50% -20%, rgba(99, 102, 241, 0.32) 0%, transparent 55%),
+    radial-gradient(ellipse 85% 70% at 15% 28%, rgba(56, 189, 248, 0.2) 0%, transparent 58%),
+    radial-gradient(ellipse 90% 80% at 85% 80%, rgba(167, 139, 250, 0.22) 0%, transparent 60%),
+    linear-gradient(165deg, #090c1d 0%, #0b1028 42%, #120f2f 100%);
 }
 
 .dna-particles-mentorship {
@@ -276,9 +258,46 @@ const quickPrompts = [
   height: 100%;
   pointer-events: none;
   z-index: 0;
-  background: 
-    radial-gradient(circle at 10% 20%, rgba(255, 230, 150, 0.06) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(255, 215, 100, 0.05) 0%, transparent 40%);
+  background:
+    radial-gradient(circle at 12% 18%, rgba(56, 189, 248, 0.22) 0%, transparent 42%),
+    radial-gradient(circle at 88% 76%, rgba(129, 140, 248, 0.2) 0%, transparent 45%),
+    radial-gradient(circle at 55% 52%, rgba(167, 139, 250, 0.16) 0%, transparent 50%);
+  animation: cosmic-drift-mentorship 18s ease-in-out infinite alternate;
+}
+
+.dna-particles-mentorship::before,
+.dna-particles-mentorship::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(2px 2px at 8% 15%, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1.5px 1.5px at 18% 36%, rgba(196, 181, 253, 0.72), transparent),
+    radial-gradient(2px 2px at 33% 66%, rgba(125, 211, 252, 0.68), transparent),
+    radial-gradient(1.5px 1.5px at 48% 22%, rgba(255, 255, 255, 0.65), transparent),
+    radial-gradient(2px 2px at 66% 58%, rgba(167, 139, 250, 0.62), transparent),
+    radial-gradient(1.5px 1.5px at 82% 28%, rgba(125, 211, 252, 0.65), transparent),
+    radial-gradient(2px 2px at 92% 78%, rgba(255, 255, 255, 0.72), transparent);
+  animation: stars-twinkle-mentorship 10s ease-in-out infinite alternate;
+}
+
+.dna-particles-mentorship::after {
+  background-size: 180% 180%;
+  opacity: 0.55;
+  filter: blur(0.2px);
+  animation-duration: 14s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes cosmic-drift-mentorship {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-1.5%, -1%, 0) scale(1.03); }
+  100% { transform: translate3d(1.2%, 1.2%, 0) scale(1.01); }
+}
+
+@keyframes stars-twinkle-mentorship {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.85; }
 }
 
 .mentorship-header {
@@ -295,23 +314,23 @@ const quickPrompts = [
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(255, 230, 150, 0.25) 0%, rgba(255, 215, 100, 0.15) 100%);
-  border: 1px solid rgba(255, 215, 140, 0.5);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.26) 0%, rgba(167, 139, 250, 0.16) 100%);
+  border: 1px solid rgba(125, 211, 252, 0.5);
   border-radius: 16px;
-  box-shadow: 0 0 40px rgba(255, 215, 100, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 40px rgba(56, 189, 248, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .mentorship-header .title {
   font-size: 2rem;
   margin: 0 0 8px;
-  background: linear-gradient(90deg, #ffe066, #ffd700, #ffe066);
+  background: linear-gradient(90deg, #e0f2fe, #38bdf8, #e0e7ff);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: shimmer 3s ease-in-out infinite;
   font-weight: 800;
-  text-shadow: 0 0 30px rgba(255, 230, 150, 0.5);
+  text-shadow: 0 0 30px rgba(56, 189, 248, 0.5);
 }
 
 @keyframes shimmer {
@@ -345,11 +364,11 @@ const quickPrompts = [
   align-items: center;
   gap: 24px;
   padding: 24px;
-  background: linear-gradient(135deg, rgba(255, 230, 150, 0.12) 0%, rgba(255, 248, 235, 0.06) 50%, rgba(255, 215, 100, 0.08) 100%);
-  border: 1px solid rgba(255, 215, 140, 0.4);
+  background: linear-gradient(135deg, rgba(224, 242, 254, 0.22) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(221, 214, 254, 0.14) 100%);
+  border: 1px solid rgba(125, 211, 252, 0.4);
   border-radius: 16px;
   backdrop-filter: blur(25px);
-  box-shadow: 0 0 40px rgba(255, 215, 100, 0.15);
+  box-shadow: 0 0 40px rgba(56, 189, 248, 0.15);
 }
 
 .crystal-avatar-container {
@@ -362,7 +381,7 @@ const quickPrompts = [
 .crystal-halo-ring {
   position: absolute;
   border-radius: 50%;
-  border: 1px solid rgba(255, 230, 150, 0.5);
+  border: 1px solid rgba(125, 211, 252, 0.5);
   animation: pulse-ring 3s ease-in-out infinite;
 }
 
@@ -374,13 +393,13 @@ const quickPrompts = [
 .halo-ring-2 {
   inset: -30px;
   animation-delay: 0.5s;
-  border-color: rgba(255, 215, 100, 0.35);
+  border-color: rgba(56, 189, 248, 0.35);
 }
 
 .halo-ring-3 {
   inset: -45px;
   animation-delay: 1s;
-  border-color: rgba(255, 200, 50, 0.25);
+  border-color: rgba(167, 139, 250, 0.25);
 }
 
 @keyframes pulse-ring {
@@ -392,10 +411,10 @@ const quickPrompts = [
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ffe066 0%, #ffd700 50%, #e8c49a 100%);
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 50%, #a78bfa 100%);
   box-shadow: 
-    0 0 50px rgba(255, 230, 150, 0.7),
-    0 0 100px rgba(255, 215, 100, 0.4),
+    0 0 50px rgba(125, 211, 252, 0.7),
+    0 0 100px rgba(167, 139, 250, 0.35),
     inset 0 0 30px rgba(255, 255, 255, 0.4);
   animation: crystal-float 4s ease-in-out infinite;
 }
@@ -409,7 +428,7 @@ const quickPrompts = [
   position: absolute;
   inset: 20%;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 230, 150, 0.8));
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(125, 211, 252, 0.78));
   animation: core-glow 2s ease-in-out infinite alternate;
 }
 
@@ -433,9 +452,9 @@ const quickPrompts = [
   position: absolute;
   width: 4px;
   height: 4px;
-  background: #ffd700;
+  background: #38bdf8;
   border-radius: 50%;
-  box-shadow: 0 0 6px rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
 }
 
 .p1 { top: 10%; left: 50%; animation: float-particle 3s ease-in-out infinite; }
@@ -453,7 +472,7 @@ const quickPrompts = [
   position: absolute;
   inset: -5px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 215, 0, 0.2) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.24) 0%, transparent 70%);
   animation: ring-rotate 10s linear infinite;
 }
 
@@ -475,10 +494,10 @@ const quickPrompts = [
 
 .ai-name {
   font-size: 1.5rem;
-  color: #ffd700;
+  color: #0369a1;
   margin: 0;
   font-weight: 700;
-  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+  text-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
 }
 
 .status-indicator {
@@ -492,18 +511,18 @@ const quickPrompts = [
 }
 
 .status-indicator.status-online {
-  background: rgba(0, 208, 132, 0.15);
-  color: #00d084;
+  background: rgba(124, 58, 237, 0.15);
+  color: #7c3aed;
 }
 
 .status-indicator.status-thinking {
-  background: rgba(255, 191, 0, 0.15);
-  color: #ffbf00;
+  background: rgba(56, 189, 248, 0.15);
+  color: #0ea5e9;
 }
 
 .status-indicator.status-listening {
-  background: rgba(74, 158, 255, 0.15);
-  color: #4a9eff;
+  background: rgba(99, 102, 241, 0.15);
+  color: #6366f1;
 }
 
 .status-dot {
@@ -534,21 +553,22 @@ const quickPrompts = [
 
 .ai-tag {
   padding: 4px 12px;
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(212, 165, 116, 0.08) 100%);
-  border: 1px solid rgba(255, 215, 0, 0.2);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(167, 139, 250, 0.08) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.24);
   border-radius: 20px;
   font-size: 0.75rem;
-  color: #d4a574;
+  color: #0369a1;
 }
 
 .chat-section {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, rgba(53, 42, 32, 0.4) 0%, rgba(26, 21, 16, 0.6) 100%);
-  border: 1px solid rgba(212, 165, 116, 0.15);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.82) 0%, rgba(224, 242, 254, 0.5) 55%, rgba(237, 233, 254, 0.38) 100%);
+  border: 1px solid rgba(125, 211, 252, 0.24);
   border-radius: 16px;
   overflow: hidden;
+  backdrop-filter: blur(18px);
 }
 
 .chat-container {
@@ -591,15 +611,15 @@ const quickPrompts = [
 }
 
 .ai-message .message-content {
-  background: linear-gradient(135deg, rgba(212, 165, 116, 0.15) 0%, rgba(53, 42, 32, 0.6) 100%);
-  border: 1px solid rgba(212, 165, 116, 0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(224, 242, 254, 0.65) 100%);
+  border: 1px solid rgba(125, 211, 252, 0.22);
   color: var(--color-text-primary);
   border-bottom-left-radius: 4px;
 }
 
 .user-message .message-content {
-  background: linear-gradient(135deg, #ffd700 0%, #d4a574 100%);
-  color: #1a1510;
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 55%, #a78bfa 100%);
+  color: #f8fafc;
   border-bottom-right-radius: 4px;
 }
 
@@ -630,7 +650,7 @@ const quickPrompts = [
 .typing-indicator span {
   width: 8px;
   height: 8px;
-  background: #d4a574;
+  background: #38bdf8;
   border-radius: 50%;
   animation: typing-bounce 1.4s ease-in-out infinite;
 }
@@ -647,16 +667,17 @@ const quickPrompts = [
   display: flex;
   gap: 12px;
   padding: 16px 20px;
-  background: rgba(26, 21, 16, 0.8);
-  border-top: 1px solid rgba(212, 165, 116, 0.1);
+  background: rgba(255, 255, 255, 0.72);
+  border-top: 1px solid rgba(125, 211, 252, 0.18);
+  backdrop-filter: blur(14px);
 }
 
 .input-wrapper {
   flex: 1;
   display: flex;
   gap: 8px;
-  background: rgba(53, 42, 32, 0.5);
-  border: 1px solid rgba(212, 165, 116, 0.2);
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(125, 211, 252, 0.2);
   border-radius: 12px;
   padding: 4px;
 }
@@ -688,34 +709,34 @@ const quickPrompts = [
 }
 
 .voice-btn {
-  background: rgba(74, 158, 255, 0.1);
-  color: #4a9eff;
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
 }
 
 .voice-btn:hover {
-  background: rgba(74, 158, 255, 0.2);
-  box-shadow: 0 0 15px rgba(74, 158, 255, 0.3);
+  background: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
 }
 
 .voice-btn.active {
-  background: #4a9eff;
+  background: #6366f1;
   color: white;
   animation: voice-pulse 1s ease-in-out infinite;
 }
 
 @keyframes voice-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(74, 158, 255, 0.4); }
-  50% { box-shadow: 0 0 0 10px rgba(74, 158, 255, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
 }
 
 .send-btn {
-  background: linear-gradient(135deg, #ffd700 0%, #d4a574 100%);
-  color: #1a1510;
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 55%, #a78bfa 100%);
+  color: #f8fafc;
 }
 
 .send-btn:hover:not(:disabled) {
   transform: scale(1.05);
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
 }
 
 .send-btn:disabled {
@@ -732,16 +753,16 @@ const quickPrompts = [
 }
 
 .role-selection-card, .quick-prompts-card {
-  background: linear-gradient(135deg, rgba(53, 42, 32, 0.5) 0%, rgba(26, 21, 16, 0.7) 100%);
-  border: 1px solid rgba(212, 165, 116, 0.15);
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.78) 0%, rgba(224, 242, 254, 0.55) 55%, rgba(237, 233, 254, 0.4) 100%);
+  border: 1px solid rgba(125, 211, 252, 0.18);
   border-radius: 16px;
   padding: 20px;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(22px) saturate(1.08);
 }
 
 .sidebar-title {
   font-size: 1rem;
-  color: #ffd700;
+  color: #0369a1;
   margin: 0 0 16px;
   font-weight: 700;
   display: flex;
@@ -753,7 +774,7 @@ const quickPrompts = [
   content: '';
   width: 4px;
   height: 16px;
-  background: linear-gradient(180deg, #ffd700, #d4a574);
+  background: linear-gradient(180deg, #38bdf8, #a78bfa);
   border-radius: 2px;
 }
 
@@ -766,8 +787,8 @@ const quickPrompts = [
 .role-card {
   position: relative;
   padding: 16px 12px;
-  background: rgba(212, 165, 116, 0.05);
-  border: 1px solid rgba(212, 165, 116, 0.1);
+  background: rgba(56, 189, 248, 0.05);
+  border: 1px solid rgba(125, 211, 252, 0.12);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -779,15 +800,15 @@ const quickPrompts = [
 }
 
 .role-card:hover {
-  background: rgba(212, 165, 116, 0.1);
-  border-color: rgba(212, 165, 116, 0.3);
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(125, 211, 252, 0.35);
   transform: translateY(-2px);
 }
 
 .role-card.selected {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(212, 165, 116, 0.1) 100%);
-  border-color: #ffd700;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18) 0%, rgba(167, 139, 250, 0.12) 100%);
+  border-color: rgba(125, 211, 252, 0.85);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.22);
 }
 
 .role-selected-indicator {
@@ -797,7 +818,7 @@ const quickPrompts = [
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ffd700;
+  background: #38bdf8;
   opacity: 0;
   transform: scale(0);
   transition: all 0.3s ease;
@@ -806,7 +827,7 @@ const quickPrompts = [
 .role-card.selected .role-selected-indicator {
   opacity: 1;
   transform: scale(1);
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
 }
 
 .role-icon {
@@ -815,9 +836,9 @@ const quickPrompts = [
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(212, 165, 116, 0.08) 100%);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(167, 139, 250, 0.08) 100%);
   border-radius: 10px;
-  color: #d4a574;
+  color: #0369a1;
 }
 
 .role-name {
@@ -839,8 +860,8 @@ const quickPrompts = [
 
 .prompt-btn {
   padding: 10px 14px;
-  background: rgba(212, 165, 116, 0.05);
-  border: 1px solid rgba(212, 165, 116, 0.1);
+  background: rgba(56, 189, 248, 0.05);
+  border: 1px solid rgba(125, 211, 252, 0.1);
   border-radius: 8px;
   color: var(--color-text-secondary);
   font-size: 0.85rem;
@@ -850,9 +871,9 @@ const quickPrompts = [
 }
 
 .prompt-btn:hover {
-  background: rgba(212, 165, 116, 0.1);
-  border-color: rgba(212, 165, 116, 0.3);
-  color: #ffd700;
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(125, 211, 252, 0.3);
+  color: #0369a1;
 }
 
 .mentorship-footer {
@@ -860,7 +881,7 @@ const quickPrompts = [
   justify-content: space-between;
   padding: 20px 0;
   margin-top: 20px;
-  border-top: 1px solid rgba(212, 165, 116, 0.1);
+  border-top: 1px solid rgba(125, 211, 252, 0.1);
   position: relative;
   z-index: 1;
 }
@@ -871,5 +892,65 @@ const quickPrompts = [
   gap: 8px;
   padding: 12px 24px;
   font-weight: 600;
+}
+
+/* 琉璃蓝主题覆盖：与深空背景协调 */
+.mentorship-view :is(.header-icon, .crystal-avatar-section, .chat-section, .role-selection-card, .quick-prompts-card) {
+  border-color: rgba(129, 140, 248, 0.38) !important;
+  box-shadow: 0 18px 44px rgba(3, 6, 24, 0.5), 0 0 30px rgba(99, 102, 241, 0.18) !important;
+}
+
+.mentorship-view :is(.crystal-avatar-section, .chat-section, .role-selection-card, .quick-prompts-card) {
+  background: linear-gradient(145deg, rgba(8, 12, 30, 0.8), rgba(16, 24, 48, 0.72), rgba(38, 31, 80, 0.56)) !important;
+  backdrop-filter: blur(22px) saturate(1.15) !important;
+}
+
+.mentorship-view .header-icon,
+.mentorship-view .send-btn,
+.mentorship-view .sidebar-title::before,
+.mentorship-view .role-card.selected,
+.mentorship-view .role-icon {
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 52%, #a78bfa 100%) !important;
+  color: #f8fafc !important;
+}
+
+.mentorship-view .chat-input-bar,
+.mentorship-view .input-wrapper,
+.mentorship-view .prompt-btn {
+  border-color: rgba(129, 140, 248, 0.42) !important;
+  background: linear-gradient(135deg, rgba(15, 22, 44, 0.78), rgba(28, 34, 68, 0.7), rgba(54, 45, 99, 0.6)) !important;
+}
+
+.mentorship-view :is(.subtitle, .ai-description, .mentor-advice, .role-desc, .chat-input::placeholder, .message-time) {
+  color: #a5b4fc !important;
+}
+
+.mentorship-view :is(.ai-name, .sidebar-title, .mentor-title, .role-name, .prompt-btn, .chat-input, .message-content) {
+  color: #e0e7ff !important;
+}
+
+.mentorship-view .send-btn:hover:not(:disabled),
+.mentorship-view .prompt-btn:hover,
+.mentorship-view .role-card:hover {
+  box-shadow: 0 0 22px rgba(56, 189, 248, 0.35) !important;
+}
+
+.mentorship-view .typing-indicator span,
+.mentorship-view .role-selected-indicator {
+  background: #38bdf8 !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5) !important;
+}
+
+.mentorship-view .mentorship-header .title,
+.mentorship-view .sidebar-title,
+.mentorship-view .ai-tag {
+  color: #c7d2fe !important;
+  text-shadow: 0 0 18px rgba(129, 140, 248, 0.36) !important;
+}
+
+.mentorship-view .header-icon,
+.mentorship-view .send-btn {
+  animation: gradient-shift 5s ease infinite !important;
+  background-size: 220% 220% !important;
 }
 </style>

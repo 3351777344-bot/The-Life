@@ -191,14 +191,14 @@ const refreshAdvice = () => {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  background: linear-gradient(135deg, rgba(212, 165, 116, 0.1), rgba(53, 42, 32, 0.3));
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(255, 255, 255, 0.3));
   border-bottom: 1px solid var(--glass-border);
   cursor: pointer;
   user-select: none;
 }
 
 .sidebar-header:hover {
-  background: linear-gradient(135deg, rgba(212, 165, 116, 0.15), rgba(53, 42, 32, 0.4));
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(255, 255, 255, 0.4));
 }
 
 .sidebar-title {
@@ -212,7 +212,7 @@ const refreshAdvice = () => {
   width: 32px;
   height: 32px;
   border: none;
-  background: rgba(212, 165, 116, 0.1);
+  background: rgba(56, 189, 248, 0.1);
   border-radius: 8px;
   color: var(--color-accent-gold);
   cursor: pointer;
@@ -224,7 +224,7 @@ const refreshAdvice = () => {
 }
 
 .sidebar-toggle:hover {
-  background: rgba(212, 165, 116, 0.2);
+  background: rgba(56, 189, 248, 0.2);
   transform: scale(1.1);
 }
 
@@ -268,28 +268,28 @@ const refreshAdvice = () => {
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 6px;
-  background: rgba(212, 165, 116, 0.1);
+  background: rgba(56, 189, 248, 0.1);
   color: var(--color-accent-gold);
 }
 
 .attribute-value.high {
-  background: rgba(0, 208, 132, 0.15);
-  color: #00d084;
+  background: rgba(124, 58, 237, 0.15);
+  color: #7c3aed;
 }
 
 .attribute-value.low {
-  background: rgba(255, 107, 107, 0.15);
-  color: #ff6b6b;
+  background: rgba(79, 70, 229, 0.15);
+  color: #4f46e5;
 }
 
 .attribute-bar {
   position: relative;
   height: 14px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(224, 242, 254, 0.75);
   border-radius: 7px;
   overflow: visible;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 1px 2px rgba(14, 116, 185, 0.08);
 }
 
 .attribute-fill {
@@ -316,23 +316,23 @@ const refreshAdvice = () => {
 }
 
 .attribute-fill.bar-high {
-  background: linear-gradient(90deg, #00c853, #00e676, #69f0ae);
-  box-shadow: 0 0 12px rgba(0, 200, 83, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .attribute-fill.bar-medium {
-  background: linear-gradient(90deg, #ff8f00, #ffc107, #ffeb3b);
-  box-shadow: 0 0 12px rgba(255, 193, 7, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: linear-gradient(90deg, #4f46e5, #6366f1, #818cf8);
+  box-shadow: 0 0 12px rgba(79, 70, 229, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .attribute-fill.bar-low {
-  background: linear-gradient(90deg, #e65100, #ff5722, #ff7043);
-  box-shadow: 0 0 12px rgba(255, 87, 34, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: linear-gradient(90deg, #4338ca, #4f46e5, #6366f1);
+  box-shadow: 0 0 12px rgba(67, 56, 202, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .attribute-fill.bar-critical {
-  background: linear-gradient(90deg, #c62828, #f44336, #ef5350);
-  box-shadow: 0 0 12px rgba(244, 67, 54, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: linear-gradient(90deg, #312e81, #4338ca, #4f46e5);
+  box-shadow: 0 0 12px rgba(67, 56, 202, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   animation: pulse-critical 1s ease-in-out infinite;
 }
 
@@ -357,23 +357,23 @@ const refreshAdvice = () => {
 }
 
 .attribute-glow.bar-high {
-  background: #00e676;
-  box-shadow: 0 0 8px #00c853;
+  background: #8b5cf6;
+  box-shadow: 0 0 8px #6366f1;
 }
 
 .attribute-glow.bar-medium {
-  background: #ffc107;
-  box-shadow: 0 0 8px #ff8f00;
+  background: #6366f1;
+  box-shadow: 0 0 8px #4f46e5;
 }
 
 .attribute-glow.bar-low {
-  background: #ff5722;
-  box-shadow: 0 0 8px #e65100;
+  background: #4f46e5;
+  box-shadow: 0 0 8px #4338ca;
 }
 
 .attribute-glow.bar-critical {
-  background: #f44336;
-  box-shadow: 0 0 8px #c62828;
+  background: #4338ca;
+  box-shadow: 0 0 8px #312e81;
 }
 
 .attribute-threshold {
@@ -430,9 +430,9 @@ const refreshAdvice = () => {
 .stat-card {
   text-align: center;
   padding: 12px;
-  background: rgba(212, 165, 116, 0.05);
+  background: rgba(56, 189, 248, 0.05);
   border-radius: 8px;
-  border: 1px solid rgba(212, 165, 116, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.1);
 }
 
 .stat-label {
@@ -450,19 +450,19 @@ const refreshAdvice = () => {
 }
 
 .stat-value.high {
-  color: #00d084;
+  color: #7c3aed;
 }
 
 .stat-value.low {
-  color: #ff6b6b;
+  color: #4f46e5;
 }
 
 /* AI顾问卡片 */
 .ai-mentor {
   padding: 16px;
   margin-bottom: 16px;
-  background: linear-gradient(135deg, rgba(212, 165, 116, 0.05), rgba(53, 42, 32, 0.3));
-  border: 1px solid rgba(212, 165, 116, 0.2);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.05), rgba(255, 255, 255, 0.3));
+  border: 1px solid rgba(56, 189, 248, 0.2);
 }
 
 .mentor-header {
@@ -492,8 +492,8 @@ const refreshAdvice = () => {
 .btn-refresh {
   width: 100%;
   padding: 8px;
-  background: rgba(212, 165, 116, 0.15);
-  border: 1px solid rgba(212, 165, 116, 0.3);
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
   color: var(--color-accent-gold);
   border-radius: 6px;
   cursor: pointer;
@@ -502,7 +502,7 @@ const refreshAdvice = () => {
 }
 
 .btn-refresh:hover {
-  background: rgba(212, 165, 116, 0.25);
+  background: rgba(56, 189, 248, 0.25);
   transform: scale(1.02);
 }
 
@@ -537,11 +537,11 @@ const refreshAdvice = () => {
 }
 
 .trend-item.positive {
-  border-left: 3px solid #00d084;
+  border-left: 3px solid #7c3aed;
 }
 
 .trend-item.negative {
-  border-left: 3px solid #ff6b6b;
+  border-left: 3px solid #4f46e5;
 }
 
 .trend-attr {
@@ -554,11 +554,11 @@ const refreshAdvice = () => {
 }
 
 .trend-item.positive .trend-value {
-  color: #00d084;
+  color: #7c3aed;
 }
 
 .trend-item.negative .trend-value {
-  color: #ff6b6b;
+  color: #4f46e5;
 }
 
 /* 展开指引 */
@@ -568,7 +568,7 @@ const refreshAdvice = () => {
   color: var(--color-text-muted);
   opacity: 0.7;
   padding-top: 12px;
-  border-top: 1px solid rgba(212, 165, 116, 0.1);
+  border-top: 1px solid rgba(56, 189, 248, 0.1);
 }
 
 /* 折叠态 */
@@ -595,7 +595,7 @@ const refreshAdvice = () => {
   display: flex;
   justify-content: space-between;
   padding: 8px;
-  background: rgba(212, 165, 116, 0.1);
+  background: rgba(56, 189, 248, 0.1);
   border-radius: 6px;
   font-size: 0.85rem;
   cursor: help;
@@ -603,7 +603,7 @@ const refreshAdvice = () => {
 }
 
 .collapsed-item:hover {
-  background: rgba(212, 165, 116, 0.2);
+  background: rgba(56, 189, 248, 0.2);
   transform: translateX(4px);
 }
 

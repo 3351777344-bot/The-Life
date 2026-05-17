@@ -1,5 +1,6 @@
 <template>
   <div class="comparison-view">
+    <CrystalNodeTree />
     <div class="light-beam beam-1"></div>
     <div class="light-beam beam-2"></div>
     <div class="light-beam beam-3"></div>
@@ -10,24 +11,6 @@
       <div class="beam-accent bottom-left"></div>
       <div class="beam-accent bottom-right"></div>
 
-      <div class="header-section">
-        <div class="header-icon">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="url(#compGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <polyline points="22 4 12 14.01 9 11.01" stroke="url(#compGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <defs>
-              <linearGradient id="compGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ffd700"/>
-                <stop offset="50%" stop-color="#d4a574"/>
-                <stop offset="100%" stop-color="#cd7f32"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-        <h1 class="main-title">人生分岔路</h1>
-        <p class="subtitle">AIGC人生规划与决策辅助互动产品</p>
-      </div>
-
       <div class="comparison-main">
         <aside class="left-sidebar">
           <AttributesSidebar
@@ -37,32 +20,78 @@
         </aside>
 
         <main class="comparison-area">
+          <div class="radar-hero glass-card" v-if="radarAxes.length">
+            <div class="radar-hero-head">
+              <h3>五维属性雷达</h3>
+              <span class="radar-pill">职业发展 · 财务 · 人际 · 健康 · 成长</span>
+            </div>
+            <div class="radar-hero-body">
+              <svg class="radar-mini-svg" viewBox="0 0 240 240" aria-hidden="true">
+                <defs>
+                  <linearGradient id="radarFillG" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="rgba(56,189,248,0.45)" />
+                    <stop offset="100%" stop-color="rgba(167,139,250,0.35)" />
+                  </linearGradient>
+                </defs>
+                <g class="radar-grid-mini">
+                  <circle cx="120" cy="120" r="90" fill="none" stroke="rgba(125,211,252,0.35)" stroke-width="1" />
+                  <circle cx="120" cy="120" r="60" fill="none" stroke="rgba(125,211,252,0.25)" stroke-width="1" />
+                  <circle cx="120" cy="120" r="30" fill="none" stroke="rgba(125,211,252,0.2)" stroke-width="1" />
+                </g>
+                <g class="radar-axes-mini">
+                  <line
+                    v-for="(pt, index) in radarAxisPoints"
+                    :key="'ax' + index"
+                    x1="120"
+                    y1="120"
+                    :x2="pt.x"
+                    :y2="pt.y"
+                    stroke="rgba(148,163,184,0.45)"
+                    stroke-width="1"
+                  />
+                </g>
+                <polygon class="radar-shape-mini" :points="radarPolygon" fill="url(#radarFillG)" stroke="rgba(56,189,248,0.85)" stroke-width="2" />
+                <g class="radar-labels-mini">
+                  <text
+                    v-for="(axis, index) in radarAxes"
+                    :key="axis.key"
+                    :x="radarAxisPoints[index].lx"
+                    :y="radarAxisPoints[index].ly"
+                    text-anchor="middle"
+                    dominant-baseline="middle"
+                    class="radar-lbl"
+                  >{{ axis.label }}</text>
+                </g>
+              </svg>
+            </div>
+          </div>
+
           <div class="comparison-header">
-            <h2 class="comparison-title">平行空间双窗对比</h2>
+            <h2 class="comparison-title">PARALLEL / 平行时空观察窗</h2>
             <div class="comparison-controls">
               <button
                 class="btn btn-small"
                 :class="{ active: comparisonMode === 'side-by-side' }"
                 @click="comparisonMode = 'side-by-side'"
               >
-                ▭▭ 并排
+                ▭▭ SIDE BY SIDE
               </button>
               <button
                 class="btn btn-small"
                 :class="{ active: comparisonMode === 'slider' }"
                 @click="comparisonMode = 'slider'"
               >
-                ⇄ 滑块
+                ⇄ SCAN GATE
               </button>
               <button
                 class="btn btn-small"
                 :class="{ active: comparisonMode === 'blend' }"
                 @click="comparisonMode = 'blend'"
               >
-                ◐ 融合
+                ◐ BLEND
               </button>
               <button v-if="selectedRoutes.length >= 2" class="btn btn-small" @click="swapRoutes">
-                ⇅ 交换
+                ⇅ SWAP
               </button>
             </div>
           </div>
@@ -88,32 +117,37 @@
           <div v-if="comparisonMode === 'side-by-side'" class="comparison-content side-by-side">
             <div class="route-window left-window">
               <div class="route-card glass-card" @click="expandRoute(selectedRoutes[0])">
-                <div class="expand-hint">点击放大</div>
+                <div class="expand-hint">TIMELINE A / CLICK TO EXPAND</div>
                 <div class="route-glow"></div>
+                <div class="route-visual route-visual--tech" aria-hidden="true">
+                  <div class="route-visual-orbit"></div>
+                  <span class="route-visual-glyph">⎔</span>
+                </div>
+                <p class="route-scene-caption">TIMELINE A · 平行时空观察窗</p>
                 <div class="route-type" :class="selectedRoutes[0]?.type">{{ selectedRoutes[0]?.type }}</div>
                 <h3 class="route-title">{{ selectedRoutes[0]?.title }}</h3>
                 <p class="route-description">{{ selectedRoutes[0]?.description }}</p>
                 <div class="metrics">
                   <div class="metric-item">
-                    <span class="metric-label">可行性</span>
+                    <span class="metric-label">FEASIBILITY</span>
                     <div class="metric-bar">
                       <div class="metric-fill" :style="{ width: selectedRoutes[0]?.feasibility + '%' }"></div>
                     </div>
                     <span class="metric-value">{{ selectedRoutes[0]?.feasibility }}%</span>
                   </div>
                   <div class="metric-item">
-                    <span class="metric-label">难度</span>
+                    <span class="metric-label">DIFFICULTY</span>
                     <span class="metric-badge" :class="getDifficultyClass(selectedRoutes[0]?.difficulty)">
                       {{ selectedRoutes[0]?.difficulty }}
                     </span>
                   </div>
                   <div class="metric-item">
-                    <span class="metric-label">预期收益</span>
+                    <span class="metric-label">BENEFIT</span>
                     <span class="metric-badge benefit">{{ selectedRoutes[0]?.benefit }}</span>
                   </div>
                 </div>
                 <div class="attribute-impact">
-                  <h4>属性影响</h4>
+                  <h4>ATTRIBUTE IMPACT</h4>
                   <div class="impact-list">
                     <div
                       v-for="(impact, attr) in getRouteImpacts(selectedRoutes[0])"
@@ -126,38 +160,46 @@
                   </div>
                 </div>
                 <button class="btn btn-primary full-width" @click.stop="selectRoute(selectedRoutes[0])">
-                  选择此路线
+                  SELECT TIMELINE A
                 </button>
               </div>
             </div>
+            <div class="vs-pillar" aria-hidden="true">
+              <div class="vs-orb">VS CORE</div>
+            </div>
             <div class="route-window right-window">
               <div class="route-card glass-card" @click="expandRoute(selectedRoutes[1])">
-                <div class="expand-hint">点击放大</div>
-                <div class="route-glow"></div>
+                <div class="expand-hint">TIMELINE B / CLICK TO EXPAND</div>
+                <div class="route-glow route-glow--art"></div>
+                <div class="route-visual route-visual--art" aria-hidden="true">
+                  <div class="route-visual-orbit"></div>
+                  <span class="route-visual-glyph">✦</span>
+                </div>
+                <p class="route-scene-caption">TIMELINE B · 平行时空观察窗</p>
                 <div class="route-type" :class="selectedRoutes[1]?.type">{{ selectedRoutes[1]?.type }}</div>
                 <h3 class="route-title">{{ selectedRoutes[1]?.title }}</h3>
                 <p class="route-description">{{ selectedRoutes[1]?.description }}</p>
                 <div class="metrics">
                   <div class="metric-item">
-                    <span class="metric-label">可行性</span>
+                    <span class="metric-label">FEASIBILITY</span>
                     <div class="metric-bar">
                       <div class="metric-fill" :style="{ width: selectedRoutes[1]?.feasibility + '%' }"></div>
                     </div>
                     <span class="metric-value">{{ selectedRoutes[1]?.feasibility }}%</span>
                   </div>
                   <div class="metric-item">
-                    <span class="metric-label">难度</span>
+                    <span class="metric-label">DIFFICULTY</span>
                     <span class="metric-badge" :class="getDifficultyClass(selectedRoutes[1]?.difficulty)">
                       {{ selectedRoutes[1]?.difficulty }}
                     </span>
                   </div>
                   <div class="metric-item">
-                    <span class="metric-label">预期收益</span>
+                    <span class="metric-label">BENEFIT</span>
                     <span class="metric-badge benefit">{{ selectedRoutes[1]?.benefit }}</span>
                   </div>
                 </div>
                 <div class="attribute-impact">
-                  <h4>属性影响</h4>
+                  <h4>ATTRIBUTE IMPACT</h4>
                   <div class="impact-list">
                     <div
                       v-for="(impact, attr) in getRouteImpacts(selectedRoutes[1])"
@@ -170,7 +212,7 @@
                   </div>
                 </div>
                 <button class="btn btn-primary full-width" @click.stop="selectRoute(selectedRoutes[1])">
-                  选择此路线
+                  SELECT TIMELINE B
                 </button>
               </div>
             </div>
@@ -274,13 +316,50 @@
 
           <div class="policy-info glass-card">
             <div class="panel-header">
-              <h3 class="panel-title">教育/共聚政策</h3>
+              <h3 class="panel-title">政策与公共服务</h3>
+              <span class="live-dot">实时更新</span>
             </div>
             <div class="policy-item" v-for="policy in policyData" :key="policy.id">
               <h4 class="policy-title">{{ policy.title }}</h4>
               <p class="policy-text">{{ policy.description }}</p>
               <span class="policy-date">{{ policy.date }}</span>
             </div>
+          </div>
+
+          <div class="wave-panel glass-card">
+            <div class="panel-header">
+              <h3 class="panel-title">社会指标波形</h3>
+            </div>
+            <svg class="wave-svg" viewBox="0 0 280 100" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="waveLine" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#38bdf8" />
+                  <stop offset="100%" stop-color="#a78bfa" />
+                </linearGradient>
+              </defs>
+              <path
+                class="wave-area"
+                :d="waveAreaPath"
+                fill="url(#waveLine)"
+                opacity="0.22"
+              />
+              <path
+                class="wave-line"
+                :d="compositeTrendPath" fill="none" stroke="url(#waveLine)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <p class="wave-caption">综合五维属性的历史波动（示意）</p>
+          </div>
+
+          <div class="salary-panel glass-card">
+            <div class="panel-header">
+              <h3 class="panel-title">薪资水平参考</h3>
+            </div>
+            <ul class="salary-list">
+              <li v-for="row in salaryBands" :key="row.role">
+                <span class="salary-role">{{ row.role }}</span>
+                <span class="salary-band">{{ row.band }}</span>
+              </li>
+            </ul>
           </div>
         </aside>
       </div>
@@ -344,6 +423,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import AttributesSidebar from './AttributesSidebar.vue'
+import CrystalNodeTree from './CrystalNodeTree.vue'
 
 const props = defineProps({
   routes: {
@@ -353,10 +433,71 @@ const props = defineProps({
   attributes: {
     type: Object,
     default: () => ({})
+  },
+  radarAxes: {
+    type: Array,
+    default: () => []
+  },
+  radarAxisPoints: {
+    type: Array,
+    default: () => []
+  },
+  radarPolygon: {
+    type: String,
+    default: ''
+  },
+  attributeHistory: {
+    type: Array,
+    default: () => []
   }
 })
 
 const emit = defineEmits(['go-back', 'confirm-selection', 'route-selected'])
+
+const ATTR_KEYS = ['career', 'finance', 'relationship', 'health', 'growth']
+
+const waveGeometry = computed(() => {
+  const records = props.attributeHistory || []
+  const w = 280
+  const h = 100
+  const padX = 12
+  const padY = 10
+  const innerH = h - padY * 2
+  if (!records.length) {
+    const y = h / 2
+    const line = `M${padX},${y} L${w - padX},${y}`
+    return {
+      line,
+      area: `${line} L${w - padX},${h - padY} L${padX},${h - padY} Z`
+    }
+  }
+  const xStep = records.length > 1 ? (w - padX * 2) / (records.length - 1) : 0
+  const pts = records.map((item, idx) => {
+    let sum = 0
+    ATTR_KEYS.forEach((k) => {
+      sum += Math.max(0, Math.min(100, Number(item[k] ?? 0)))
+    })
+    const v = sum / ATTR_KEYS.length
+    const x = padX + idx * xStep
+    const y = padY + innerH - (v / 100) * innerH
+    return { x, y }
+  })
+  const line = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
+  const first = pts[0]
+  const last = pts[pts.length - 1]
+  const area = `${line} L${last.x.toFixed(1)},${(h - padY).toFixed(1)} L${first.x.toFixed(1)},${(h - padY).toFixed(1)} Z`
+  return { line, area }
+})
+
+const compositeTrendPath = computed(() => waveGeometry.value.line)
+const waveAreaPath = computed(() => waveGeometry.value.area)
+
+const salaryBands = [
+  { role: '算法 / 工程', band: '35–80k / 月' },
+  { role: '产品 / 运营', band: '25–55k / 月' },
+  { role: '设计 / 创意', band: '18–45k / 月' },
+  { role: '公共服务', band: '12–28k / 月' }
+]
 
 const comparisonMode = ref('side-by-side')
 const selectedRoutes = ref([])
@@ -525,6 +666,7 @@ const endSliderDrag = () => {
   margin: 0 auto;
   padding: 32px;
   position: relative;
+  z-index: 1;
 }
 
 .light-beam {
@@ -535,9 +677,16 @@ const endSliderDrag = () => {
   height: 100%;
   pointer-events: none;
   z-index: 0;
-  background: linear-gradient(270deg, transparent, rgba(212, 165, 116, 0.12), rgba(255, 215, 100, 0.2), rgba(212, 165, 116, 0.12), transparent);
+  background: linear-gradient(
+    270deg,
+    transparent,
+    rgba(125, 211, 252, 0.18),
+    rgba(56, 189, 248, 0.22),
+    rgba(167, 139, 250, 0.12),
+    transparent
+  );
   animation: beam-flow 12s linear infinite;
-  opacity: 0.4;
+  opacity: 0.45;
 }
 
 .beam-1 { animation-delay: 0s; top: 5%; }
@@ -564,59 +713,84 @@ const endSliderDrag = () => {
 .beam-accent.top-left {
   top: -30px;
   left: -30px;
-  background: radial-gradient(circle, rgba(255, 215, 100, 0.5) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(125, 211, 252, 0.55) 0%, transparent 70%);
 }
 
 .beam-accent.top-right {
   top: -30px;
   right: -30px;
-  background: radial-gradient(circle, rgba(212, 165, 116, 0.5) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.45) 0%, transparent 70%);
 }
 
 .beam-accent.bottom-left {
   bottom: -30px;
   left: -30px;
-  background: radial-gradient(circle, rgba(205, 127, 50, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.35) 0%, transparent 70%);
 }
 
 .beam-accent.bottom-right {
   bottom: -30px;
   right: -30px;
-  background: radial-gradient(circle, rgba(255, 191, 0, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(244, 114, 182, 0.28) 0%, transparent 70%);
 }
 
-.header-section {
-  text-align: center;
-  margin-bottom: 40px;
-  animation: fadeInDown 0.8s ease-out;
-  position: relative;
+.radar-hero {
+  padding: 18px 20px 14px;
+  margin-bottom: 20px;
+  border-radius: 20px;
 }
 
-.header-icon {
-  margin-bottom: 16px;
-  animation: float-gentle 4s ease-in-out infinite;
+.radar-hero-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.main-title {
-  font-size: 3rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #ffd700, #d4a574, #ffbf00);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 8px;
-  text-shadow: 0 0 40px rgba(212, 165, 116, 0.3);
-}
-
-.subtitle {
+.radar-hero-head h3 {
+  margin: 0;
   font-size: 1rem;
-  color: var(--color-text-secondary);
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: 0.06em;
+}
+
+.radar-pill {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #0369a1;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(186, 230, 253, 0.55);
+  border: 1px solid rgba(125, 211, 252, 0.45);
+}
+
+.radar-hero-body {
+  display: flex;
+  justify-content: center;
+}
+
+.radar-mini-svg {
+  width: min(100%, 220px);
+  height: auto;
+  filter: drop-shadow(0 8px 24px rgba(56, 189, 248, 0.2));
+}
+
+.radar-lbl {
+  font-size: 9px;
+  fill: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.radar-shape-mini {
+  filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.35));
 }
 
 .comparison-main {
   display: grid;
-  grid-template-columns: 280px 1fr 280px;
+  grid-template-columns: 300px 1fr 300px;
   gap: 24px;
   margin-bottom: 40px;
   position: relative;
@@ -672,10 +846,10 @@ const endSliderDrag = () => {
 
 .btn.btn-small:hover,
 .btn.btn-small.active {
-  background: rgba(212, 165, 116, 0.25);
+  background: rgba(125, 211, 252, 0.25);
   border-color: var(--color-accent-gold);
   color: var(--color-accent-gold);
-  box-shadow: 0 0 15px rgba(212, 165, 116, 0.2);
+  box-shadow: 0 0 15px rgba(125, 211, 252, 0.2);
 }
 
 .route-selector {
@@ -717,16 +891,16 @@ const endSliderDrag = () => {
 }
 
 .route-btn:hover {
-  background: rgba(212, 165, 116, 0.15);
-  border-color: rgba(212, 165, 116, 0.5);
+  background: rgba(125, 211, 252, 0.15);
+  border-color: rgba(125, 211, 252, 0.5);
   transform: translateY(-2px);
 }
 
 .route-btn.selected {
-  background: rgba(212, 165, 116, 0.3);
+  background: rgba(125, 211, 252, 0.3);
   border-color: var(--color-accent-gold);
   color: var(--color-accent-gold);
-  box-shadow: 0 0 20px rgba(212, 165, 116, 0.3);
+  box-shadow: 0 0 20px rgba(125, 211, 252, 0.3);
 }
 
 .route-name {
@@ -745,13 +919,71 @@ const endSliderDrag = () => {
 
 .side-by-side {
   display: flex;
-  flex-direction: column;
-  gap: 24px;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 20px;
+}
+
+.vs-pillar {
+  flex: 0 0 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.vs-orb {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #f8fafc;
+  background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.95), rgba(186, 230, 253, 0.5) 45%, rgba(56, 189, 248, 0.55) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 0 0 1px rgba(125, 211, 252, 0.55),
+    0 12px 40px rgba(14, 165, 233, 0.35),
+    0 0 28px rgba(167, 139, 250, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  animation: vs-pulse 3.2s ease-in-out infinite, vs-glint 1.6s ease-in-out infinite;
+}
+
+@keyframes vs-glint {
+  0%,
+  100% {
+    filter: brightness(1) drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
+  }
+  50% {
+    filter: brightness(1.12) drop-shadow(0 0 22px rgba(167, 139, 250, 0.55));
+  }
+}
+
+@keyframes vs-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 1px rgba(125, 211, 252, 0.45),
+      0 10px 32px rgba(14, 165, 233, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow:
+      0 0 0 2px rgba(167, 139, 250, 0.45),
+      0 18px 48px rgba(56, 189, 248, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
 }
 
 .left-window,
 .right-window {
   flex: 1;
+  min-width: 0;
 }
 
 .left-window .route-card,
@@ -764,12 +996,13 @@ const endSliderDrag = () => {
   top: 12px;
   right: 12px;
   font-size: 0.7rem;
-  color: var(--color-accent-gold);
+  color: #0369a1;
   opacity: 0;
   transition: opacity 0.3s ease;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.92);
   padding: 4px 8px;
   border-radius: 4px;
+  border: 1px solid rgba(125, 211, 252, 0.45);
 }
 
 .route-card:hover .expand-hint {
@@ -783,6 +1016,71 @@ const endSliderDrag = () => {
 
 .left-window { animation-delay: 0s; }
 .right-window { animation-delay: 0.15s; }
+
+.route-visual {
+  position: relative;
+  height: 118px;
+  border-radius: 16px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 12px 32px rgba(15, 76, 129, 0.08);
+}
+
+.route-visual--tech {
+  background:
+    radial-gradient(ellipse 80% 80% at 20% 20%, rgba(56, 189, 248, 0.45), transparent 55%),
+    radial-gradient(ellipse 60% 60% at 90% 80%, rgba(129, 140, 248, 0.35), transparent 50%),
+    linear-gradient(145deg, #0c4a6e 0%, #0369a1 40%, #0ea5e9 100%);
+}
+
+.route-visual--art {
+  background:
+    radial-gradient(ellipse 70% 70% at 80% 15%, rgba(244, 114, 182, 0.35), transparent 55%),
+    radial-gradient(ellipse 50% 50% at 10% 90%, rgba(167, 139, 250, 0.4), transparent 50%),
+    linear-gradient(145deg, #5b21b6 0%, #7c3aed 45%, #a78bfa 100%);
+}
+
+.route-visual-orbit {
+  position: absolute;
+  inset: -40%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  animation: orbit-glow 5s ease-in-out infinite;
+}
+
+.route-visual--art .route-visual-orbit {
+  animation-duration: 6.5s;
+}
+
+@keyframes orbit-glow {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
+.route-visual-glyph {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 2.2rem;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 0 24px rgba(186, 230, 253, 0.8);
+}
+
+.route-scene-caption {
+  margin: 0 0 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-accent-gold);
+  text-transform: none;
+}
 
 @keyframes slideInUp {
   from {
@@ -808,10 +1106,14 @@ const endSliderDrag = () => {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle at center, rgba(212, 165, 116, 0.08) 0%, transparent 50%);
+  background: radial-gradient(circle at center, rgba(56, 189, 248, 0.12) 0%, transparent 50%);
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
+}
+
+.route-glow--art {
+  background: radial-gradient(circle at center, rgba(167, 139, 250, 0.14) 0%, transparent 50%);
 }
 
 .route-card:hover .route-glow {
@@ -831,7 +1133,7 @@ const endSliderDrag = () => {
   font-size: 0.75rem;
   font-weight: 600;
   margin-bottom: 14px;
-  background: rgba(212, 165, 116, 0.2);
+  background: rgba(125, 211, 252, 0.2);
   color: var(--color-accent-gold);
 }
 
@@ -881,7 +1183,7 @@ const endSliderDrag = () => {
 
 .metric-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ffd700, #d4a574);
+  background: linear-gradient(90deg, #38bdf8, #7dd3fc, #a78bfa);
   border-radius: 4px;
   transition: width 0.5s ease;
 }
@@ -901,23 +1203,23 @@ const endSliderDrag = () => {
 }
 
 .metric-badge.easy {
-  background: rgba(72, 187, 120, 0.2);
-  color: #48bb78;
+  background: rgba(129, 140, 248, 0.2);
+  color: #6366f1;
 }
 
 .metric-badge.medium {
-  background: rgba(250, 204, 21, 0.2);
-  color: #facc15;
+  background: rgba(167, 139, 250, 0.2);
+  color: #8b5cf6;
 }
 
 .metric-badge.hard {
-  background: rgba(245, 101, 101, 0.2);
-  color: #f56565;
+  background: rgba(79, 70, 229, 0.2);
+  color: #4f46e5;
 }
 
 .metric-badge.benefit {
-  background: rgba(66, 153, 225, 0.2);
-  color: #4299e1;
+  background: rgba(99, 102, 241, 0.2);
+  color: #6366f1;
 }
 
 .metric-badge.large {
@@ -948,13 +1250,13 @@ const endSliderDrag = () => {
 }
 
 .impact-tag.positive {
-  background: rgba(72, 187, 120, 0.15);
-  color: #48bb78;
+  background: rgba(129, 140, 248, 0.15);
+  color: #6366f1;
 }
 
 .impact-tag.negative {
-  background: rgba(245, 101, 101, 0.15);
-  color: #f56565;
+  background: rgba(79, 70, 229, 0.15);
+  color: #4f46e5;
 }
 
 .impact-tag.large {
@@ -1006,7 +1308,7 @@ const endSliderDrag = () => {
   top: 0;
   width: 40px;
   height: 100%;
-  background: rgba(212, 165, 116, 0.3);
+  background: rgba(125, 211, 252, 0.3);
   backdrop-filter: blur(10px);
   cursor: ew-resize;
   transform: translateX(-50%);
@@ -1038,20 +1340,20 @@ const endSliderDrag = () => {
   appearance: none;
   width: 24px;
   height: 24px;
-  background: linear-gradient(135deg, #ffd700, #d4a574);
+  background: linear-gradient(135deg, #0284c7, #38bdf8, #a78bfa);
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 0 15px rgba(212, 165, 116, 0.5);
+  box-shadow: 0 0 15px rgba(125, 211, 252, 0.5);
 }
 
 .slider-input::-moz-range-thumb {
   width: 24px;
   height: 24px;
-  background: linear-gradient(135deg, #ffd700, #d4a574);
+  background: linear-gradient(135deg, #0284c7, #38bdf8, #a78bfa);
   border-radius: 50%;
   cursor: pointer;
   border: none;
-  box-shadow: 0 0 15px rgba(212, 165, 116, 0.5);
+  box-shadow: 0 0 15px rgba(125, 211, 252, 0.5);
 }
 
 .blend-mode {
@@ -1090,8 +1392,10 @@ const endSliderDrag = () => {
 .analysis-item {
   text-align: center;
   padding: 16px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.62);
   border-radius: 12px;
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  backdrop-filter: blur(10px);
 }
 
 .analysis-label {
@@ -1108,11 +1412,11 @@ const endSliderDrag = () => {
 }
 
 .analysis-value.positive {
-  color: #48bb78;
+  color: #6366f1;
 }
 
 .analysis-value.negative {
-  color: #f56565;
+  color: #4f46e5;
 }
 
 .social-dynamics,
@@ -1122,6 +1426,95 @@ const endSliderDrag = () => {
 
 .panel-header {
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.live-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #0369a1;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(224, 242, 254, 0.85);
+  border: 1px solid rgba(125, 211, 252, 0.45);
+}
+
+.live-dot::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6366f1;
+  box-shadow: 0 0 10px #6366f1;
+  animation: live-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(0.85);
+  }
+}
+
+.wave-panel,
+.salary-panel {
+  padding: 18px;
+}
+
+.wave-svg {
+  width: 100%;
+  height: 72px;
+  display: block;
+}
+
+.wave-caption {
+  margin: 8px 0 0;
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+}
+
+.salary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.salary-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(186, 230, 253, 0.45);
+  font-size: 0.78rem;
+}
+
+.salary-role {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.salary-band {
+  font-weight: 700;
+  color: var(--color-accent-gold-dark);
+  white-space: nowrap;
 }
 
 .panel-title {
@@ -1132,8 +1525,9 @@ const endSliderDrag = () => {
 .social-item {
   padding: 12px;
   margin-bottom: 12px;
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.55);
   border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
 }
 
 .social-item:last-child {
@@ -1150,18 +1544,18 @@ const endSliderDrag = () => {
 }
 
 .social-tag.行业 {
-  background: rgba(66, 153, 225, 0.2);
-  color: #4299e1;
+  background: rgba(99, 102, 241, 0.2);
+  color: #6366f1;
 }
 
 .social-tag.政策 {
-  background: rgba(250, 204, 21, 0.2);
-  color: #facc15;
+  background: rgba(167, 139, 250, 0.2);
+  color: #8b5cf6;
 }
 
 .social-tag.数据 {
-  background: rgba(168, 85, 247, 0.2);
-  color: #a855f7;
+  background: rgba(196, 181, 253, 0.25);
+  color: #7c3aed;
 }
 
 .social-text {
@@ -1173,8 +1567,9 @@ const endSliderDrag = () => {
 .policy-item {
   padding: 14px;
   margin-bottom: 12px;
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.55);
   border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
 }
 
 .policy-item:last-child {
@@ -1211,8 +1606,8 @@ const endSliderDrag = () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
+  background: rgba(30, 58, 95, 0.42);
+  backdrop-filter: blur(14px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1253,7 +1648,7 @@ const endSliderDrag = () => {
   width: 40px;
   height: 40px;
   border: none;
-  background: rgba(212, 165, 116, 0.2);
+  background: rgba(125, 211, 252, 0.2);
   color: var(--color-accent-gold);
   font-size: 24px;
   border-radius: 50%;
@@ -1265,7 +1660,7 @@ const endSliderDrag = () => {
 }
 
 .expanded-close:hover {
-  background: rgba(212, 165, 116, 0.4);
+  background: rgba(125, 211, 252, 0.4);
   transform: rotate(90deg);
 }
 
@@ -1362,9 +1757,28 @@ const endSliderDrag = () => {
   }
 
   .social-dynamics,
-  .policy-info {
+  .policy-info,
+  .wave-panel,
+  .salary-panel {
     flex: 1;
-    min-width: 300px;
+    min-width: 280px;
+  }
+}
+
+@media (max-width: 900px) {
+  .side-by-side {
+    flex-direction: column;
+  }
+
+  .vs-pillar {
+    flex: 0 0 auto;
+    padding: 4px 0 12px;
+  }
+
+  .vs-orb {
+    width: 48px;
+    height: 48px;
+    font-size: 0.8rem;
   }
 }
 
@@ -1375,10 +1789,6 @@ const endSliderDrag = () => {
 
   .comparison-container {
     padding: 16px;
-  }
-
-  .main-title {
-    font-size: 2rem;
   }
 
   .comparison-header {
@@ -1401,5 +1811,34 @@ const endSliderDrag = () => {
   .comparison-footer .btn {
     width: 100%;
   }
+}
+
+/* 琉璃蓝主题覆盖：对比页局部统一 */
+.comparison-view .route-type,
+.comparison-view .route-btn.selected,
+.comparison-view .btn.btn-small.active,
+.comparison-view .analysis-header h4,
+.comparison-view .panel-title {
+  color: #0369a1 !important;
+}
+
+.comparison-view .route-btn:hover,
+.comparison-view .route-btn.selected,
+.comparison-view .analysis-item,
+.comparison-view .social-item,
+.comparison-view .policy-item,
+.comparison-view .wave-panel,
+.comparison-view .salary-panel {
+  border-color: rgba(125, 211, 252, 0.42) !important;
+}
+
+.comparison-view .route-type {
+  background: rgba(56, 189, 248, 0.2) !important;
+}
+
+.comparison-view .social-tag.政策,
+.comparison-view .metric-badge.medium {
+  background: rgba(96, 165, 250, 0.2) !important;
+  color: #3b82f6 !important;
 }
 </style>

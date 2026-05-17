@@ -1,12 +1,12 @@
 <template>
   <div class="reflection-view">
     <div class="reflection-container">
-      <h1 class="title">观心</h1>
+      <h1 class="title">REFLECTION / 心理与现实状态仪表盘</h1>
 
       <div class="compass glass-container">
         <div class="compass-center">
-          <h2>属性罗盘</h2>
-          <p>基于你的选择和经历生成</p>
+          <h2>STATE COMPASS</h2>
+          <p>以等级、趋势和叙事状态呈现五维变化，而非单纯数值。</p>
         </div>
         <div class="compass-directions">
           <div class="direction" v-for="axis in radarAxes" :key="axis.key">
@@ -24,11 +24,11 @@
       </div>
 
       <div class="visualization-section glass-container">
-        <h3>属性趋势</h3>
+        <h3>ATTRIBUTE TELEMETRY</h3>
         <div class="visualization-options">
-          <button class="btn btn-secondary small" @click="$emit('show-radar')">雷达图</button>
-          <button class="btn btn-secondary small" @click="$emit('show-trend')">趋势曲线</button>
-          <button class="btn btn-secondary small" @click="$emit('show-impact')">影响溯源</button>
+          <button class="btn btn-secondary small" @click="$emit('show-radar')">RADAR</button>
+          <button class="btn btn-secondary small" @click="$emit('show-trend')">TREND</button>
+          <button class="btn btn-secondary small" @click="$emit('show-impact')">IMPACT TRACE</button>
         </div>
         <div class="chart-container">
           <div v-if="currentChart === 'radar'" class="radar-chart">
@@ -80,18 +80,18 @@
       </div>
 
       <div class="social-sidebar glass-container">
-        <h3>天下志</h3>
+        <h3>REALITY FEED / 天下志</h3>
         <div class="social-item" v-for="item in socialFeed" :key="item.id">
           <span class="source">{{ item.source }}</span>
           <p>{{ item.text }}</p>
           <span class="update-time">{{ item.date }}</span>
         </div>
-        <button class="btn btn-secondary small" @click="$emit('refresh-social')">刷新数据</button>
+        <button class="btn btn-secondary small" @click="$emit('refresh-social')">SYNC REALITY DATA</button>
       </div>
 
       <div class="reflection-controls">
-        <button class="btn btn-secondary" @click="$emit('go-to-divergence')">返回</button>
-        <button class="btn btn-primary" @click="$emit('go-to-mentorship')">AI顾问</button>
+        <button class="btn btn-secondary" @click="$emit('go-to-divergence')">BACK TO ROUTES</button>
+        <button class="btn btn-primary" @click="$emit('go-to-mentorship')">OPEN MENTOR CHANNEL</button>
       </div>
     </div>
   </div>
@@ -177,11 +177,19 @@ const getAttributeNarrative = (attribute, value) => {
 </script>
 
 <style scoped>
+.reflection-view {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+}
+
 .reflection-container {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
   animation: slideInUp 0.8s ease-out;
+  position: relative;
+  z-index: 1;
 }
 
 .compass {
@@ -223,14 +231,14 @@ const getAttributeNarrative = (attribute, value) => {
   align-items: center;
   gap: var(--space-sm);
   padding: var(--space-md);
-  background: rgba(212, 165, 116, 0.08);
+  background: rgba(56, 189, 248, 0.08);
   border-radius: 16px;
   transition: var(--transition-smooth);
   text-align: center;
 }
 
 .direction:hover {
-  background: rgba(212, 165, 116, 0.15);
+  background: rgba(56, 189, 248, 0.15);
   transform: translateY(-4px);
 }
 
@@ -243,16 +251,16 @@ const getAttributeNarrative = (attribute, value) => {
   justify-content: center;
   font-size: 32px;
   font-weight: bold;
-  background: linear-gradient(135deg, rgba(212, 165, 116, 0.3), rgba(212, 165, 116, 0.1));
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(56, 189, 248, 0.1));
   border: 2px solid var(--glass-border);
   transition: var(--transition-smooth);
-  box-shadow: 0 0 20px rgba(212, 165, 116, 0.2);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
 }
 
 .direction:hover .direction-icon {
-  box-shadow: 0 0 30px rgba(212, 165, 116, 0.4), var(--glow-gold);
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.4), var(--glow-gold);
   transform: scale(1.1);
-  background: linear-gradient(135deg, rgba(212, 165, 116, 0.5), rgba(212, 165, 116, 0.2));
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.5), rgba(56, 189, 248, 0.2));
   border-color: var(--glass-border-hover);
 }
 
@@ -291,21 +299,21 @@ const getAttributeNarrative = (attribute, value) => {
 }
 
 .attribute-level.level-high {
-  background: rgba(0, 208, 132, 0.2);
-  color: #00d084;
-  box-shadow: 0 0 15px rgba(0, 208, 132, 0.3);
+  background: rgba(124, 58, 237, 0.2);
+  color: #7c3aed;
+  box-shadow: 0 0 15px rgba(124, 58, 237, 0.3);
 }
 
 .attribute-level.level-medium {
-  background: rgba(255, 191, 0, 0.2);
-  color: #ffbf00;
-  box-shadow: 0 0 15px rgba(255, 191, 0, 0.3);
+  background: rgba(129, 140, 248, 0.2);
+  color: #6366f1;
+  box-shadow: 0 0 15px rgba(129, 140, 248, 0.3);
 }
 
 .attribute-level.level-low {
-  background: rgba(255, 107, 107, 0.2);
-  color: #ff6b6b;
-  box-shadow: 0 0 15px rgba(255, 107, 107, 0.3);
+  background: rgba(79, 70, 229, 0.2);
+  color: #4f46e5;
+  box-shadow: 0 0 15px rgba(79, 70, 229, 0.3);
 }
 
 .attribute-bar {
@@ -320,7 +328,7 @@ const getAttributeNarrative = (attribute, value) => {
 .attribute-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--color-accent-gold), var(--color-accent-gold-bright));
-  box-shadow: 0 0 10px rgba(212, 165, 116, 0.5);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
   transition: width 0.5s ease-out;
 }
 
@@ -386,10 +394,10 @@ const getAttributeNarrative = (attribute, value) => {
 }
 
 .radar-shape {
-  fill: rgba(212, 165, 116, 0.15);
+  fill: rgba(56, 189, 248, 0.15);
   stroke: var(--color-accent-gold);
   stroke-width: 2;
-  filter: drop-shadow(0 0 10px rgba(212, 165, 116, 0.3));
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.3));
 }
 
 .radar-labels text {
@@ -410,7 +418,7 @@ const getAttributeNarrative = (attribute, value) => {
 .radar-legend span {
   color: var(--color-text-secondary);
   padding: 4px 12px;
-  background: rgba(212, 165, 116, 0.1);
+  background: rgba(56, 189, 248, 0.1);
   border-radius: 12px;
 }
 
@@ -425,27 +433,27 @@ const getAttributeNarrative = (attribute, value) => {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: drop-shadow(0 0 8px rgba(212, 165, 116, 0.3));
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.3));
 }
 
 .trend-line.career {
-  stroke: #ffd700;
+  stroke: #0ea5e9;
 }
 
 .trend-line.finance {
-  stroke: #ffbf00;
+  stroke: #38bdf8;
 }
 
 .trend-line.relationship {
-  stroke: #d4a574;
+  stroke: #a78bfa;
 }
 
 .trend-line.health {
-  stroke: #00d084;
+  stroke: #6366f1;
 }
 
 .trend-line.growth {
-  stroke: #cd7f32;
+  stroke: #8b5cf6;
 }
 
 .trend-legend {
@@ -460,33 +468,33 @@ const getAttributeNarrative = (attribute, value) => {
   padding: 4px 12px;
   border-radius: 12px;
   font-size: 0.9rem;
-  background: rgba(212, 165, 116, 0.1);
+  background: rgba(56, 189, 248, 0.1);
   border-left: 3px solid;
 }
 
 .legend-item.career {
-  border-left-color: #ffd700;
-  color: #ffd700;
+  border-left-color: #0ea5e9;
+  color: #0369a1;
 }
 
 .legend-item.finance {
-  border-left-color: #ffbf00;
-  color: #ffbf00;
+  border-left-color: #38bdf8;
+  color: #0284c7;
 }
 
 .legend-item.relationship {
-  border-left-color: #d4a574;
-  color: #d4a574;
+  border-left-color: #a78bfa;
+  color: #6d28d9;
 }
 
 .legend-item.health {
-  border-left-color: #00d084;
-  color: #00d084;
+  border-left-color: #6366f1;
+  color: #4338ca;
 }
 
 .legend-item.growth {
-  border-left-color: #cd7f32;
-  color: #cd7f32;
+  border-left-color: #8b5cf6;
+  color: #6d28d9;
 }
 
 .impact-list {
@@ -497,14 +505,14 @@ const getAttributeNarrative = (attribute, value) => {
 
 .impact-item {
   padding: var(--space-md);
-  background: rgba(212, 165, 116, 0.08);
+  background: rgba(56, 189, 248, 0.08);
   border-radius: 12px;
   border-left: 4px solid var(--color-accent-gold);
   transition: var(--transition-smooth);
 }
 
 .impact-item:hover {
-  background: rgba(212, 165, 116, 0.15);
+  background: rgba(56, 189, 248, 0.15);
   transform: translateX(8px);
 }
 
@@ -534,13 +542,13 @@ const getAttributeNarrative = (attribute, value) => {
 }
 
 .impact-tag.positive {
-  background: rgba(0, 208, 132, 0.2);
-  color: #00d084;
+  background: rgba(124, 58, 237, 0.2);
+  color: #7c3aed;
 }
 
 .impact-tag.negative {
-  background: rgba(255, 107, 107, 0.2);
-  color: #ff6b6b;
+  background: rgba(79, 70, 229, 0.2);
+  color: #4f46e5;
 }
 
 .impact-empty {
@@ -564,7 +572,7 @@ const getAttributeNarrative = (attribute, value) => {
 
 .social-item {
   padding: var(--space-md);
-  background: rgba(212, 165, 116, 0.08);
+  background: rgba(56, 189, 248, 0.08);
   border-radius: 12px;
   margin-bottom: var(--space-md);
   transition: var(--transition-smooth);
@@ -572,7 +580,7 @@ const getAttributeNarrative = (attribute, value) => {
 }
 
 .social-item:hover {
-  background: rgba(212, 165, 116, 0.15);
+  background: rgba(56, 189, 248, 0.15);
   border-left-color: var(--color-accent-gold-bright);
 }
 

@@ -9,33 +9,33 @@
       <div class="beam-accent top-right"></div>
 
       <div class="divergence-header">
-        <div class="header-icon">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="url(#divGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <defs>
-              <linearGradient id="divGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ffd700"/>
-                <stop offset="50%" stop-color="#d4a574"/>
-                <stop offset="100%" stop-color="#cd7f32"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-        <h1 class="title">衍化</h1>
-        <p class="subtitle">探索命运的无限可能</p>
+        <h1 class="title">DIVERGENCE / 衍化路线数据包</h1>
+        <p class="subtitle">ROUTE PACKET GENERATOR · AI / MANUAL BRANCH SIMULATION</p>
       </div>
 
       <div class="mode-switch">
-        <span class="mode-label" :class="{ active: mode === 'ai' }">AI智能生成</span>
+        <span class="mode-label" :class="{ active: mode === 'ai' }">AI MODE</span>
         <div class="toggle" :class="{ active: mode === 'ai' }" @click="$emit('toggle-mode')">
           <div class="toggle-thumb"></div>
         </div>
-        <span class="mode-label" :class="{ active: mode !== 'ai' }">玩家自定义</span>
+        <span class="mode-label" :class="{ active: mode !== 'ai' }">MANUAL MODE</span>
+      </div>
+
+      <div class="agent-collab-panel glass-card">
+        <h3>AI AGENT COLLABORATION</h3>
+        <div class="agent-grid">
+          <div v-for="agent in agentStages" :key="agent.code" class="agent-stage">
+            <span>{{ agent.code }}</span>
+            <strong>{{ agent.name }}</strong>
+            <i :class="{ active: isGenerating }"></i>
+          </div>
+        </div>
       </div>
 
       <div class="routes-container" v-if="mode === 'ai'">
         <div class="route-card glass-card fade-in-up" v-for="(route, index) in aiRoutes" :key="index" :style="{ animationDelay: (index * 0.1) + 's' }">
           <div class="route-glow"></div>
+          <div class="packet-code">ROUTE-PACKET {{ String(index + 1).padStart(2, '0') }}</div>
           <div class="route-header">
             <h3>{{ route.title }}</h3>
             <div class="route-tag" :class="route.tagColor">{{ route.tag }}</div>
@@ -43,47 +43,54 @@
           <p class="route-description">{{ route.description }}</p>
           <div class="route-meta">
             <div class="meta-item">
-              <span class="meta-label">可行性</span>
+              <span class="meta-label">FEASIBILITY</span>
               <div class="meta-bar">
                 <div class="meta-fill" :style="{ width: route.feasibility + '%' }"></div>
               </div>
               <span class="meta-value">{{ route.feasibility }}%</span>
             </div>
             <div class="meta-tags">
-              <span class="meta-tag difficulty">{{ route.difficulty }}</span>
-              <span class="meta-tag benefit">{{ route.benefit }}</span>
+              <span class="meta-tag difficulty">DIFFICULTY {{ route.difficulty }}</span>
+              <span class="meta-tag benefit">BENEFIT {{ route.benefit }}</span>
+              <span class="meta-tag">REGRET {{ regretRisk(route) }}%</span>
+              <span class="meta-tag">REAL COST {{ route.requiredCapital || 'ESTIMATED' }}</span>
             </div>
           </div>
+          <div class="route-impact-grid">
+            <span v-for="(impact, key) in routeImpact(route)" :key="key" :class="{ negative: impact < 0 }">
+              {{ key }} {{ impact > 0 ? '+' : '' }}{{ impact }}
+            </span>
+          </div>
           <div class="route-actions">
-            <button class="btn btn-secondary small" @click="$emit('refine-route', index)">细化路线</button>
-            <button class="btn btn-secondary small" @click="$emit('replace-route', index)">替换路线</button>
-            <button class="btn btn-secondary small" :class="{ selected: compareRoutes.includes(route) }" @click="$emit('toggle-compare', route)">{{ compareRoutes.includes(route) ? '取消对比' : '加入对比' }}</button>
-            <button class="btn btn-primary small" @click="$emit('select-route', route)">选择路线</button>
+            <button class="btn btn-secondary small" @click="$emit('refine-route', index)">REFINE</button>
+            <button class="btn btn-secondary small" @click="$emit('replace-route', index)">REPLACE</button>
+            <button class="btn btn-secondary small" :class="{ selected: compareRoutes.includes(route) }" @click="$emit('toggle-compare', route)">{{ compareRoutes.includes(route) ? 'REMOVE COMPARE' : 'ADD COMPARE' }}</button>
+            <button class="btn btn-primary small" @click="$emit('select-route', route)">SELECT</button>
           </div>
         </div>
         <button class="btn btn-primary generate-btn" @click="$emit('generate-ai-routes')" :disabled="isGenerating">
           <span class="btn-glow"></span>
-          {{ isGenerating ? '生成中...' : '重新生成路线' }}
+          {{ isGenerating ? 'AGENTS RUNNING...' : 'REGENERATE ROUTES' }}
         </button>
       </div>
 
       <div class="custom-route" v-else>
         <div class="custom-route-header">
-          <h3>自定义路线</h3>
+          <h3>MANUAL ROUTE PACKET</h3>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>路线名称</label>
+            <label>ROUTE NAME</label>
             <input type="text" v-model="localCustom.title" class="input" placeholder="路线名称">
           </div>
           <div class="form-group">
-            <label>可行性</label>
+            <label>FEASIBILITY</label>
             <input type="number" v-model="localCustom.feasibility" class="input" placeholder="0-100%">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>难度</label>
+            <label>DIFFICULTY</label>
             <select v-model="localCustom.difficulty" class="input">
               <option value="">请选择</option>
               <option value="低">低</option>
@@ -92,7 +99,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label>预期收益</label>
+            <label>BENEFIT</label>
             <select v-model="localCustom.benefit" class="input">
               <option value="">请选择</option>
               <option value="低">低</option>
@@ -103,14 +110,14 @@
           </div>
         </div>
         <div class="form-group full-width">
-          <label>路线描述</label>
+          <label>ROUTE DESCRIPTION</label>
           <textarea v-model="localCustom.description" class="input" rows="3" placeholder="路线描述"></textarea>
         </div>
         <div class="form-group full-width">
-          <label>上传规划文档</label>
+          <label>UPLOAD PLANNING DOCUMENT</label>
           <input type="file" class="input" @change="$emit('file-upload', $event)">
         </div>
-        <button class="btn btn-primary" @click="$emit('add-custom-route', localCustom)">添加路线</button>
+        <button class="btn btn-primary" @click="$emit('add-custom-route', localCustom)">ADD MANUAL PACKET</button>
         <div class="custom-route-list" v-if="customRoutes.length">
           <h4>我的路线</h4>
           <div class="custom-route-card glass-card" v-for="(route, index) in customRoutes" :key="route.id">
@@ -135,12 +142,12 @@
 
       <div class="multimedia-section glass-card" v-if="selectedRoute">
         <div class="multimedia-header">
-          <h3>多模态素材</h3>
+          <h3>MULTIMODAL OUTPUT</h3>
         </div>
         <div class="multimedia-options">
-          <button class="btn btn-secondary" @click="$emit('generate-comic')">生成漫画</button>
-          <button class="btn btn-secondary" @click="$emit('generate-video')">生成短视频</button>
-          <button class="btn btn-secondary" @click="$emit('generate-poster')">生成海报</button>
+          <button class="btn btn-secondary" @click="$emit('generate-comic')">COMIC</button>
+          <button class="btn btn-secondary" @click="$emit('generate-video')">VIDEO</button>
+          <button class="btn btn-secondary" @click="$emit('generate-poster')">POSTER</button>
         </div>
         <div class="style-selector">
           <label>风格选择</label>
@@ -163,12 +170,12 @@
       </div>
 
       <div class="divergence-controls">
-        <button class="btn btn-secondary" @click="$emit('go-to-destiny')">返回</button>
+        <button class="btn btn-secondary" @click="$emit('go-to-destiny')">BACK TO GRAPH</button>
         <button v-if="compareRoutes.length >= 2" class="btn btn-primary" @click="$emit('go-to-comparison')">
-          <span class="btn-icon">🔄</span>开启双窗对比
+          <span class="btn-icon">⇄</span>OPEN PARALLEL VIEW
         </button>
         <button class="btn btn-primary" @click="$emit('go-to-reflection')">
-          <span class="btn-icon">📊</span>查看属性
+          <span class="btn-icon">⌁</span>VIEW ATTRIBUTES
         </button>
       </div>
     </div>
@@ -176,7 +183,7 @@
 </template>
 
 <script setup>
-import { reactive, toRefs, watch } from 'vue'
+import { reactive, watch, ref } from 'vue'
 defineProps({
   aiRoutes: { type: Array, required: true },
   isGenerating: { type: Boolean, required: true },
@@ -190,7 +197,21 @@ defineProps({
 const emit = defineEmits(['generate-ai-routes','refine-route','replace-route','toggle-compare','select-route','add-custom-route','remove-custom-route','file-upload','generate-comic','generate-video','generate-poster','go-to-destiny','go-to-comparison','go-to-reflection','toggle-mode'])
 
 const localCustom = reactive({ title: '', description: '', feasibility: '', difficulty: '', benefit: '' })
-const localStyle = reactive('治愈')
+const localStyle = ref('治愈')
+const agentStages = [
+  { code: 'AGENT-01', name: '剧本架构师' },
+  { code: 'AGENT-02', name: '数值精算师' },
+  { code: 'AGENT-03', name: '扰动源模拟' },
+  { code: 'AGENT-04', name: '现实数据检索' }
+]
+
+const routeImpact = (route) => route?.impacts || route?.impactFactors || {}
+const regretRisk = (route) => {
+  const feasibility = Number(route?.feasibility || 55)
+  const impacts = Object.values(routeImpact(route)).map(Number).filter(Number.isFinite)
+  const negative = impacts.filter((item) => item < 0).reduce((sum, item) => sum + Math.abs(item), 0)
+  return Math.max(0, Math.min(99, Math.round(100 - feasibility + negative)))
+}
 
 watch(() => localCustom, (v) => {}, { deep: true })
 </script>
@@ -218,7 +239,7 @@ watch(() => localCustom, (v) => {}, { deep: true })
   height: 100%;
   pointer-events: none;
   z-index: 0;
-  background: linear-gradient(270deg, transparent, rgba(212, 165, 116, 0.15), rgba(255, 215, 100, 0.25), rgba(212, 165, 116, 0.15), transparent);
+  background: linear-gradient(270deg, transparent, rgba(56, 189, 248, 0.15), rgba(14, 165, 233, 0.25), rgba(167, 139, 250, 0.15), transparent);
   animation: beam-flow 10s linear infinite;
   opacity: 0.5;
 }
@@ -247,13 +268,13 @@ watch(() => localCustom, (v) => {}, { deep: true })
 .beam-accent.top-left {
   top: -20px;
   left: -20px;
-  background: radial-gradient(circle, rgba(255, 215, 100, 0.6) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.6) 0%, transparent 70%);
 }
 
 .beam-accent.top-right {
   top: -20px;
   right: -20px;
-  background: radial-gradient(circle, rgba(212, 165, 116, 0.6) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(125, 211, 252, 0.6) 0%, transparent 70%);
 }
 
 .divergence-header {
@@ -270,7 +291,7 @@ watch(() => localCustom, (v) => {}, { deep: true })
 .divergence-header .title {
   font-size: 2.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #ffd700, #d4a574, #cd7f32);
+  background: linear-gradient(135deg, #ecfeff, #38bdf8, #a78bfa);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -309,7 +330,7 @@ watch(() => localCustom, (v) => {}, { deep: true })
 .toggle {
   width: 56px;
   height: 28px;
-  background: rgba(212, 165, 116, 0.2);
+  background: rgba(56, 189, 248, 0.2);
   border-radius: 14px;
   cursor: pointer;
   position: relative;
@@ -318,7 +339,7 @@ watch(() => localCustom, (v) => {}, { deep: true })
 }
 
 .toggle.active {
-  background: rgba(212, 165, 116, 0.5);
+  background: rgba(56, 189, 248, 0.5);
 }
 
 .toggle-thumb {
@@ -327,7 +348,7 @@ watch(() => localCustom, (v) => {}, { deep: true })
   left: 3px;
   width: 20px;
   height: 20px;
-  background: linear-gradient(135deg, #d4a574, #ffd700);
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
   border-radius: 50%;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -365,7 +386,7 @@ watch(() => localCustom, (v) => {}, { deep: true })
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle at center, rgba(212, 165, 116, 0.1) 0%, transparent 50%);
+  background: radial-gradient(circle at center, rgba(56, 189, 248, 0.12) 0%, transparent 50%);
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
@@ -392,7 +413,7 @@ watch(() => localCustom, (v) => {}, { deep: true })
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: rgba(212, 165, 116, 0.2);
+  background: rgba(56, 189, 248, 0.2);
   color: var(--color-accent-gold);
 }
 
@@ -432,7 +453,7 @@ watch(() => localCustom, (v) => {}, { deep: true })
 
 .meta-fill {
   height: 100%;
-  background: linear-gradient(90deg, #d4a574, #ffd700);
+  background: linear-gradient(90deg, #0ea5e9, #38bdf8);
   transition: width 0.6s ease;
   border-radius: 3px;
 }
@@ -455,18 +476,18 @@ watch(() => localCustom, (v) => {}, { deep: true })
   padding: 4px 12px;
   border-radius: 6px;
   font-size: 0.8rem;
-  background: rgba(212, 165, 116, 0.15);
+  background: rgba(56, 189, 248, 0.15);
   color: var(--color-text-secondary);
 }
 
 .meta-tag.difficulty {
-  background: rgba(255, 191, 0, 0.15);
-  color: #ffbf00;
+  background: rgba(96, 165, 250, 0.15);
+  color: #3b82f6;
 }
 
 .meta-tag.benefit {
-  background: rgba(0, 208, 132, 0.15);
-  color: #00d084;
+  background: rgba(124, 58, 237, 0.15);
+  color: #7c3aed;
 }
 
 .route-actions {
@@ -481,7 +502,7 @@ watch(() => localCustom, (v) => {}, { deep: true })
 }
 
 .route-actions .btn.selected {
-  background: rgba(212, 165, 116, 0.3);
+  background: rgba(56, 189, 248, 0.3);
   border-color: var(--color-accent-gold);
 }
 
@@ -628,14 +649,14 @@ watch(() => localCustom, (v) => {}, { deep: true })
 
 .media-thumb {
   height: 100px;
-  background: rgba(212, 165, 116, 0.1);
+  background: rgba(56, 189, 248, 0.1);
   border-radius: 8px;
   margin-bottom: 8px;
 }
 
-.media-thumb.comic { background: linear-gradient(135deg, rgba(255, 191, 0, 0.2), rgba(255, 107, 107, 0.2)); }
-.media-thumb.video { background: linear-gradient(135deg, rgba(0, 208, 132, 0.2), rgba(74, 158, 255, 0.2)); }
-.media-thumb.poster { background: linear-gradient(135deg, rgba(212, 165, 116, 0.2), rgba(205, 127, 50, 0.2)); }
+.media-thumb.comic { background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(167, 139, 250, 0.2)); }
+.media-thumb.video { background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(167, 139, 250, 0.2)); }
+.media-thumb.poster { background: linear-gradient(135deg, rgba(125, 211, 252, 0.22), rgba(167, 139, 250, 0.18)); }
 
 .media-info strong {
   display: block;
@@ -732,5 +753,45 @@ watch(() => localCustom, (v) => {}, { deep: true })
   .divergence-controls .btn {
     width: 100%;
   }
+}
+
+/* 琉璃蓝主题覆盖：衍化页内部统一 */
+.divergence-view :is(.header-icon, .route-card, .media-card, .custom-route-item) {
+  border-color: rgba(125, 211, 252, 0.34) !important;
+}
+
+.divergence-view .header-icon,
+.divergence-view .mode-label.active,
+.divergence-view .route-tag,
+.divergence-view .btn-primary {
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 50%, #a78bfa 100%) !important;
+  color: #f8fafc !important;
+}
+
+.divergence-view .route-card,
+.divergence-view .media-card,
+.divergence-view .custom-route-item,
+.divergence-view .mode-switch {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.74), rgba(224, 242, 254, 0.54), rgba(237, 233, 254, 0.38)) !important;
+}
+
+.divergence-view .toggle.active .toggle-thumb {
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.55) !important;
+}
+
+.divergence-view .light-beam {
+  background: linear-gradient(
+    270deg,
+    transparent,
+    rgba(56, 189, 248, 0.16),
+    rgba(14, 165, 233, 0.24),
+    rgba(167, 139, 250, 0.14),
+    transparent
+  ) !important;
+}
+
+.divergence-view .beam-accent.top-left,
+.divergence-view .beam-accent.top-right {
+  background: radial-gradient(circle, rgba(125, 211, 252, 0.55) 0%, transparent 72%) !important;
 }
 </style>

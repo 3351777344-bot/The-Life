@@ -1,7 +1,22 @@
 <template>
   <div class="app">
-    <div class="starfield" aria-hidden="true"></div>
-    <div class="main-content">
+    <div class="fui-global-grid" aria-hidden="true"></div>
+    <div class="fui-global-scan" aria-hidden="true"></div>
+    <CommandCenterView
+      v-if="currentView === 'command'"
+      :userInfo="userInfo"
+      :attributes="attributes"
+      :nodeCount="nodeCount"
+      :leafCount="leafCount"
+      :selectedDepth="selectedDepth"
+      :routeCount="aiRoutes.length + customRoutes.length"
+      @navigate="(v) => currentView = v"
+    />
+    <div v-else class="main-content">
+      <header class="app-hero glass-container">
+        <h1 class="app-hero-title">LIFE DIVERGENCE OS</h1>
+        <p class="app-hero-sub">人生分岔路 · 平行时空推演系统</p>
+      </header>
       <ViewNav :currentView="currentView" @navigate="(v) => currentView = v" />
 
       <div v-if="statusMessage" class="status-toast">{{ statusMessage }}</div>
@@ -40,24 +55,14 @@
           :treeNodes="treeNodes"
           :selectedNode="selectedNode"
           :selectedNodeData="selectedNodeData"
+          :selectedPathIds="selectedPathIds"
+          :committedNodeId="committedNodeId"
           :nodeCount="nodeCount"
           :leafCount="leafCount"
           :selectedDepth="selectedDepth"
-          :treeTransformStyle="treeTransformStyle"
-          :isPanning="isPanning"
-          @add-node="addNode"
-          @zoom-in="zoomIn"
-          @zoom-out="zoomOut"
-          @reset-view="resetView"
-          @export-tree="exportTree"
-          @reset-tree="resetTree"
-          @start-pan="startPan"
-          @pan-move="onPanMove"
-          @end-pan="endPan"
           @select-node="selectNode"
-          @edit-node="editNode"
+          @commit-node="commitNodeSelection"
           @delete-node="deleteNode"
-          @extend-branch="extendBranch"
           @go-to-genesis="goToGenesis"
           @go-to-divergence="goToDivergence"
         />
@@ -94,6 +99,10 @@
         <ComparisonView
           :routes="compareRoutes"
           :attributes="attributes"
+          :radar-axes="radarAxes"
+          :radar-axis-points="radarAxisPoints"
+          :radar-polygon="radarPolygon"
+          :attribute-history="attributeHistory"
           @go-back="() => currentView = 'divergence'"
           @confirm-selection="goToReflection"
         />
@@ -147,11 +156,37 @@
       </div>
 
     </div>
+
+    <button
+      v-if="currentView !== 'mentorship' && currentView !== 'command'"
+      type="button"
+      class="ai-console-dock"
+      @click="goToMentorship"
+      aria-label="打开 AI 导师"
+    >
+      <span class="ai-console-avatar" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="url(#dockG)" stroke-width="2" />
+          <path d="M8 14c1.5 2 6.5 2 8 0" stroke="url(#dockG)" stroke-width="1.5" stroke-linecap="round" />
+          <defs>
+            <linearGradient id="dockG" x1="0" y1="0" x2="24" y2="24">
+              <stop stop-color="#6366f1" />
+              <stop offset="1" stop-color="#a78bfa" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </span>
+      <span class="ai-console-bubble">
+        <strong>AI 决策导师</strong>
+        <span class="ai-console-hint">人生模拟与路径建议已就绪，点此对话</span>
+      </span>
+    </button>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import CommandCenterView from './components/CommandCenterView.vue'
 import ViewNav from './components/ViewNav.vue'
 import GenesisView from './components/GenesisView.vue'
 import DestinyView from './components/DestinyView.vue'
@@ -164,7 +199,7 @@ import InputDialog from './components/InputDialog.vue'
 import { generateRoute, getAIAdvice, generateScenario } from './services/ollamaService'
 
 // Minimal reactive state to keep components running
-const currentView = ref('genesis')
+const currentView = ref('command')
 const statusMessage = ref('')
 
 // Dialog state
@@ -202,99 +237,49 @@ const currentScenario = ref({
   ]
 })
 
-const treeNodes = ref([
+const createInitialDestinyNodes = () => [
   {
     id: 'current',
     parentId: null,
     title: '当前人生节点',
-    description: '从你的基础建模出发，展开关键选择。',
+    description: '从你的基础建模出发，等待系统推演三条关键分岔。',
     depth: 1,
     timeline: new Date().toISOString(),
-    children: ['branch-stay', 'branch-jump', 'branch-startup']
+    children: ['branch-stay', 'branch-jump', 'branch-independent']
   },
   {
     id: 'branch-stay',
     parentId: 'current',
-    title: '在现公司继续深耕',
-    description: '稳定发展路线，逐步积累管理经验和行业影响力',
+    title: '稳定深耕',
+    description: '保留现有城市与职业基本盘，通过项目、晋升与长期积累提升确定性。',
     depth: 2,
-    timeline: new Date(Date.now() - 7*24*60*60*1000).toISOString(),
-    children: ['stay-promote', 'stay-transfer']
+    timeline: new Date().toISOString(),
+    children: []
   },
   {
     id: 'branch-jump',
     parentId: 'current',
-    title: '跳槽到大厂或创业公司',
-    description: '追求更大平台或更大挑战，快速成长',
+    title: '平台跃迁',
+    description: '进入更高强度平台或高速增长组织，用风险换取更高职业斜率。',
     depth: 2,
-    timeline: new Date(Date.now() - 5*24*60*60*1000).toISOString(),
-    children: ['jump-tech', 'jump-startup']
+    timeline: new Date().toISOString(),
+    children: []
   },
   {
-    id: 'branch-startup',
+    id: 'branch-independent',
     parentId: 'current',
-    title: '独立创业或自由职业',
-    description: '创造个人品牌，获得更高的上升潜力和收入',
+    title: '独立路线',
+    description: '发展个人品牌、副业或创业项目，将职业资产转化为更自由的路径。',
     depth: 2,
-    timeline: new Date(Date.now() - 3*24*60*60*1000).toISOString(),
-    children: ['startup-own', 'startup-invest']
-  },
-  {
-    id: 'stay-promote',
-    parentId: 'branch-stay',
-    title: '争取晋升为总监',
-    description: '专注于团队建设和战略规划',
-    depth: 3,
-    timeline: new Date().toISOString(),
-    children: []
-  },
-  {
-    id: 'stay-transfer',
-    parentId: 'branch-stay',
-    title: '转向策略或运营方向',
-    description: '拓宽职业边界，增强竞争力',
-    depth: 3,
-    timeline: new Date().toISOString(),
-    children: []
-  },
-  {
-    id: 'jump-tech',
-    parentId: 'branch-jump',
-    title: '加入科技大厂（BAT）',
-    description: '获得更优的薪资和平台机会',
-    depth: 3,
-    timeline: new Date().toISOString(),
-    children: []
-  },
-  {
-    id: 'jump-startup',
-    parentId: 'branch-jump',
-    title: '加入高成长创业公司',
-    description: '获得期权和更多话语权',
-    depth: 3,
-    timeline: new Date().toISOString(),
-    children: []
-  },
-  {
-    id: 'startup-own',
-    parentId: 'branch-startup',
-    title: '创办自己的公司',
-    description: '打造产品和团队',
-    depth: 3,
-    timeline: new Date().toISOString(),
-    children: []
-  },
-  {
-    id: 'startup-invest',
-    parentId: 'branch-startup',
-    title: '成为天使投资人/顾问',
-    description: '通过投资和咨询获得收益',
-    depth: 3,
     timeline: new Date().toISOString(),
     children: []
   }
-])
+]
+
+const treeNodes = ref(createInitialDestinyNodes())
 const selectedNode = ref('current')
+const selectedPathIds = ref(['current'])
+const committedNodeId = ref(null)
 const selectedNodeData = computed(() => treeNodes.value.find(n => n.id === selectedNode.value))
 const nodeCount = computed(() => treeNodes.value.length)
 const leafCount = computed(() => treeNodes.value.filter(n => !n.children || n.children.length === 0).length)
@@ -302,14 +287,6 @@ const selectedDepth = computed(() => {
   const n = selectedNodeData.value
   return n?.depth || 1
 })
-const treeScale = ref(1)
-const treeOffset = ref({ x: 0, y: 0 })
-const panStart = ref({ x: 0, y: 0 })
-const treeTransformStyle = computed(() => ({
-  transform: `translate(${treeOffset.value.x}px, ${treeOffset.value.y}px) scale(${treeScale.value})`,
-  transformOrigin: 'center top'
-}))
-const isPanning = ref(false)
 
 const aiRoutes = ref([
   {
@@ -371,11 +348,11 @@ const impactHistory = ref([
 ])
 const currentChart = ref('radar')
 const radarAxes = ref([
-  { key: 'career', label: '职业' },
-  { key: 'finance', label: '财务' },
-  { key: 'relationship', label: '人际' },
-  { key: 'health', label: '健康' },
-  { key: 'growth', label: '成长' }
+  { key: 'career', label: '职业发展' },
+  { key: 'finance', label: '财务状况' },
+  { key: 'relationship', label: '人际关系' },
+  { key: 'health', label: '健康状态' },
+  { key: 'growth', label: '个人成长' }
 ])
 const radarAxisPoints = computed(() => {
   const centerX = 120
@@ -408,7 +385,7 @@ const radarPolygon = computed(() => {
     })
     .join(' ')
 })
-const axisLabelMap = ref({ career: '职业', finance: '财务', relationship: '人际', health: '健康', growth: '成长' })
+const axisLabelMap = ref({ career: '职业发展', finance: '财务状况', relationship: '人际关系', health: '健康状态', growth: '个人成长' })
 const socialFeed = ref([
   { id: 'feed_1', source: '国家统计局', text: '青年就业市场回暖，数字服务类岗位增长明显。', date: new Date().toLocaleDateString() },
   { id: 'feed_2', source: '人社公开数据', text: '一线城市生活成本继续上升，择业需同步评估净收益。', date: new Date().toLocaleDateString() },
@@ -597,119 +574,58 @@ const selectAIRole = (role) => {
 }
 const toggleVoiceInput = () => { isListening.value = !isListening.value; setStatusMessage(isListening.value ? '开始语音' : '停止语音') }
 
-// Minimal tree helpers
-const addNode = () => {
-  const parentId = selectedNode.value || 'current'
-  const parent = findNode(parentId)
-  if (!parent) return
-  
-  // Step 1: Get title
-  const defaultTitle = `分支-${(parent.children?.length || 0) + 1}`
-  inputDialog.value = {
-    title: '新增节点',
-    message: '请输入节点标题：',
-    placeholder: '例如：考虑创业',
-    defaultValue: defaultTitle,
-    inputType: 'text',
-    onConfirm: (title) => {
-      if (!title) {
-        setStatusMessage('已取消')
-        return
-      }
-      // Step 2: Get description
-      inputDialog.value = {
-        title: '新增节点',
-        message: '请输入节点描述：',
-        placeholder: '例如：在现有工作基础上探索新方向',
-        defaultValue: '一次新的关键选择',
-        inputType: 'text',
-        onConfirm: (desc) => {
-          const nodeId = `node_${Date.now()}`
-          const newNode = {
-            id: nodeId,
-            parentId,
-            title,
-            description: desc || '一次新的关键选择',
-            depth: (parent.depth || 1) + 1,
-            timeline: new Date().toISOString(),
-            children: []
-          }
-          parent.children = [...(parent.children || []), nodeId]
-          treeNodes.value.push(newNode)
-          selectedNode.value = nodeId
-          recordAttributeHistory()
-          setStatusMessage('已新增节点')
-        }
-      }
-      showInputDialog.value = true
-    }
-  }
-  showInputDialog.value = true
-}
-const zoomIn = () => { treeScale.value = Math.min(2, +(treeScale.value + 0.1).toFixed(2)) }
-const zoomOut = () => { treeScale.value = Math.max(0.6, +(treeScale.value - 0.1).toFixed(2)) }
-const resetView = () => {
-  treeScale.value = 1
-  treeOffset.value = { x: 0, y: 0 }
-}
-const exportTree = () => {
-  const payload = {
-    exportedAt: new Date().toISOString(),
-    userInfo: userInfo.value,
-    treeNodes: treeNodes.value,
-    attributes: attributes.value,
-    savedPaths: savedPaths.value
-  }
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'life_tree_export.json'
-  a.click()
-  URL.revokeObjectURL(url)
-  setStatusMessage('已导出图谱')
-}
-const resetTree = () => {
-  treeNodes.value = [
-    {
-      id: 'current',
-      parentId: null,
-      title: '当前人生节点',
-      description: '从你的基础建模出发，展开关键选择。',
-      depth: 1,
-      timeline: new Date().toISOString(),
-      children: []
-    }
-  ]
-  selectedNode.value = 'current'
-  setStatusMessage('树状图已重置')
-}
-const startPan = (e) => {
-  isPanning.value = true
-  panStart.value = {
-    x: e.clientX - treeOffset.value.x,
-    y: e.clientY - treeOffset.value.y
-  }
-}
-const onPanMove = (e) => {
-  if (!isPanning.value) return
-  treeOffset.value = {
-    x: e.clientX - panStart.value.x,
-    y: e.clientY - panStart.value.y
-  }
-}
-const endPan = () => { isPanning.value = false }
+// Destiny graph helpers
 const selectNode = (n) => { selectedNode.value = n }
-const editNode = (id) => {
+
+const getAncestorPath = (id) => {
+  const ids = []
+  let current = findNode(id)
+  while (current) {
+    ids.unshift(current.id)
+    current = current.parentId ? findNode(current.parentId) : null
+  }
+  return ids
+}
+
+const createGeneratedBranch = (parent, index) => {
+  const depth = (parent.depth || 1) + 1
+  const templates = [
+    ['资源整合', '整合当前人脉、资金与技能，形成下一阶段可执行方案。'],
+    ['高压突破', '接受更强挑战，以短期压力换取更高成长速度。'],
+    ['稳态验证', '先用低成本试点验证路线，降低不可逆损失。']
+  ]
+  const [title, description] = templates[(index - 1) % templates.length]
+  return {
+    id: `${parent.id}-next-${Date.now()}-${index}`,
+    parentId: parent.id,
+    title: `${title} ${index}`,
+    description,
+    depth,
+    timeline: new Date().toISOString(),
+    generated: true,
+    children: []
+  }
+}
+
+const extendSelectedBranch = (node) => {
+  if (!node || (node.children || []).length) return
+  const count = node.depth >= 4 ? 2 : 3
+  const createdNodes = Array.from({ length: count }, (_, index) => createGeneratedBranch(node, index + 1))
+  node.children = createdNodes.map((child) => child.id)
+  treeNodes.value.push(...createdNodes)
+}
+
+const commitNodeSelection = (id) => {
   const node = findNode(id)
   if (!node) return
-  const title = window.prompt('编辑节点标题：', node.title)
-  if (!title) return
-  const desc = window.prompt('编辑节点描述：', node.description || '')
-  node.title = title
-  node.description = desc || ''
-  setStatusMessage('节点已更新')
+  selectedNode.value = id
+  committedNodeId.value = id
+  selectedPathIds.value = getAncestorPath(id)
+  extendSelectedBranch(node)
+  recordAttributeHistory()
+  setStatusMessage(`已选择命轨节点：${node.title}`)
 }
+
 const deleteNode = (id) => {
   if (id === 'current') {
     setStatusMessage('根节点不可删除')
@@ -721,43 +637,14 @@ const deleteNode = (id) => {
   treeNodes.value = treeNodes.value.filter(n => !idsToRemove.includes(n.id))
   const parent = findNode(node.parentId)
   if (parent) parent.children = (parent.children || []).filter(cid => cid !== id)
-  if (selectedNode.value === id) selectedNode.value = parent?.id || 'current'
-  setStatusMessage('节点及其子分支已删除')
-}
-const extendBranch = (id) => {
-  const parent = findNode(id)
-  if (!parent) return
-  
-  inputDialog.value = {
-    title: '延伸分支',
-    message: '请输入要生成的分支数量（2-5）：',
-    placeholder: '输入数字',
-    defaultValue: '2',
-    inputType: 'number',
-    onConfirm: (value) => {
-      const count = Number(value || 2)
-      const branchCount = Number.isFinite(count) ? Math.max(2, Math.min(5, count)) : 2
-      const createdIds = []
-      for (let i = 1; i <= branchCount; i += 1) {
-        const nodeId = `node_${Date.now()}_${i}`
-        const node = {
-          id: nodeId,
-          parentId: id,
-          title: `${parent.title}-分支${i}`,
-          description: `基于 ${parent.title} 的分支方案 ${i}`,
-          depth: (parent.depth || 1) + 1,
-          timeline: new Date().toISOString(),
-          children: []
-        }
-        treeNodes.value.push(node)
-        createdIds.push(nodeId)
-      }
-      parent.children = [...(parent.children || []), ...createdIds]
-      recordAttributeHistory()
-      setStatusMessage(`已延伸 ${branchCount} 个分支`)
-    }
+  if (idsToRemove.includes(selectedNode.value)) selectedNode.value = parent?.id || 'current'
+  if (idsToRemove.includes(committedNodeId.value)) {
+    committedNodeId.value = parent?.id || 'current'
+    selectedPathIds.value = getAncestorPath(committedNodeId.value)
+  } else {
+    selectedPathIds.value = selectedPathIds.value.filter(pathId => !idsToRemove.includes(pathId))
   }
-  showInputDialog.value = true
+  setStatusMessage('节点及其子分支已删除')
 }
 
 // divergence implementations (lightweight but functional)
@@ -966,7 +853,180 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.main-content { padding: var(--space-lg); max-width: 1200px; margin: 0 auto }
-.status-toast { padding: 0.8rem 1rem; background: #f7f7f7; border-radius: 10px; margin-bottom: var(--space-md); box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-.title { font-size: 1.8rem; margin-bottom: 1rem }
+.main-content {
+  padding: var(--space-lg);
+  max-width: 1680px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.app-hero {
+  text-align: center;
+  padding: 1rem 1.25rem 1.1rem;
+  margin-bottom: var(--space-lg);
+  border-radius: 20px;
+}
+
+.app-hero-title {
+  font-size: clamp(1.35rem, 2.8vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  background: linear-gradient(105deg, #4f46e5, #6366f1, #818cf8, #a78bfa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 0.35rem;
+}
+
+.app-hero-sub {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.18em;
+  opacity: 0.92;
+}
+
+.dna-helix {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.dna-svg {
+  width: min(42vw, 520px);
+  height: 100%;
+  margin: 0 auto;
+  display: block;
+  filter: blur(0.3px);
+}
+
+.dna-strand {
+  stroke-linecap: round;
+  stroke-dasharray: 28 14;
+  animation: dna-dash 20s linear infinite;
+}
+
+.dna-strand.b {
+  animation-duration: 26s;
+  animation-direction: reverse;
+}
+
+@keyframes dna-dash {
+  to {
+    stroke-dashoffset: -420;
+  }
+}
+
+.path-tags {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.path-tag {
+  position: absolute;
+  padding: 6px 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #3730a3;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.75), rgba(224, 231, 255, 0.55));
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  box-shadow: 0 0 22px rgba(99, 102, 241, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  animation: tag-drift 10s ease-in-out infinite;
+}
+
+.path-tag:nth-child(2) {
+  animation-delay: -2.5s;
+}
+.path-tag:nth-child(3) {
+  animation-delay: -5s;
+}
+.path-tag:nth-child(4) {
+  animation-delay: -7.5s;
+}
+
+@keyframes tag-drift {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.02);
+  }
+}
+
+.ai-console-dock {
+  position: fixed;
+  right: max(16px, 2vw);
+  bottom: max(16px, 2vh);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px 10px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(224, 231, 255, 0.5), rgba(237, 233, 254, 0.45));
+  backdrop-filter: blur(18px) saturate(1.15);
+  box-shadow: 0 12px 40px rgba(49, 46, 129, 0.14), 0 0 34px rgba(99, 102, 241, 0.2);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.ai-console-dock:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 48px rgba(49, 46, 129, 0.18), 0 0 42px rgba(99, 102, 241, 0.3);
+}
+
+.ai-console-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 30% 25%, #fff, rgba(199, 210, 254, 0.85));
+  box-shadow: inset 0 0 0 2px rgba(99, 102, 241, 0.4);
+}
+
+.ai-console-bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 220px;
+}
+
+.ai-console-bubble strong {
+  font-size: 0.82rem;
+  color: var(--color-text-primary);
+}
+
+.ai-console-hint {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+}
+
+.status-toast {
+  padding: 0.8rem 1.2rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(224, 231, 255, 0.9));
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  border-radius: 14px;
+  margin-bottom: var(--space-md);
+  box-shadow: 0 8px 28px rgba(30, 58, 95, 0.08), 0 0 28px rgba(99, 102, 241, 0.16);
+  backdrop-filter: blur(12px);
+  color: var(--color-text-primary);
+}
+
+.title {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
 </style>

@@ -1,23 +1,8 @@
 <template>
   <div class="conclusion-view">
-    <div class="dna-particles-conclusion"></div>
-    
     <div class="conclusion-header">
-      <div class="header-icon">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="url(#headerGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <polyline points="22 4 12 14.01 9 11.01" stroke="url(#headerGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <defs>
-            <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#ffd700"/>
-              <stop offset="50%" stop-color="#d4a574"/>
-              <stop offset="100%" stop-color="#cd7f32"/>
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-      <h1 class="title">归途</h1>
-      <p class="subtitle">终局报告 · 回顾你的人生旅程</p>
+      <h1 class="title">REPORT / 终局归档报告</h1>
+      <p class="subtitle">FINAL ARCHIVE · REGRET INDEX · AI LIFE ADVICE</p>
     </div>
 
     <div class="conclusion-layout">
@@ -31,11 +16,11 @@
                 <line x1="9" y1="9" x2="9.01" y2="9"/>
                 <line x1="15" y1="9" x2="15.01" y2="9"/>
               </svg>
-              后悔指数
+              REGRET INDEX
             </h3>
           </div>
           <div class="regret-display">
-            <div class="regret-number" :class="regretLevelClass">
+            <div class="regret-number" :class="regretLevelClass" :style="{ '--regret': regretLevel }">
               {{ regretLevel }}
               <span class="regret-max">/100</span>
             </div>
@@ -59,7 +44,7 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
               </svg>
-              AI 人生建议
+              AI LIFE ADVICE
             </h3>
           </div>
           <div class="advice-content">
@@ -73,7 +58,7 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
               </svg>
-              分析摘要
+              ANALYSIS SUMMARY
             </h3>
           </div>
           <pre class="analysis-box">{{ regretAnalysis }}</pre>
@@ -87,7 +72,7 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
               </svg>
-              已保存路径
+              SAVED TIMELINES
             </h3>
           </div>
           <div class="paths-list">
@@ -121,7 +106,7 @@
                 <line x1="12" y1="20" x2="12" y2="4"/>
                 <line x1="6" y1="20" x2="6" y2="14"/>
               </svg>
-              旅程统计
+              ARCHIVE STATS
             </h3>
           </div>
           <div class="stats-grid">
@@ -174,7 +159,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
-        继续论道
+        BACK TO MENTOR
       </button>
       <div class="footer-actions">
         <button class="btn btn-outline" @click="$emit('restart')">
@@ -182,7 +167,7 @@
             <polyline points="1 4 1 10 7 10"/>
             <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
           </svg>
-          重新开始
+          RESET SIMULATION
         </button>
         <button class="btn btn-primary" @click="downloadReport">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -190,7 +175,7 @@
             <polyline points="7 10 12 15 17 10"/>
             <line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          导出报告
+          EXPORT ARCHIVE
         </button>
       </div>
     </div>
@@ -226,9 +211,9 @@ const regretLevelClass = computed(() => {
 })
 
 const regretProgressColor = computed(() => {
-  if (props.regretLevel < 30) return 'linear-gradient(90deg, #00d084, #00a854)'
-  if (props.regretLevel < 60) return 'linear-gradient(90deg, #ffbf00, #ff9500)'
-  return 'linear-gradient(90deg, #ff6b6b, #ff4444)'
+  if (props.regretLevel < 30) return 'linear-gradient(90deg, #7c3aed, #6d28d9)'
+  if (props.regretLevel < 60) return 'linear-gradient(90deg, #38bdf8, #0284c7)'
+  return 'linear-gradient(90deg, #60a5fa, #a78bfa)'
 })
 
 const downloadReport = () => {
@@ -263,10 +248,11 @@ const downloadReport = () => {
   flex-direction: column;
   position: relative;
   padding: 24px;
-  background: 
-    radial-gradient(ellipse at 20% 20%, rgba(255, 230, 150, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(255, 215, 100, 0.08) 0%, transparent 50%),
-    linear-gradient(135deg, #0f0e0d 0%, #1a1510 100%);
+  background:
+    radial-gradient(circle at 52% 45%, rgba(0, 0, 0, 0.96) 0 8%, rgba(17, 24, 39, 0.95) 9%, rgba(55, 65, 81, 0.72) 16%, rgba(79, 70, 229, 0.28) 22%, transparent 36%),
+    radial-gradient(circle at 52% 45%, rgba(56, 189, 248, 0.3) 25%, rgba(99, 102, 241, 0.25) 34%, rgba(167, 139, 250, 0.18) 42%, transparent 60%),
+    radial-gradient(ellipse 120% 90% at 50% -10%, rgba(79, 70, 229, 0.3) 0%, transparent 56%),
+    linear-gradient(165deg, #06080f 0%, #090d1a 45%, #140f28 100%);
 }
 
 .dna-particles-conclusion {
@@ -277,9 +263,44 @@ const downloadReport = () => {
   height: 100%;
   pointer-events: none;
   z-index: 0;
-  background: 
-    radial-gradient(circle at 10% 30%, rgba(255, 230, 150, 0.06) 0%, transparent 40%),
-    radial-gradient(circle at 90% 70%, rgba(255, 215, 100, 0.05) 0%, transparent 40%);
+  background:
+    radial-gradient(circle at 52% 45%, rgba(0, 0, 0, 0.85) 0 6%, rgba(56, 189, 248, 0.22) 16%, rgba(99, 102, 241, 0.2) 24%, rgba(167, 139, 250, 0.12) 32%, transparent 48%),
+    conic-gradient(
+      from 0deg at 52% 45%,
+      rgba(99, 102, 241, 0.14),
+      rgba(56, 189, 248, 0.22),
+      rgba(167, 139, 250, 0.18),
+      rgba(56, 189, 248, 0.12),
+      rgba(99, 102, 241, 0.14)
+    );
+  mix-blend-mode: screen;
+  animation: blackhole-spin 26s linear infinite;
+}
+
+.dna-particles-conclusion::before,
+.dna-particles-conclusion::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 28% 14% at 52% 45%, rgba(255, 255, 255, 0.13) 0%, rgba(167, 139, 250, 0.08) 58%, transparent 100%);
+  animation: blackhole-pulse 6.5s ease-in-out infinite;
+}
+
+.dna-particles-conclusion::after {
+  filter: blur(1.2px);
+  opacity: 0.7;
+  animation-duration: 10s;
+}
+
+@keyframes blackhole-spin {
+  from { transform: rotate(0deg) scale(1); }
+  to { transform: rotate(360deg) scale(1.03); }
+}
+
+@keyframes blackhole-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.72; transform: scale(1.08); }
 }
 
 .conclusion-header {
@@ -305,7 +326,7 @@ const downloadReport = () => {
 .conclusion-header .title {
   font-size: 2rem;
   margin: 0 0 8px;
-  background: linear-gradient(90deg, #ffe066, #ffd700, #ffe066);
+  background: linear-gradient(90deg, #e0f2fe, #38bdf8, #e0e7ff);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -342,12 +363,12 @@ const downloadReport = () => {
 }
 
 .glass-card {
-  background: linear-gradient(135deg, rgba(255, 248, 235, 0.08) 0%, rgba(255, 230, 150, 0.05) 50%, rgba(255, 215, 100, 0.06) 100%);
-  border: 1px solid rgba(255, 215, 140, 0.4);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.72) 0%, rgba(254, 249, 231, 0.45) 50%, rgba(224, 242, 254, 0.38) 100%);
+  border: 1px solid rgba(125, 211, 252, 0.28);
   border-radius: 16px;
   padding: 24px;
-  backdrop-filter: blur(25px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 40px rgba(255, 215, 100, 0.1);
+  backdrop-filter: blur(26px) saturate(1.08);
+  box-shadow: 0 12px 36px rgba(30, 58, 95, 0.08), 0 0 36px rgba(56, 189, 248, 0.12);
 }
 
 .card-header {
@@ -356,17 +377,17 @@ const downloadReport = () => {
 
 .card-title {
   font-size: 1.1rem;
-  color: #ffe066;
+  color: #0369a1;
   margin: 0;
   font-weight: 700;
   display: flex;
   align-items: center;
   gap: 10px;
-  text-shadow: 0 0 20px rgba(255, 230, 150, 0.5);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8), 0 0 18px rgba(56, 189, 248, 0.35);
 }
 
 .card-title svg {
-  color: #ffd700;
+  color: #0284c7;
 }
 
 .regret-index-card {
@@ -386,8 +407,8 @@ const downloadReport = () => {
 }
 
 .regret-number.level-low {
-  color: #00d084;
-  text-shadow: 0 0 50px rgba(0, 208, 132, 0.6);
+  color: #7c3aed;
+  text-shadow: 0 0 50px rgba(124, 58, 237, 0.6);
 }
 
 .regret-number.level-medium {
@@ -396,8 +417,8 @@ const downloadReport = () => {
 }
 
 .regret-number.level-high {
-  color: #ff6b6b;
-  text-shadow: 0 0 50px rgba(255, 107, 107, 0.6);
+  color: #6366f1;
+  text-shadow: 0 0 50px rgba(99, 102, 241, 0.6);
 }
 
 .regret-max {
@@ -442,8 +463,8 @@ const downloadReport = () => {
 }
 
 .advice-content {
-  background: rgba(255, 215, 0, 0.05);
-  border: 1px solid rgba(255, 215, 0, 0.1);
+  background: rgba(56, 189, 248, 0.06);
+  border: 1px solid rgba(56, 189, 248, 0.16);
   border-radius: 12px;
   padding: 20px;
 }
@@ -456,8 +477,8 @@ const downloadReport = () => {
 }
 
 .analysis-box {
-  background: rgba(15, 14, 13, 0.6);
-  border: 1px solid rgba(212, 165, 116, 0.1);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(125, 211, 252, 0.24);
   padding: 20px;
   border-radius: 12px;
   white-space: pre-wrap;
@@ -469,6 +490,7 @@ const downloadReport = () => {
   max-height: 250px;
   overflow-y: auto;
   margin: 0;
+  backdrop-filter: blur(12px);
 }
 
 .analysis-box::-webkit-scrollbar {
@@ -476,12 +498,12 @@ const downloadReport = () => {
 }
 
 .analysis-box::-webkit-scrollbar-track {
-  background: rgba(53, 42, 32, 0.3);
+  background: rgba(241, 245, 249, 0.95);
   border-radius: 3px;
 }
 
 .analysis-box::-webkit-scrollbar-thumb {
-  background: rgba(212, 165, 116, 0.3);
+  background: rgba(56, 189, 248, 0.45);
   border-radius: 3px;
 }
 
@@ -510,12 +532,12 @@ const downloadReport = () => {
 }
 
 .paths-list::-webkit-scrollbar-track {
-  background: rgba(53, 42, 32, 0.3);
+  background: rgba(241, 245, 249, 0.95);
   border-radius: 3px;
 }
 
 .paths-list::-webkit-scrollbar-thumb {
-  background: rgba(212, 165, 116, 0.3);
+  background: rgba(56, 189, 248, 0.45);
   border-radius: 3px;
 }
 
@@ -524,8 +546,8 @@ const downloadReport = () => {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: rgba(212, 165, 116, 0.05);
-  border: 1px solid rgba(212, 165, 116, 0.1);
+  background: rgba(56, 189, 248, 0.06);
+  border: 1px solid rgba(125, 211, 252, 0.18);
   border-radius: 10px;
   animation: slide-in 0.4s ease-out backwards;
 }
@@ -547,11 +569,11 @@ const downloadReport = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(212, 165, 116, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.24) 0%, rgba(167, 139, 250, 0.14) 100%);
   border-radius: 8px;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #ffd700;
+  color: #0369a1;
 }
 
 .path-info {
@@ -629,7 +651,7 @@ const downloadReport = () => {
   justify-content: center;
   background: linear-gradient(135deg, rgba(255, 230, 150, 0.25) 0%, rgba(255, 215, 100, 0.12) 100%);
   border-radius: 12px;
-  color: #ffd700;
+  color: #0369a1;
   margin-bottom: 10px;
   box-shadow: 0 0 15px rgba(255, 215, 100, 0.2);
 }
@@ -654,7 +676,7 @@ const downloadReport = () => {
   align-items: center;
   padding: 20px 0;
   margin-top: 20px;
-  border-top: 1px solid rgba(212, 165, 116, 0.1);
+  border-top: 1px solid rgba(125, 211, 252, 0.18);
   position: relative;
   z-index: 1;
 }
@@ -674,12 +696,55 @@ const downloadReport = () => {
 
 .btn-outline {
   background: transparent;
-  border: 1px solid rgba(212, 165, 116, 0.3);
+  border: 1px solid rgba(125, 211, 252, 0.3);
   color: var(--color-text-primary);
 }
 
 .btn-outline:hover {
-  background: rgba(212, 165, 116, 0.1);
-  border-color: rgba(212, 165, 116, 0.5);
+  background: rgba(125, 211, 252, 0.14);
+  border-color: rgba(125, 211, 252, 0.5);
+}
+
+/* 琉璃蓝主题覆盖：与黑洞背景协调 */
+.conclusion-view :is(.header-icon, .glass-card, .stat-item, .path-item) {
+  border-color: rgba(129, 140, 248, 0.36) !important;
+}
+
+.conclusion-view .header-icon,
+.conclusion-view .path-number,
+.conclusion-view .stat-icon,
+.conclusion-view .btn-outline:hover {
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 50%, #a78bfa 100%) !important;
+  color: #f8fafc !important;
+}
+
+.conclusion-view .stats-card,
+.conclusion-view .stat-item,
+.conclusion-view .path-item {
+  background: linear-gradient(145deg, rgba(8, 12, 30, 0.8), rgba(16, 24, 48, 0.72), rgba(38, 31, 80, 0.56)) !important;
+  box-shadow: 0 18px 44px rgba(3, 6, 24, 0.5), 0 0 30px rgba(99, 102, 241, 0.16) !important;
+}
+
+.conclusion-view .stat-value,
+.conclusion-view .card-title,
+.conclusion-view .policy-title,
+.conclusion-view .btn-outline {
+  color: #c7d2fe !important;
+  text-shadow: 0 0 16px rgba(129, 140, 248, 0.34) !important;
+}
+
+.conclusion-view .progress-track,
+.conclusion-view .advice-content,
+.conclusion-view .analysis-box {
+  border-color: rgba(129, 140, 248, 0.42) !important;
+  background: linear-gradient(135deg, rgba(15, 22, 44, 0.78), rgba(28, 34, 68, 0.7), rgba(54, 45, 99, 0.6)) !important;
+}
+
+.conclusion-view :is(.path-title, .policy-text, .regret-text, .advice-content p) {
+  color: #e0e7ff !important;
+}
+
+.conclusion-view :is(.subtitle, .path-date, .stat-label, .policy-date) {
+  color: #a5b4fc !important;
 }
 </style>
