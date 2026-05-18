@@ -3,6 +3,11 @@
     <div class="reflection-container">
       <h1 class="title">观心</h1>
 
+      <div v-if="!selectedRoute" class="reflection-empty glass-container">
+        <strong>你还没有最终路线</strong>
+        <p>当前属性面板仍可查看，但为了得到更有意义的趋势和影响分析，建议先在衍化页选择一条路线。</p>
+      </div>
+
       <div class="compass glass-container">
         <div class="compass-center">
           <h2>属性罗盘</h2>
@@ -107,7 +112,8 @@ const props = defineProps({
   radarAxisPoints: { type: Array, required: true },
   radarPolygon: { type: String, required: true },
   axisLabelMap: { type: Object, required: true },
-  socialFeed: { type: Array, required: true }
+  socialFeed: { type: Array, required: true },
+  selectedRoute: { type: Object, required: false }
 })
 
 const emit = defineEmits(['show-radar','show-trend','show-impact','refresh-social','go-to-divergence','go-to-mentorship'])
@@ -182,6 +188,23 @@ const getAttributeNarrative = (attribute, value) => {
   flex-direction: column;
   gap: var(--space-lg);
   animation: slideInUp 0.8s ease-out;
+}
+
+.reflection-empty {
+  padding: var(--space-md) var(--space-lg);
+  border: 1px dashed rgba(212, 165, 116, 0.35);
+}
+
+.reflection-empty strong {
+  display: block;
+  margin-bottom: var(--space-xs);
+  color: var(--color-accent-gold-light);
+}
+
+.reflection-empty p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
 }
 
 .compass {

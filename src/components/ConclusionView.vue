@@ -65,6 +65,7 @@
           <div class="advice-content">
             <p>{{ aiAdvice }}</p>
           </div>
+          <p class="demo-hint">演示建议：这里适合用来收尾，强调产品不是给唯一答案，而是帮助用户对不同人生路径做可视化复盘。</p>
         </div>
 
         <div class="analysis-card glass-card">
@@ -75,6 +76,14 @@
               </svg>
               分析摘要
             </h3>
+          </div>
+          <div v-if="!selectedRoute" class="report-warning-banner">
+            <strong>当前报告上下文较少</strong>
+            <p>你还没有明确锁定最终路线，因此这份报告更偏向全局复盘。若先确认路线，再回到终局页，报告会更聚焦。</p>
+          </div>
+          <div v-if="reportError" class="report-error-banner">
+            <strong>报告使用了本地兜底结果</strong>
+            <p>{{ reportError }}</p>
           </div>
           <pre class="analysis-box">{{ regretAnalysis }}</pre>
         </div>
@@ -206,6 +215,8 @@ const props = defineProps({
   regretText: { type: String, default: '' },
   regretAnalysis: { type: String, default: '' },
   aiAdvice: { type: String, default: '' },
+  reportError: { type: String, default: '' },
+  selectedRoute: { type: Object, default: null },
   totalSelections: { type: Number, default: 0 },
   explorationTime: { type: String, default: '0分钟' },
   achievementsUnlocked: { type: Number, default: 0 },
@@ -455,6 +466,13 @@ const downloadReport = () => {
   margin: 0;
 }
 
+.demo-hint {
+  margin: 14px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
 .analysis-box {
   background: rgba(15, 14, 13, 0.6);
   border: 1px solid rgba(212, 165, 116, 0.1);
@@ -483,6 +501,45 @@ const downloadReport = () => {
 .analysis-box::-webkit-scrollbar-thumb {
   background: rgba(212, 165, 116, 0.3);
   border-radius: 3px;
+}
+
+.report-error-banner {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255, 191, 0, 0.12);
+  border: 1px solid rgba(255, 191, 0, 0.32);
+  color: #ffe3a1;
+}
+
+.report-error-banner strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.report-error-banner p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.report-warning-banner {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(212, 165, 116, 0.12);
+  border: 1px solid rgba(212, 165, 116, 0.32);
+  color: var(--color-text-secondary);
+}
+
+.report-warning-banner strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-accent-gold-light);
+}
+
+.report-warning-banner p {
+  margin: 0;
+  line-height: 1.5;
 }
 
 .conclusion-sidebar {

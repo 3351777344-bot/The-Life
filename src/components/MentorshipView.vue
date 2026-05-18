@@ -54,6 +54,14 @@
         </div>
 
         <div class="chat-section">
+          <div v-if="!selectedRoute" class="advisor-empty-banner">
+            <strong>你还没有最终路线</strong>
+            <p>当前可以继续做泛化咨询，但如果先在衍化页选定路线，顾问建议会更聚焦、更贴近你的局面。</p>
+          </div>
+          <div v-if="advisorError" class="advisor-error-banner">
+            <strong>顾问回复出现问题</strong>
+            <p>{{ advisorError }}</p>
+          </div>
           <div class="chat-container" ref="chatContainer">
             <div class="chat-messages">
               <div 
@@ -173,6 +181,8 @@ const props = defineProps([
   'chatInput',
   'currentAI角色',
   'currentAIDescription',
+  'selectedRoute',
+  'advisorError',
   'isListening'
 ])
 
@@ -237,11 +247,19 @@ const statusText = computed(() => {
 const displayMessages = computed(() => {
   const msgs = Array.isArray(props.chatMessages) ? [...props.chatMessages] : []
   return msgs.map((msg, idx) => {
-    const isAi = idx % 2 === 0
+    if (msg && typeof msg === 'object' && 'content' in msg) {
+      return {
+        role: msg.role === 'user' ? 'user' : 'ai',
+        content: String(msg.content || ''),
+        time: msg.time || '刚刚'
+      }
+    }
+
+    const isAi = idx % 2 === 1
     return {
       role: isAi ? 'ai' : 'user',
       content: msg,
-      time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+      time: '刚刚'
     }
   })
 })
@@ -549,6 +567,45 @@ const quickPrompts = [
   border: 1px solid rgba(212, 165, 116, 0.15);
   border-radius: 16px;
   overflow: hidden;
+}
+
+.advisor-empty-banner {
+  margin: 16px 16px 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(212, 165, 116, 0.12);
+  border: 1px solid rgba(212, 165, 116, 0.35);
+  color: var(--color-text-secondary);
+}
+
+.advisor-empty-banner strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-accent-gold-light);
+}
+
+.advisor-empty-banner p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.advisor-error-banner {
+  margin: 16px 16px 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255, 107, 107, 0.12);
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  color: #ffdede;
+}
+
+.advisor-error-banner strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.advisor-error-banner p {
+  margin: 0;
+  line-height: 1.5;
 }
 
 .chat-container {

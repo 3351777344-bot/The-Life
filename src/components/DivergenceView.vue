@@ -32,8 +32,17 @@
         </div>
         <span class="mode-label" :class="{ active: mode !== 'ai' }">玩家自定义</span>
       </div>
+      <p class="demo-hint">演示建议：优先对比“快速成长路线”和“平衡发展路线”，最容易体现产品价值。</p>
 
       <div class="routes-container" v-if="mode === 'ai'">
+        <div v-if="routeGenerationError" class="state-banner error-banner">
+          <strong>路线生成出现问题</strong>
+          <p>{{ routeGenerationError }}</p>
+        </div>
+        <div v-else-if="!isGenerating && aiRoutes.length === 0" class="state-banner empty-banner">
+          <strong>暂时还没有路线</strong>
+          <p>可以重新触发 AI 生成，或切换到自定义模式先录入你的路线想法。</p>
+        </div>
         <div class="route-card glass-card fade-in-up" v-for="(route, index) in aiRoutes" :key="index" :style="{ animationDelay: (index * 0.1) + 's' }">
           <div class="route-glow"></div>
           <div class="route-header">
@@ -108,7 +117,8 @@
         </div>
         <div class="form-group full-width">
           <label>上传规划文档</label>
-          <input type="file" class="input" @change="$emit('file-upload', $event)">
+          <input type="file" class="input" accept=".txt,.md,.json,.csv,.tsv,.doc,.docx" @change="$emit('file-upload', $event)">
+          <p v-if="uploadedPlanMeta?.summary" class="upload-summary">{{ uploadedPlanMeta.summary }}</p>
         </div>
         <button class="btn btn-primary" @click="$emit('add-custom-route', localCustom)">添加路线</button>
         <div class="custom-route-list" v-if="customRoutes.length">
@@ -184,6 +194,8 @@ defineProps({
   customRoutes: { type: Array, required: true },
   selectedRoute: { type: Object, required: false },
   generatedMedia: { type: Array, required: true },
+  routeGenerationError: { type: String, required: false, default: '' },
+  uploadedPlanMeta: { type: Object, required: false, default: null },
   mode: { type: String, required: true }
 })
 
@@ -295,6 +307,13 @@ watch(() => localCustom, (v) => {}, { deep: true })
   border: 1px solid var(--glass-border);
 }
 
+.demo-hint {
+  margin: -12px 0 24px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.84rem;
+}
+
 .mode-label {
   font-size: 0.9rem;
   color: var(--color-text-muted);
@@ -343,6 +362,34 @@ watch(() => localCustom, (v) => {}, { deep: true })
   gap: 20px;
   position: relative;
   z-index: 1;
+}
+
+.state-banner {
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid;
+}
+
+.state-banner strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.state-banner p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.error-banner {
+  background: rgba(255, 107, 107, 0.12);
+  border-color: rgba(255, 107, 107, 0.35);
+  color: #ffdede;
+}
+
+.empty-banner {
+  background: rgba(212, 165, 116, 0.12);
+  border-color: rgba(212, 165, 116, 0.35);
+  color: var(--color-text-secondary);
 }
 
 .route-card {
@@ -540,6 +587,13 @@ watch(() => localCustom, (v) => {}, { deep: true })
 
 .custom-route-list {
   margin-top: 24px;
+}
+
+.upload-summary {
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
 }
 
 .custom-route-list h4 {

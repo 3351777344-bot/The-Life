@@ -4,7 +4,7 @@
     <div class="main-content">
       <ViewNav :currentView="currentView" @navigate="(v) => currentView = v" />
 
-      <div v-if="statusMessage" class="status-toast">{{ statusMessage }}</div>
+      <div v-if="statusMessage" class="status-toast" :class="`status-${statusType}`">{{ statusMessage }}</div>
 
       <InputDialog
         :show="showInputDialog"
@@ -23,6 +23,7 @@
           :isCardFlipped="isCardFlipped"
           :currentScenario="currentScenario"
           :statusMessage="statusMessage"
+          :scenarioError="scenarioError"
           @update:userInfo="(v) => userInfo = v"
           @fetch-scenario="fetchScenario"
           @flip-card="flipCard"
@@ -45,6 +46,7 @@
           :selectedDepth="selectedDepth"
           :treeTransformStyle="treeTransformStyle"
           :isPanning="isPanning"
+          :selectedRoute="selectedRoute"
           @add-node="addNode"
           @zoom-in="zoomIn"
           @zoom-out="zoomOut"
@@ -66,11 +68,13 @@
       <div v-else-if="currentView === 'divergence'">
         <DivergenceView
           :aiRoutes="aiRoutes"
-          :isGenerating="isGenerating"
+          :isGenerating="isGeneratingRoutes"
           :compareRoutes="compareRoutes"
           :customRoutes="customRoutes"
           :selectedRoute="selectedRoute"
           :generatedMedia="generatedMedia"
+          :routeGenerationError="routeGenerationError"
+          :uploadedPlanMeta="uploadedPlanMeta"
           :mode="mode"
           @generate-ai-routes="generateAIRoutes"
           @refine-route="refineRoute"
@@ -94,8 +98,10 @@
         <ComparisonView
           :routes="compareRoutes"
           :attributes="attributes"
+          :selectedRoute="selectedRoute"
           @go-back="() => currentView = 'divergence'"
-          @confirm-selection="goToReflection"
+          @route-selected="handleComparisonRouteSelected"
+          @confirm-selection="handleComparisonConfirm"
         />
       </div>
 
@@ -110,6 +116,7 @@
           :radarPolygon="radarPolygon"
           :axisLabelMap="axisLabelMap"
           :socialFeed="socialFeed"
+          :selectedRoute="selectedRoute"
           @show-radar="showRadarChart"
           @show-trend="showTrendChart"
           @show-impact="showImpactTrace"
@@ -122,10 +129,12 @@
       <div v-else-if="currentView === 'mentorship'">
         <MentorshipView
           :chatMessages="chatMessages"
-          :isGeneratingAIResponse="isGenerating"
+          :isGeneratingAIResponse="isGeneratingAIResponse"
           :chatInput="chatInput"
           :currentAI角色="currentAIRole"
           :currentAIDescription="currentAIDescription"
+          :selectedRoute="selectedRoute"
+          :advisorError="advisorError"
           :isListening="isListening"
           @send-message="sendMessage"
           @select-ai-role="selectAIRole"
@@ -142,7 +151,14 @@
           :regretText="regretText"
           :regretAnalysis="regretAnalysis"
           :aiAdvice="aiAdvice"
-          @restart="goToGenesis"
+          :reportError="reportError"
+          :selectedRoute="selectedRoute"
+          :totalSelections="totalSelections"
+          :explorationTime="explorationTime"
+          :achievementsUnlocked="achievementsUnlocked"
+          :restartCount="restartCount"
+          @go-to-mentorship="goToMentorship"
+          @restart="restartJourney"
         />
       </div>
 
@@ -151,21 +167,78 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import ViewNav from './components/ViewNav.vue'
-import GenesisView from './components/GenesisView.vue'
-import DestinyView from './components/DestinyView.vue'
-import DivergenceView from './components/DivergenceView.vue'
-import ComparisonView from './components/ComparisonView.vue'
-import ReflectionView from './components/ReflectionView.vue'
-import MentorshipView from './components/MentorshipView.vue'
-import ConclusionView from './components/ConclusionView.vue'
 import InputDialog from './components/InputDialog.vue'
-import { generateRoute, getAIAdvice, generateScenario } from './services/ollamaService'
+import { buildFallbackRouteImpacts, getRoutePreviewValues } from './services/routeStateService'
+import {
+  cloneData,
+  createDefaultUserInfo,
+  createDefaultScenario,
+  createDefaultTreeNodes,
+  createDefaultAttributes,
+  createDefaultAttributeHistory,
+  createDefaultImpactHistory,
+  resetJourneyState
+} from './services/journeyStateService'
+import {
+  requestScenario,
+  requestRoutes,
+  requestAdvisorReply,
+  requestRegretReport,
+  requestPlanningFileExtraction,
+  resolveRouteAttributeDeltas
+} from './services/lifeJourneyFacade'
+
+const DEFAULT_AI_ROLE = '人生规划师'
+const DEFAULT_AI_DESCRIPTION = '擅长把你的现实约束和长期目标转成可执行建议。'
+
+const viewLoadingComponent = {
+  template: `
+    <div class="view-loading glass-container">
+      <div class="view-loading__spinner"></div>
+      <p class="view-loading__text">页面正在加载中...</p>
+    </div>
+  `
+}
+
+const createAsyncView = (loader) => defineAsyncComponent({
+  loader,
+  loadingComponent: viewLoadingComponent,
+  delay: 120
+})
+
+const GenesisView = createAsyncView(() => import('./components/GenesisView.vue'))
+const DestinyView = createAsyncView(() => import('./components/DestinyView.vue'))
+const DivergenceView = createAsyncView(() => import('./components/DivergenceView.vue'))
+const ComparisonView = createAsyncView(() => import('./components/ComparisonView.vue'))
+const ReflectionView = createAsyncView(() => import('./components/ReflectionView.vue'))
+const MentorshipView = createAsyncView(() => import('./components/MentorshipView.vue'))
+const ConclusionView = createAsyncView(() => import('./components/ConclusionView.vue'))
+
+const buildSocialFeed = (city = '北京') => ([
+  { id: 'feed_1', source: '国家统计局', text: '青年就业市场回暖，数字服务类岗位增长明显。', date: new Date().toLocaleDateString() },
+  { id: 'feed_2', source: '人社公开数据', text: '一线城市生活成本继续上升，择业需同步评估净收益。', date: new Date().toLocaleDateString() },
+  { id: 'feed_3', source: '行业观察', text: `${city || '目标城市'} 的 AI 应用岗位更看重复合能力与持续学习。`, date: new Date().toLocaleDateString() }
+])
+
+const formatDuration = (durationMs) => {
+  const totalMinutes = Math.max(1, Math.round(durationMs / (1000 * 60)))
+  if (totalMinutes < 60) return `${totalMinutes}分钟`
+
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return minutes > 0 ? `${hours}小时${minutes}分钟` : `${hours}小时`
+}
 
 // Minimal reactive state to keep components running
 const currentView = ref('genesis')
 const statusMessage = ref('')
+const statusType = ref('info')
+const routeGenerationError = ref('')
+const scenarioError = ref('')
+const reportError = ref('')
+const advisorError = ref('')
 
 // Dialog state
 const showInputDialog = ref(false)
@@ -177,123 +250,13 @@ const inputDialog = ref({
   onConfirm: null
 })
 
-const userInfo = ref({
-  age: '28',
-  education: 'bachelor',
-  occupation: '互联网产品经理',
-  city: '北京',
-  income: '15000',
-  family: 'single',
-  skills: '产品设计、数据分析、团队管理',
-  investment: '50000',
-  riskPreference: 'moderate',
-  delayGratification: 'high',
-  stressResistance: 'medium',
-  decisionStyle: 'analytical',
-  lifeGoals: '在5年内成为资深产品负责人，建立个人品牌；长期实现财务自由和生活灵活性'
-})
+const userInfo = ref(createDefaultUserInfo())
 const isCardFlipped = ref(false)
-const currentScenario = ref({
-  scenario: '你收到一个外地高薪 offer，但当前城市已有稳定生活基础，你会怎么选？',
-  options: [
-    { text: '立即转岗追求更高成长', style: '风险偏好型' },
-    { text: '暂时不动，优先稳住基本盘', style: '风险规避型' },
-    { text: '先谈远程或试用期再决定', style: '平衡型' }
-  ]
-})
+const currentScenario = ref(createDefaultScenario())
+const defaultScenario = cloneData(currentScenario.value)
 
-const treeNodes = ref([
-  {
-    id: 'current',
-    parentId: null,
-    title: '当前人生节点',
-    description: '从你的基础建模出发，展开关键选择。',
-    depth: 1,
-    timeline: new Date().toISOString(),
-    children: ['branch-stay', 'branch-jump', 'branch-startup']
-  },
-  {
-    id: 'branch-stay',
-    parentId: 'current',
-    title: '在现公司继续深耕',
-    description: '稳定发展路线，逐步积累管理经验和行业影响力',
-    depth: 2,
-    timeline: new Date(Date.now() - 7*24*60*60*1000).toISOString(),
-    children: ['stay-promote', 'stay-transfer']
-  },
-  {
-    id: 'branch-jump',
-    parentId: 'current',
-    title: '跳槽到大厂或创业公司',
-    description: '追求更大平台或更大挑战，快速成长',
-    depth: 2,
-    timeline: new Date(Date.now() - 5*24*60*60*1000).toISOString(),
-    children: ['jump-tech', 'jump-startup']
-  },
-  {
-    id: 'branch-startup',
-    parentId: 'current',
-    title: '独立创业或自由职业',
-    description: '创造个人品牌，获得更高的上升潜力和收入',
-    depth: 2,
-    timeline: new Date(Date.now() - 3*24*60*60*1000).toISOString(),
-    children: ['startup-own', 'startup-invest']
-  },
-  {
-    id: 'stay-promote',
-    parentId: 'branch-stay',
-    title: '争取晋升为总监',
-    description: '专注于团队建设和战略规划',
-    depth: 3,
-    timeline: new Date().toISOString(),
-    children: []
-  },
-  {
-    id: 'stay-transfer',
-    parentId: 'branch-stay',
-    title: '转向策略或运营方向',
-    description: '拓宽职业边界，增强竞争力',
-    depth: 3,
-    timeline: new Date().toISOString(),
-    children: []
-  },
-  {
-    id: 'jump-tech',
-    parentId: 'branch-jump',
-    title: '加入科技大厂（BAT）',
-    description: '获得更优的薪资和平台机会',
-    depth: 3,
-    timeline: new Date().toISOString(),
-    children: []
-  },
-  {
-    id: 'jump-startup',
-    parentId: 'branch-jump',
-    title: '加入高成长创业公司',
-    description: '获得期权和更多话语权',
-    depth: 3,
-    timeline: new Date().toISOString(),
-    children: []
-  },
-  {
-    id: 'startup-own',
-    parentId: 'branch-startup',
-    title: '创办自己的公司',
-    description: '打造产品和团队',
-    depth: 3,
-    timeline: new Date().toISOString(),
-    children: []
-  },
-  {
-    id: 'startup-invest',
-    parentId: 'branch-startup',
-    title: '成为天使投资人/顾问',
-    description: '通过投资和咨询获得收益',
-    depth: 3,
-    timeline: new Date().toISOString(),
-    children: []
-  }
-])
+const treeNodes = ref(createDefaultTreeNodes())
+const defaultTreeNodes = cloneData(treeNodes.value)
 const selectedNode = ref('current')
 const selectedNodeData = computed(() => treeNodes.value.find(n => n.id === selectedNode.value))
 const nodeCount = computed(() => treeNodes.value.length)
@@ -349,26 +312,23 @@ const aiRoutes = ref([
     impactFactors: { career: 80, growth: 85, health: 85, relationship: 75, finance: 70 }
   }
 ])
-const isGenerating = ref(false)
+const defaultAiRoutes = cloneData(aiRoutes.value)
+const isGeneratingRoutes = ref(false)
+const isGeneratingAIResponse = ref(false)
 const compareRoutes = ref([])
 const customRoutes = ref([])
 const selectedRoute = ref(null)
 const generatedMedia = ref([])
 const mode = ref('ai')
 const uploadedDocText = ref('')
+const uploadedPlanMeta = ref(null)
 
-const attributes = ref({ career: 70, finance: 65, relationship: 75, health: 68, growth: 72 })
-const attributeHistory = ref([
-  { career: 60, finance: 55, relationship: 70, health: 65, growth: 60, time: new Date(Date.now() - 60*24*60*60*1000).toISOString() },
-  { career: 65, finance: 60, relationship: 72, health: 66, growth: 65, time: new Date(Date.now() - 30*24*60*60*1000).toISOString() },
-  { career: 68, finance: 63, relationship: 74, health: 67, growth: 70, time: new Date(Date.now() - 7*24*60*60*1000).toISOString() },
-  { career: 70, finance: 65, relationship: 75, health: 68, growth: 72, time: new Date().toISOString() }
-])
-const impactHistory = ref([
-  { id: 'impact_1', title: '完成大型项目交付', changes: { career: 5, growth: 10 }, time: new Date(Date.now() - 30*24*60*60*1000).toLocaleString() },
-  { id: 'impact_2', title: '获得年度奖金', changes: { finance: 8, relationship: 3 }, time: new Date(Date.now() - 15*24*60*60*1000).toLocaleString() },
-  { id: 'impact_3', title: '带队参加行业大会', changes: { career: 3, growth: 5 }, time: new Date(Date.now() - 7*24*60*60*1000).toLocaleString() }
-])
+const defaultAttributes = createDefaultAttributes()
+const attributes = ref(cloneData(defaultAttributes))
+const attributeHistory = ref(createDefaultAttributeHistory())
+const defaultAttributeHistory = cloneData(attributeHistory.value)
+const impactHistory = ref(createDefaultImpactHistory())
+const defaultImpactHistory = cloneData(impactHistory.value)
 const currentChart = ref('radar')
 const radarAxes = ref([
   { key: 'career', label: '职业' },
@@ -409,23 +369,22 @@ const radarPolygon = computed(() => {
     .join(' ')
 })
 const axisLabelMap = ref({ career: '职业', finance: '财务', relationship: '人际', health: '健康', growth: '成长' })
-const socialFeed = ref([
-  { id: 'feed_1', source: '国家统计局', text: '青年就业市场回暖，数字服务类岗位增长明显。', date: new Date().toLocaleDateString() },
-  { id: 'feed_2', source: '人社公开数据', text: '一线城市生活成本继续上升，择业需同步评估净收益。', date: new Date().toLocaleDateString() },
-  { id: 'feed_3', source: '行业观察', text: 'AI 应用岗位对跨学科能力需求增强。', date: new Date().toLocaleDateString() }
-])
+const socialFeed = ref(buildSocialFeed(userInfo.value.city))
 
 const chatMessages = ref([])
 const chatInput = ref('')
 const isListening = ref(false)
-const currentAIRole = ref('人生规划师')
-const currentAIDescription = ref('擅长把你的现实约束和长期目标转成可执行建议。')
+const currentAIRole = ref(DEFAULT_AI_ROLE)
+const currentAIDescription = ref(DEFAULT_AI_DESCRIPTION)
 
 const savedPaths = ref([])
 const regretLevel = ref(20)
 const regretText = ref('暂无')
 const regretAnalysis = ref('暂无')
 const aiAdvice = ref('')
+const journeyStartedAt = ref(Date.now())
+const decisionCount = ref(0)
+const restartCount = ref(0)
 
 const roleDescMap = {
   '职场导师': '聚焦职业路径、能力成长和岗位决策。',
@@ -434,10 +393,36 @@ const roleDescMap = {
   '人生规划师': '平衡职业、财务、关系、健康与成长。'
 }
 
+const totalSelections = computed(() => decisionCount.value)
+const explorationTime = computed(() => {
+  currentView.value
+  decisionCount.value
+  chatMessages.value.length
+  return formatDuration(Date.now() - journeyStartedAt.value)
+})
+const achievementsUnlocked = computed(() => {
+  let count = 0
+  if (decisionCount.value >= 1) count += 1
+  if (compareRoutes.value.length >= 2) count += 1
+  if (generatedMedia.value.length > 0) count += 1
+  if (chatMessages.value.some((message) => message.role === 'ai')) count += 1
+  return count
+})
+
 // Simple helpers
-const setStatusMessage = (msg) => {
+const setStatusMessage = (msg, type = 'info') => {
   statusMessage.value = msg
-  if (msg) setTimeout(() => statusMessage.value = '', 2500)
+  statusType.value = type
+  if (msg) {
+    setTimeout(() => {
+      statusMessage.value = ''
+      statusType.value = 'info'
+    }, 2500)
+  }
+}
+
+const incrementDecisionCount = (amount = 1) => {
+  decisionCount.value += amount
 }
 
 const recordAttributeHistory = () => {
@@ -452,6 +437,15 @@ const recordAttributeHistory = () => {
 const recordImpact = (title, changes) => {
   impactHistory.value.unshift({ id: `impact_${Date.now()}`, title, changes, time: new Date().toLocaleString() })
   if (impactHistory.value.length > 12) impactHistory.value.pop()
+}
+
+const appendChatMessage = (role, content) => {
+  chatMessages.value.push({
+    id: `${role}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    role,
+    content,
+    time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  })
 }
 
 // compute simple trend points for a given attribute key from history
@@ -534,14 +528,48 @@ const goToDivergence = () => currentView.value = 'divergence'
 const goToComparison = () => currentView.value = 'comparison'
 const goToReflection = () => currentView.value = 'reflection'
 const goToMentorship = () => currentView.value = 'mentorship'
-const goToConclusion = () => currentView.value = 'conclusion'
+const goToConclusion = async () => {
+  const reportPayload = {
+    userInfo: userInfo.value,
+    selectedRoute: selectedRoute.value,
+    savedPaths: savedPaths.value,
+    attributes: attributes.value,
+    attributeHistory: attributeHistory.value,
+    impactHistory: impactHistory.value,
+    decisionCount: decisionCount.value,
+    currentAIRole: currentAIRole.value
+  }
+
+  reportError.value = ''
+  setStatusMessage('正在生成终局报告...')
+
+  const reportResult = await requestRegretReport(reportPayload)
+  if (reportResult.ok) {
+    const report = reportResult.data
+    if (report?.regretLevel != null) regretLevel.value = Number(report.regretLevel)
+    if (report?.regretText) regretText.value = report.regretText
+    if (report?.analysis) regretAnalysis.value = report.analysis
+    if (report?.advice) aiAdvice.value = report.advice
+  } else {
+    reportError.value = reportResult.error?.message || '终局报告生成失败，请稍后重试。'
+    computeRegret()
+    setStatusMessage(reportError.value, 'error')
+  }
+
+  currentView.value = 'conclusion'
+}
 const goToGenesis = () => currentView.value = 'genesis'
 
 // Genesis handlers
 const fetchScenario = async () => {
-  const generated = await generateScenario(userInfo.value)
-  if (generated?.scenario && Array.isArray(generated?.options)) {
-    currentScenario.value = generated
+  scenarioError.value = ''
+  const result = await requestScenario(userInfo.value)
+  if (result.ok && result.data?.scenario && Array.isArray(result.data?.options)) {
+    currentScenario.value = result.data
+    setStatusMessage('新场景已生成')
+  } else if (!result.ok) {
+    scenarioError.value = result.error?.message || '场景生成失败，请稍后重试。'
+    setStatusMessage(scenarioError.value, 'error')
   }
 }
 const flipCard = () => isCardFlipped.value = !isCardFlipped.value
@@ -557,8 +585,8 @@ const selectOption = (opt) => {
   }
   
   const impacts = styleImpacts[opt] || {}
-  recordImpact(`选择决策风格：${opt}`, impacts)
-  recordAttributeHistory()
+  applyAttributeChanges(`选择决策风格：${opt}`, impacts)
+  incrementDecisionCount()
   
   setStatusMessage(`决策风格已记录：${opt}`)
 }
@@ -570,8 +598,8 @@ const clearLocalData = () => { localStorage.removeItem('life_local_backup'); set
 // Simple chat
 const sendMessage = (text) => {
   if (!text) return
-  chatMessages.value.push(text)
-  isGenerating.value = true
+  appendChatMessage('user', text)
+  isGeneratingAIResponse.value = true
   const context = {
     role: currentAIRole.value,
     selectedRoute: selectedRoute.value?.title || '未选择路线',
@@ -579,15 +607,19 @@ const sendMessage = (text) => {
     attributes: attributes.value,
     recentImpacts: impactHistory.value.slice(0, 3)
   }
-  getAIAdvice(text, context)
-    .then((reply) => {
-      chatMessages.value.push(`AI(${currentAIRole.value})：${reply || '建议暂不可用，请稍后重试。'}`)
-    })
-    .catch(() => {
-      chatMessages.value.push(`AI(${currentAIRole.value})：建议暂不可用，请稍后重试。`)
+  advisorError.value = ''
+  requestAdvisorReply(text, context)
+    .then((result) => {
+      if (result.ok) {
+        appendChatMessage('ai', result.data || '建议暂不可用，请稍后重试。')
+        return
+      }
+      advisorError.value = result.error?.message || '顾问暂时无法回复，请稍后重试。'
+      appendChatMessage('ai', advisorError.value)
+      setStatusMessage(advisorError.value, 'error')
     })
     .finally(() => {
-      isGenerating.value = false
+      isGeneratingAIResponse.value = false
     })
 }
 
@@ -638,6 +670,7 @@ const addNode = () => {
           treeNodes.value.push(newNode)
           selectedNode.value = nodeId
           recordAttributeHistory()
+          incrementDecisionCount()
           setStatusMessage('已新增节点')
         }
       }
@@ -703,12 +736,34 @@ const selectNode = (n) => { selectedNode.value = n }
 const editNode = (id) => {
   const node = findNode(id)
   if (!node) return
-  const title = window.prompt('编辑节点标题：', node.title)
-  if (!title) return
-  const desc = window.prompt('编辑节点描述：', node.description || '')
-  node.title = title
-  node.description = desc || ''
-  setStatusMessage('节点已更新')
+  inputDialog.value = {
+    title: '编辑节点',
+    message: '请更新节点标题：',
+    placeholder: '输入新的节点标题',
+    defaultValue: node.title,
+    inputType: 'text',
+    onConfirm: (title) => {
+      if (!title) {
+        setStatusMessage('已取消')
+        return
+      }
+
+      inputDialog.value = {
+        title: '编辑节点',
+        message: '请更新节点描述：',
+        placeholder: '输入新的节点描述',
+        defaultValue: node.description || '',
+        inputType: 'text',
+        onConfirm: (desc) => {
+          node.title = title
+          node.description = desc || ''
+          setStatusMessage('节点已更新')
+        }
+      }
+      showInputDialog.value = true
+    }
+  }
+  showInputDialog.value = true
 }
 const deleteNode = (id) => {
   if (id === 'current') {
@@ -754,6 +809,7 @@ const extendBranch = (id) => {
       }
       parent.children = [...(parent.children || []), ...createdIds]
       recordAttributeHistory()
+      incrementDecisionCount(branchCount)
       setStatusMessage(`已延伸 ${branchCount} 个分支`)
     }
   }
@@ -762,7 +818,8 @@ const extendBranch = (id) => {
 
 // divergence implementations (lightweight but functional)
 const generateAIRoutes = async () => {
-  isGenerating.value = true
+  isGeneratingRoutes.value = true
+  routeGenerationError.value = ''
   try {
     const context = {
       selectedNode: selectedNodeData.value,
@@ -770,45 +827,44 @@ const generateAIRoutes = async () => {
       goals: userInfo.value.lifeGoals,
       attributes: attributes.value
     }
-    const res = await generateRoute(userInfo.value, context)
-    const routes = Array.isArray(res?.routes) ? res.routes : []
-    aiRoutes.value = routes.slice(0, 5).map((r, idx) => ({
-      id: r.id || `ai_route_${Date.now()}_${idx}`,
-      title: r.title || r.name || `AI路线${idx + 1}`,
-      description: r.description || '暂无描述',
-      feasibility: Number(r.feasibility ?? 60),
-      difficulty: r.difficulty || '中等',
-      benefit: r.benefit || '中',
-      tag: r.personality || '推荐',
-      tagColor: Number(r.feasibility ?? 60) >= 75 ? 'high' : Number(r.feasibility ?? 60) >= 55 ? 'mid' : 'low',
-      impacts: {
-        career: Math.round((Math.random() * 16) - 4),
-        finance: Math.round((Math.random() * 16) - 4),
-        relationship: Math.round((Math.random() * 12) - 3),
-        health: Math.round((Math.random() * 10) - 3),
-        growth: Math.round((Math.random() * 16) - 4)
-      }
-    }))
-    setStatusMessage('AI 路线已生成')
+    const result = await requestRoutes(userInfo.value, context)
+    if (result.ok) {
+      aiRoutes.value = result.data
+      setStatusMessage('AI 路线已生成')
+      return
+    }
+
+    routeGenerationError.value = result.error?.message || '路线生成失败，请稍后重试。'
+    setStatusMessage(routeGenerationError.value, 'error')
   } finally {
-    isGenerating.value = false
+    isGeneratingRoutes.value = false
   }
 }
 
 const selectRoute = (route) => {
   if (!route) return
   selectedRoute.value = route
-  // persist chosen path
-  savedPaths.value.unshift({ id: route.id || `path_${Date.now()}`, title: route.title, route })
+
+  const routeId = route.id || `path_${Date.now()}`
+  const existingIndex = savedPaths.value.findIndex((savedRoute) => savedRoute.id === routeId)
+  if (existingIndex >= 0) {
+    savedPaths.value.splice(existingIndex, 1)
+  }
+  savedPaths.value.unshift({
+    id: routeId,
+    title: route.title,
+    route,
+    date: new Date().toLocaleString()
+  })
   if (savedPaths.value.length > 12) savedPaths.value.pop()
   
   // Apply route impacts to attributes
-  const impacts = route.impactFactors || {}
+  const impacts = resolveRouteAttributeDeltas(route, attributes.value)
   const changes = {}
   Object.keys(impacts).forEach((k) => {
     const targetValue = Number(impacts[k]) || 0
     const before = attributes.value[k] || 0
-    const delta = Math.round(targetValue - before)
+    const delta = Math.round(targetValue)
     const after = Math.max(0, Math.min(100, before + delta))
     attributes.value[k] = after
     changes[k] = delta
@@ -818,6 +874,7 @@ const selectRoute = (route) => {
     recordImpact(`选择路线：${route.title}`, changes)
     recordAttributeHistory()
   }
+  incrementDecisionCount()
   
   setStatusMessage(`已选择路线：${route.title}`)
 }
@@ -841,13 +898,14 @@ const replaceRoute = (index) => {
     benefit: route.benefit || '中',
     tag: '替代',
     tagColor: 'mid',
-    impacts: {
+    attributeDeltaMap: {
       career: Math.round((Math.random() * 12) - 2),
       finance: Math.round((Math.random() * 10) - 2),
       relationship: Math.round((Math.random() * 10) - 2),
       health: Math.round((Math.random() * 10) - 2),
       growth: Math.round((Math.random() * 12) - 2)
-    }
+    },
+    impacts: null
   }
   aiRoutes.value.splice(index, 1, replacement)
   setStatusMessage('路线已替换')
@@ -864,8 +922,8 @@ const toggleCompare = (route) => {
   if (compareRoutes.value.length === 2) {
     const [a, b] = compareRoutes.value
     const deltas = Object.keys(attributes.value).map((k) => {
-      const va = Number(a.impacts?.[k] || 0)
-      const vb = Number(b.impacts?.[k] || 0)
+      const va = Number(getRoutePreviewValues(a)?.[k] || 0)
+      const vb = Number(getRoutePreviewValues(b)?.[k] || 0)
       return `${axisLabelMap.value[k]}:${va >= vb ? `${a.title}优(+${va - vb})` : `${b.title}优(+${vb - va})`}`
     })
     setStatusMessage(`双路径对比：${deltas.join(' / ')}`)
@@ -886,13 +944,15 @@ const addCustomRoute = (route) => {
     feasibility,
     difficulty: route?.difficulty || '中等',
     benefit: route?.benefit || '中等',
-    impacts: {
+    attributeDeltaMap: {
       career: Math.round((feasibility - 50) / 8),
       finance: Math.round((feasibility - 50) / 10),
       relationship: Math.round((Math.random() * 10) - 3),
       health: Math.round((Math.random() * 8) - 2),
       growth: Math.round((Math.random() * 14) - 3)
-    }
+    },
+    impacts: null,
+    sourceFile: uploadedPlanMeta.value?.name || null
   }
   customRoutes.value.unshift(custom)
   setStatusMessage('自定义路线已添加')
@@ -901,15 +961,28 @@ const removeCustomRoute = (index) => {
   customRoutes.value.splice(index, 1)
   setStatusMessage('已删除自定义路线')
 }
-const handleFileUpload = (event) => {
+const handleFileUpload = async (event) => {
   const file = event?.target?.files?.[0]
   if (!file) return
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    uploadedDocText.value = String(e.target?.result || '').replace(/\s+/g, ' ').trim()
-    setStatusMessage(`已读取文档：${file.name}`)
+
+  try {
+    const result = await requestPlanningFileExtraction(file)
+    if (!result.ok) {
+      uploadedDocText.value = ''
+      uploadedPlanMeta.value = null
+      setStatusMessage(result.error?.message || '文件读取失败，请更换文件后重试。', 'error')
+      return
+    }
+
+    const { text, meta } = result.data
+    uploadedDocText.value = text
+    uploadedPlanMeta.value = meta
+    setStatusMessage(`已接入文件：${file.name}`)
+  } finally {
+    if (event?.target) {
+      event.target.value = ''
+    }
   }
-  reader.readAsText(file, 'utf-8')
 }
 const buildMedia = (type, title) => ({
   id: `${type}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
@@ -932,6 +1005,20 @@ const generatePoster = () => {
 }
 const toggleMode = () => { mode.value = mode.value === 'ai' ? 'custom' : 'ai' }
 
+const handleComparisonRouteSelected = (route) => {
+  selectRoute(route)
+}
+
+const handleComparisonConfirm = () => {
+  if (
+    compareRoutes.value.length > 0 &&
+    (!selectedRoute.value || !compareRoutes.value.some((route) => route.id === selectedRoute.value?.id))
+  ) {
+    selectRoute(compareRoutes.value[0])
+  }
+  goToReflection()
+}
+
 const showRadarChart = () => { currentChart.value = 'radar' }
 const showTrendChart = () => { currentChart.value = 'trend' }
 const showImpactTrace = () => { currentChart.value = 'impact' }
@@ -950,6 +1037,60 @@ const refreshSocialData = () => {
   setStatusMessage('社会数据已刷新')
 }
 
+const restartJourney = async () => {
+  restartCount.value += 1
+  decisionCount.value = 0
+  journeyStartedAt.value = Date.now()
+  resetJourneyState({
+    currentView,
+    isCardFlipped,
+    currentScenario,
+    treeNodes,
+    selectedNode,
+    treeScale,
+    treeOffset,
+    panStart,
+    isPanning,
+    aiRoutes,
+    compareRoutes,
+    customRoutes,
+    selectedRoute,
+    generatedMedia,
+    mode,
+    uploadedDocText,
+    uploadedPlanMeta,
+    attributes,
+    attributeHistory,
+    impactHistory,
+    currentChart,
+    socialFeed,
+    chatMessages,
+    chatInput,
+    isListening,
+    currentAIRole,
+    currentAIDescription,
+    savedPaths,
+    regretLevel,
+    regretText,
+    regretAnalysis,
+    aiAdvice,
+    buildSocialFeed,
+    defaultAiRoutes,
+    defaultImpactHistory,
+    defaultAttributeHistory,
+    defaultAttributes,
+    defaultScenario,
+    defaultTreeNodes,
+    defaultAIRole: DEFAULT_AI_ROLE,
+    defaultAIDescription: DEFAULT_AI_DESCRIPTION,
+    userCity: userInfo.value.city
+  })
+  computeRegret()
+  setStatusMessage('已重新开始新一轮人生旅程')
+
+  await generateAIRoutes()
+}
+
 onMounted(() => {
   const backup = localStorage.getItem('life_local_backup')
   if (backup) {
@@ -961,12 +1102,55 @@ onMounted(() => {
     }
   }
   generateAIRoutes()
-  recordAttributeHistory()
+  computeRegret()
 })
 </script>
 
 <style scoped>
 .main-content { padding: var(--space-lg); max-width: 1200px; margin: 0 auto }
-.status-toast { padding: 0.8rem 1rem; background: #f7f7f7; border-radius: 10px; margin-bottom: var(--space-md); box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+.status-toast {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1200;
+  max-width: min(360px, calc(100vw - 48px));
+  padding: 0.65rem 0.9rem;
+  background: rgba(255, 248, 235, 0.96);
+  color: #3b2a18;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 165, 116, 0.35);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+  text-align: center;
+  line-height: 1.4;
+  font-size: 0.88rem;
+  pointer-events: none;
+}
+.status-toast.status-error { background: rgba(255, 107, 107, 0.16); color: #ffd7d7; border: 1px solid rgba(255, 107, 107, 0.4); }
+.status-toast.status-success { background: rgba(0, 208, 132, 0.16); color: #dff9ee; border: 1px solid rgba(0, 208, 132, 0.35); }
 .title { font-size: 1.8rem; margin-bottom: 1rem }
+.view-loading {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: var(--space-lg);
+}
+.view-loading__spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(212, 165, 116, 0.25);
+  border-top-color: var(--color-accent-gold);
+  animation: view-spin 0.9s linear infinite;
+}
+.view-loading__text {
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+@keyframes view-spin {
+  to { transform: rotate(360deg); }
+}
 </style>
