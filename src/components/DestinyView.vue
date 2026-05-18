@@ -158,6 +158,10 @@
           <p>图谱会根据父子关系自动展开，节点越深，位置越向右推进。</p>
           <p>建议从主节点向外扩散，逐层细化关键选择。</p>
         </div>
+        <div v-if="selectedRoute" class="selected-route-banner">
+          <h4>当前已选路线</h4>
+          <p>{{ selectedRoute.title }}</p>
+        </div>
       </aside>
     </div>
   </div>
@@ -189,7 +193,8 @@ const props = defineProps({
   leafCount: { type: Number, required: true },
   selectedDepth: { type: Number, required: true },
   treeTransformStyle: { type: Object, required: true },
-  isPanning: { type: Boolean, required: true }
+  isPanning: { type: Boolean, required: true },
+  selectedRoute: { type: Object, required: false }
 })
 
 defineEmits([
@@ -1280,6 +1285,27 @@ const graphCanvasStyle = computed(() => ({
   font-size: 0.8rem;
   color: rgba(212, 165, 116, 0.7);
   margin: 4px 0;
+  line-height: 1.5;
+}
+
+.selected-route-banner {
+  margin: 0 16px 16px 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.22);
+}
+
+.selected-route-banner h4 {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  color: #ffe066;
+}
+
+.selected-route-banner p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
   line-height: 1.5;
 }
 

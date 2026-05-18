@@ -76,6 +76,10 @@
               分析摘要
             </h3>
           </div>
+          <div v-if="!selectedRoute" class="report-warning-banner">
+            <strong>当前报告上下文较少</strong>
+            <p>你还没有明确锁定最终路线，因此这份报告更偏向全局复盘。若先确认路线，再回到终局页，报告会更聚焦。</p>
+          </div>
           <div v-if="reportError" class="report-error-banner">
             <strong>报告使用了本地兜底结果</strong>
             <p>{{ reportError }}</p>
@@ -211,6 +215,7 @@ const props = defineProps({
   regretAnalysis: { type: String, default: '' },
   aiAdvice: { type: String, default: '' },
   reportError: { type: String, default: '' },
+  selectedRoute: { type: Object, default: null },
   totalSelections: { type: Number, default: 0 },
   explorationTime: { type: String, default: '0分钟' },
   achievementsUnlocked: { type: Number, default: 0 },
@@ -707,3 +712,22 @@ const downloadReport = () => {
   border-color: rgba(212, 165, 116, 0.5);
 }
 </style>
+.report-warning-banner {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(212, 165, 116, 0.12);
+  border: 1px solid rgba(212, 165, 116, 0.32);
+  color: var(--color-text-secondary);
+}
+
+.report-warning-banner strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-accent-gold-light);
+}
+
+.report-warning-banner p {
+  margin: 0;
+  line-height: 1.5;
+}

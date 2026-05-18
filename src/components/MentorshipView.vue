@@ -54,6 +54,10 @@
         </div>
 
         <div class="chat-section">
+          <div v-if="!selectedRoute" class="advisor-empty-banner">
+            <strong>你还没有最终路线</strong>
+            <p>当前可以继续做泛化咨询，但如果先在衍化页选定路线，顾问建议会更聚焦、更贴近你的局面。</p>
+          </div>
           <div v-if="advisorError" class="advisor-error-banner">
             <strong>顾问回复出现问题</strong>
             <p>{{ advisorError }}</p>
@@ -177,6 +181,7 @@ const props = defineProps([
   'chatInput',
   'currentAI角色',
   'currentAIDescription',
+  'selectedRoute',
   'advisorError',
   'isListening'
 ])
@@ -562,6 +567,26 @@ const quickPrompts = [
   border: 1px solid rgba(212, 165, 116, 0.15);
   border-radius: 16px;
   overflow: hidden;
+}
+
+.advisor-empty-banner {
+  margin: 16px 16px 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(212, 165, 116, 0.12);
+  border: 1px solid rgba(212, 165, 116, 0.35);
+  color: var(--color-text-secondary);
+}
+
+.advisor-empty-banner strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-accent-gold-light);
+}
+
+.advisor-empty-banner p {
+  margin: 0;
+  line-height: 1.5;
 }
 
 .advisor-error-banner {

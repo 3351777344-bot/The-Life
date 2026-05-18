@@ -67,6 +67,11 @@
             </div>
           </div>
 
+          <div v-if="routes.length < 2" class="comparison-empty glass-card">
+            <strong>还不能进入完整对比</strong>
+            <p>请先在衍化页至少加入两条路线到对比列表，再回来查看双窗分析。</p>
+          </div>
+
           <div v-if="routes.length > 2" class="route-selector glass-card">
             <div class="selector-header">
               <h4>🔄 切换对比路线</h4>
@@ -287,7 +292,7 @@
 
       <div class="comparison-footer">
         <button class="btn btn-secondary" @click="$emit('go-back')">← 返回</button>
-        <button class="btn btn-primary" @click="$emit('confirm-selection')">确认选择</button>
+        <button class="btn btn-primary" :disabled="routes.length < 2 && !selectedRoute" @click="$emit('confirm-selection')">确认选择</button>
       </div>
 
       <Teleport to="body">
@@ -350,6 +355,10 @@ const props = defineProps({
   routes: {
     type: Array,
     default: () => []
+  },
+  selectedRoute: {
+    type: Object,
+    default: null
   },
   attributes: {
     type: Object,
@@ -630,6 +639,24 @@ const endSliderDrag = () => {
 
 .comparison-area {
   min-height: 600px;
+}
+
+.comparison-empty {
+  margin-bottom: 24px;
+  padding: 20px 22px;
+  border: 1px dashed rgba(212, 165, 116, 0.4);
+}
+
+.comparison-empty strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-accent-gold-light);
+}
+
+.comparison-empty p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
 }
 
 .comparison-header {
