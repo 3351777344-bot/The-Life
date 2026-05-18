@@ -119,7 +119,6 @@
 
 1. `docs/DEMO_FLOW.md`
 2. `docs/DEMO_TALK_TRACK.md`
-3. `docs/DEMO_CHECKLIST.md`
 
 ## 五、现在前端是怎么分层的
 
@@ -206,25 +205,3 @@
 3. 然后做测试与验收
 4. 最后再考虑更高级的增强功能
 
-## 九、可以直接发群里的简版
-
-可以直接复制下面这段发飞书群：
-
----
-
-这段时间我主要把前端从 demo 往初版完整产品收口了，目前主流程已经能完整跑通：入局、命轨、衍化、对比、观心、论道、归途这几步都已经串起来了。除了页面本身，我还补了服务层、联调边界、错误和空状态、默认演示路径、阶段总结和变更记录，方便后面继续接后端或做展示。
-
-如果要快速看当前进度，建议先看：
-1. `docs/CURRENT_STATUS.md`
-2. `docs/phase-summaries/PHASE_INDEX.md`
-
-如果要和前端联调，建议先看：
-1. `docs/INTEGRATION_HANDOFF.md`
-2. `src/services/lifeJourneyFacade.js`
-
-如果想知道我具体改了哪些内容，可以看：
-1. `docs/change-logs/`
-
-当前这版已经可以作为可演示的初版前端基线继续往下推进。
-
----
