@@ -1106,16 +1106,6 @@ onMounted(() => {
   color: var(--color-text-secondary);
   font-size: 0.95rem;
 }
-.status-toast.status-error {
-  background: rgba(255, 107, 107, 0.16);
-  color: #ffd7d7;
-  border: 1px solid rgba(255, 107, 107, 0.4);
-}
-.status-toast.status-success {
-  background: rgba(0, 208, 132, 0.16);
-  color: #dff9ee;
-  border: 1px solid rgba(0, 208, 132, 0.35);
-}
 @keyframes view-spin {
   to { transform: rotate(360deg); }
 }
