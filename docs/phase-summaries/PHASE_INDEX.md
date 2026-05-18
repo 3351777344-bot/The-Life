@@ -17,7 +17,7 @@
 3. [阶段三：接口联调准备与主流程产品化收口](D:/Desktop/Software/AIGC/The-Life/docs/phase-summaries/phase-03-integration-and-flow-polish.md:1)
 4. [阶段四：默认演示路径固化](D:/Desktop/Software/AIGC/The-Life/docs/phase-summaries/phase-04-demo-flow-hardening.md:1)
 5. [阶段五：答辩展示讲解文档收口](D:/Desktop/Software/AIGC/The-Life/docs/phase-summaries/phase-05-presentation-talk-track.md:1)
-4. [阶段四：默认演示路径固化](D:/Desktop/Software/AIGC/The-Life/docs/phase-summaries/phase-04-demo-flow-hardening.md:1)
+6. [阶段六：联调边界与可维护性](D:/Desktop/Software/AIGC/The-Life/docs/phase-summaries/phase-06-integration-boundaries.md:1)
 
 ## 使用建议
 

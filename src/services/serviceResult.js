@@ -1,3 +1,5 @@
+import { SERVICE_ERROR_CODE } from './serviceContracts'
+
 export const createSuccessResult = (data, meta = {}) => ({
   ok: true,
   data,
@@ -10,7 +12,7 @@ export const createErrorResult = (message, meta = {}) => ({
   data: null,
   error: {
     message,
-    code: meta.code || 'UNKNOWN_ERROR'
+    code: meta.code || SERVICE_ERROR_CODE.UNKNOWN_ERROR
   },
   meta
 })
