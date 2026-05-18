@@ -34,6 +34,14 @@
       </div>
 
       <div class="routes-container" v-if="mode === 'ai'">
+        <div v-if="routeGenerationError" class="state-banner error-banner">
+          <strong>路线生成出现问题</strong>
+          <p>{{ routeGenerationError }}</p>
+        </div>
+        <div v-else-if="!isGenerating && aiRoutes.length === 0" class="state-banner empty-banner">
+          <strong>暂时还没有路线</strong>
+          <p>可以重新触发 AI 生成，或切换到自定义模式先录入你的路线想法。</p>
+        </div>
         <div class="route-card glass-card fade-in-up" v-for="(route, index) in aiRoutes" :key="index" :style="{ animationDelay: (index * 0.1) + 's' }">
           <div class="route-glow"></div>
           <div class="route-header">
@@ -185,6 +193,7 @@ defineProps({
   customRoutes: { type: Array, required: true },
   selectedRoute: { type: Object, required: false },
   generatedMedia: { type: Array, required: true },
+  routeGenerationError: { type: String, required: false, default: '' },
   uploadedPlanMeta: { type: Object, required: false, default: null },
   mode: { type: String, required: true }
 })
@@ -345,6 +354,34 @@ watch(() => localCustom, (v) => {}, { deep: true })
   gap: 20px;
   position: relative;
   z-index: 1;
+}
+
+.state-banner {
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid;
+}
+
+.state-banner strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.state-banner p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.error-banner {
+  background: rgba(255, 107, 107, 0.12);
+  border-color: rgba(255, 107, 107, 0.35);
+  color: #ffdede;
+}
+
+.empty-banner {
+  background: rgba(212, 165, 116, 0.12);
+  border-color: rgba(212, 165, 116, 0.35);
+  color: var(--color-text-secondary);
 }
 
 .route-card {

@@ -76,6 +76,10 @@
               分析摘要
             </h3>
           </div>
+          <div v-if="reportError" class="report-error-banner">
+            <strong>报告使用了本地兜底结果</strong>
+            <p>{{ reportError }}</p>
+          </div>
           <pre class="analysis-box">{{ regretAnalysis }}</pre>
         </div>
       </div>
@@ -206,6 +210,7 @@ const props = defineProps({
   regretText: { type: String, default: '' },
   regretAnalysis: { type: String, default: '' },
   aiAdvice: { type: String, default: '' },
+  reportError: { type: String, default: '' },
   totalSelections: { type: Number, default: 0 },
   explorationTime: { type: String, default: '0分钟' },
   achievementsUnlocked: { type: Number, default: 0 },
@@ -483,6 +488,25 @@ const downloadReport = () => {
 .analysis-box::-webkit-scrollbar-thumb {
   background: rgba(212, 165, 116, 0.3);
   border-radius: 3px;
+}
+
+.report-error-banner {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255, 191, 0, 0.12);
+  border: 1px solid rgba(255, 191, 0, 0.32);
+  color: #ffe3a1;
+}
+
+.report-error-banner strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.report-error-banner p {
+  margin: 0;
+  line-height: 1.5;
 }
 
 .conclusion-sidebar {

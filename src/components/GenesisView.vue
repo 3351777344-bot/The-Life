@@ -110,6 +110,10 @@
 
       <div class="form-section">
         <h2>情境化测评</h2>
+        <div v-if="scenarioError" class="scenario-error">
+          <strong>场景生成失败</strong>
+          <p>{{ scenarioError }}</p>
+        </div>
         <div class="card-flip" @click="$emit('flip-card')">
           <div class="card-front glass-container">
             <h3>{{ currentScenario.scenario }}</h3>
@@ -133,7 +137,7 @@
 
 <script setup>
 import { reactive, watch } from 'vue'
-const props = defineProps(['userInfo','isCardFlipped','currentScenario','statusMessage'])
+const props = defineProps(['userInfo','isCardFlipped','currentScenario','statusMessage','scenarioError'])
 const emit = defineEmits(['update:userInfo','fetch-scenario','flip-card','select-option','skip-scenario','mark-edit','backup','clear','start-destiny'])
 
 const local = reactive({ ...props.userInfo })
@@ -159,4 +163,7 @@ watch(local, (nv) => {
 .card-flip { margin: 12px 0; }
 .card-front, .card-back { padding: 18px; border-radius: 14px; }
 .card-back .option { display:flex; justify-content:space-between; gap:12px; padding: 10px; margin-bottom: 8px; border-radius: 10px; cursor: pointer; }
+.scenario-error { margin: 12px 0; padding: 12px 14px; border-radius: 12px; background: rgba(255, 107, 107, 0.12); border: 1px solid rgba(255, 107, 107, 0.35); }
+.scenario-error strong { display:block; margin-bottom: 6px; }
+.scenario-error p { margin: 0; line-height: 1.5; }
 </style>

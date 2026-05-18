@@ -4,7 +4,7 @@
     <div class="main-content">
       <ViewNav :currentView="currentView" @navigate="(v) => currentView = v" />
 
-      <div v-if="statusMessage" class="status-toast">{{ statusMessage }}</div>
+      <div v-if="statusMessage" class="status-toast" :class="`status-${statusType}`">{{ statusMessage }}</div>
 
       <InputDialog
         :show="showInputDialog"
@@ -23,6 +23,7 @@
           :isCardFlipped="isCardFlipped"
           :currentScenario="currentScenario"
           :statusMessage="statusMessage"
+          :scenarioError="scenarioError"
           @update:userInfo="(v) => userInfo = v"
           @fetch-scenario="fetchScenario"
           @flip-card="flipCard"
@@ -71,6 +72,7 @@
           :customRoutes="customRoutes"
           :selectedRoute="selectedRoute"
           :generatedMedia="generatedMedia"
+          :routeGenerationError="routeGenerationError"
           :uploadedPlanMeta="uploadedPlanMeta"
           :mode="mode"
           @generate-ai-routes="generateAIRoutes"
@@ -128,6 +130,7 @@
           :chatInput="chatInput"
           :currentAI角色="currentAIRole"
           :currentAIDescription="currentAIDescription"
+          :advisorError="advisorError"
           :isListening="isListening"
           @send-message="sendMessage"
           @select-ai-role="selectAIRole"
@@ -144,6 +147,7 @@
           :regretText="regretText"
           :regretAnalysis="regretAnalysis"
           :aiAdvice="aiAdvice"
+          :reportError="reportError"
           :totalSelections="totalSelections"
           :explorationTime="explorationTime"
           :achievementsUnlocked="achievementsUnlocked"
@@ -225,6 +229,11 @@ const formatDuration = (durationMs) => {
 // Minimal reactive state to keep components running
 const currentView = ref('genesis')
 const statusMessage = ref('')
+const statusType = ref('info')
+const routeGenerationError = ref('')
+const scenarioError = ref('')
+const reportError = ref('')
+const advisorError = ref('')
 
 // Dialog state
 const showInputDialog = ref(false)
@@ -396,9 +405,15 @@ const achievementsUnlocked = computed(() => {
 })
 
 // Simple helpers
-const setStatusMessage = (msg) => {
+const setStatusMessage = (msg, type = 'info') => {
   statusMessage.value = msg
-  if (msg) setTimeout(() => statusMessage.value = '', 2500)
+  statusType.value = type
+  if (msg) {
+    setTimeout(() => {
+      statusMessage.value = ''
+      statusType.value = 'info'
+    }, 2500)
+  }
 }
 
 const incrementDecisionCount = (amount = 1) => {
@@ -520,16 +535,20 @@ const goToConclusion = async () => {
     currentAIRole: currentAIRole.value
   }
 
+  reportError.value = ''
   setStatusMessage('正在生成终局报告...')
 
-  try {
-    const report = await requestRegretReport(reportPayload)
+  const reportResult = await requestRegretReport(reportPayload)
+  if (reportResult.ok) {
+    const report = reportResult.data
     if (report?.regretLevel != null) regretLevel.value = Number(report.regretLevel)
     if (report?.regretText) regretText.value = report.regretText
     if (report?.analysis) regretAnalysis.value = report.analysis
     if (report?.advice) aiAdvice.value = report.advice
-  } catch {
+  } else {
+    reportError.value = reportResult.error?.message || '终局报告生成失败，请稍后重试。'
     computeRegret()
+    setStatusMessage(reportError.value, 'error')
   }
 
   currentView.value = 'conclusion'
@@ -538,9 +557,14 @@ const goToGenesis = () => currentView.value = 'genesis'
 
 // Genesis handlers
 const fetchScenario = async () => {
-  const generated = await requestScenario(userInfo.value)
-  if (generated?.scenario && Array.isArray(generated?.options)) {
-    currentScenario.value = generated
+  scenarioError.value = ''
+  const result = await requestScenario(userInfo.value)
+  if (result.ok && result.data?.scenario && Array.isArray(result.data?.options)) {
+    currentScenario.value = result.data
+    setStatusMessage('新场景已生成')
+  } else if (!result.ok) {
+    scenarioError.value = result.error?.message || '场景生成失败，请稍后重试。'
+    setStatusMessage(scenarioError.value, 'error')
   }
 }
 const flipCard = () => isCardFlipped.value = !isCardFlipped.value
@@ -578,12 +602,16 @@ const sendMessage = (text) => {
     attributes: attributes.value,
     recentImpacts: impactHistory.value.slice(0, 3)
   }
+  advisorError.value = ''
   requestAdvisorReply(text, context)
-    .then((reply) => {
-      appendChatMessage('ai', reply || '建议暂不可用，请稍后重试。')
-    })
-    .catch(() => {
-      appendChatMessage('ai', '建议暂不可用，请稍后重试。')
+    .then((result) => {
+      if (result.ok) {
+        appendChatMessage('ai', result.data || '建议暂不可用，请稍后重试。')
+        return
+      }
+      advisorError.value = result.error?.message || '顾问暂时无法回复，请稍后重试。'
+      appendChatMessage('ai', advisorError.value)
+      setStatusMessage(advisorError.value, 'error')
     })
     .finally(() => {
       isGeneratingAIResponse.value = false
@@ -764,6 +792,7 @@ const extendBranch = (id) => {
 // divergence implementations (lightweight but functional)
 const generateAIRoutes = async () => {
   isGeneratingRoutes.value = true
+  routeGenerationError.value = ''
   try {
     const context = {
       selectedNode: selectedNodeData.value,
@@ -771,8 +800,15 @@ const generateAIRoutes = async () => {
       goals: userInfo.value.lifeGoals,
       attributes: attributes.value
     }
-    aiRoutes.value = await requestRoutes(userInfo.value, context)
-    setStatusMessage('AI 路线已生成')
+    const result = await requestRoutes(userInfo.value, context)
+    if (result.ok) {
+      aiRoutes.value = result.data
+      setStatusMessage('AI 路线已生成')
+      return
+    }
+
+    routeGenerationError.value = result.error?.message || '路线生成失败，请稍后重试。'
+    setStatusMessage(routeGenerationError.value, 'error')
   } finally {
     isGeneratingRoutes.value = false
   }
@@ -903,14 +939,18 @@ const handleFileUpload = async (event) => {
   if (!file) return
 
   try {
-    const { text, meta } = await requestPlanningFileExtraction(file)
+    const result = await requestPlanningFileExtraction(file)
+    if (!result.ok) {
+      uploadedDocText.value = ''
+      uploadedPlanMeta.value = null
+      setStatusMessage(result.error?.message || '文件读取失败，请更换文件后重试。', 'error')
+      return
+    }
+
+    const { text, meta } = result.data
     uploadedDocText.value = text
     uploadedPlanMeta.value = meta
     setStatusMessage(`已接入文件：${file.name}`)
-  } catch (error) {
-    uploadedDocText.value = ''
-    uploadedPlanMeta.value = null
-    setStatusMessage(error?.message || '文件读取失败，请更换文件后重试')
   } finally {
     if (event?.target) {
       event.target.value = ''
@@ -1042,6 +1082,8 @@ onMounted(() => {
 <style scoped>
 .main-content { padding: var(--space-lg); max-width: 1200px; margin: 0 auto }
 .status-toast { padding: 0.8rem 1rem; background: #f7f7f7; border-radius: 10px; margin-bottom: var(--space-md); box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+.status-toast.status-error { background: rgba(255, 107, 107, 0.16); color: #ffd7d7; border: 1px solid rgba(255, 107, 107, 0.4); }
+.status-toast.status-success { background: rgba(0, 208, 132, 0.16); color: #dff9ee; border: 1px solid rgba(0, 208, 132, 0.35); }
 .title { font-size: 1.8rem; margin-bottom: 1rem }
 .view-loading {
   min-height: 240px;
@@ -1063,6 +1105,16 @@ onMounted(() => {
 .view-loading__text {
   color: var(--color-text-secondary);
   font-size: 0.95rem;
+}
+.status-toast.status-error {
+  background: rgba(255, 107, 107, 0.16);
+  color: #ffd7d7;
+  border: 1px solid rgba(255, 107, 107, 0.4);
+}
+.status-toast.status-success {
+  background: rgba(0, 208, 132, 0.16);
+  color: #dff9ee;
+  border: 1px solid rgba(0, 208, 132, 0.35);
 }
 @keyframes view-spin {
   to { transform: rotate(360deg); }
