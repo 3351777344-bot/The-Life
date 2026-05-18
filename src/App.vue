@@ -158,15 +158,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import ViewNav from './components/ViewNav.vue'
-import GenesisView from './components/GenesisView.vue'
-import DestinyView from './components/DestinyView.vue'
-import DivergenceView from './components/DivergenceView.vue'
-import ComparisonView from './components/ComparisonView.vue'
-import ReflectionView from './components/ReflectionView.vue'
-import MentorshipView from './components/MentorshipView.vue'
-import ConclusionView from './components/ConclusionView.vue'
 import InputDialog from './components/InputDialog.vue'
 import { buildFallbackRouteImpacts, getRoutePreviewValues } from './services/routeStateService'
 import {
@@ -190,6 +183,29 @@ import {
 
 const DEFAULT_AI_ROLE = '人生规划师'
 const DEFAULT_AI_DESCRIPTION = '擅长把你的现实约束和长期目标转成可执行建议。'
+
+const viewLoadingComponent = {
+  template: `
+    <div class="view-loading glass-container">
+      <div class="view-loading__spinner"></div>
+      <p class="view-loading__text">页面正在加载中...</p>
+    </div>
+  `
+}
+
+const createAsyncView = (loader) => defineAsyncComponent({
+  loader,
+  loadingComponent: viewLoadingComponent,
+  delay: 120
+})
+
+const GenesisView = createAsyncView(() => import('./components/GenesisView.vue'))
+const DestinyView = createAsyncView(() => import('./components/DestinyView.vue'))
+const DivergenceView = createAsyncView(() => import('./components/DivergenceView.vue'))
+const ComparisonView = createAsyncView(() => import('./components/ComparisonView.vue'))
+const ReflectionView = createAsyncView(() => import('./components/ReflectionView.vue'))
+const MentorshipView = createAsyncView(() => import('./components/MentorshipView.vue'))
+const ConclusionView = createAsyncView(() => import('./components/ConclusionView.vue'))
 
 const buildSocialFeed = (city = '北京') => ([
   { id: 'feed_1', source: '国家统计局', text: '青年就业市场回暖，数字服务类岗位增长明显。', date: new Date().toLocaleDateString() },
@@ -1027,4 +1043,28 @@ onMounted(() => {
 .main-content { padding: var(--space-lg); max-width: 1200px; margin: 0 auto }
 .status-toast { padding: 0.8rem 1rem; background: #f7f7f7; border-radius: 10px; margin-bottom: var(--space-md); box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
 .title { font-size: 1.8rem; margin-bottom: 1rem }
+.view-loading {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: var(--space-lg);
+}
+.view-loading__spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(212, 165, 116, 0.25);
+  border-top-color: var(--color-accent-gold);
+  animation: view-spin 0.9s linear infinite;
+}
+.view-loading__text {
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+@keyframes view-spin {
+  to { transform: rotate(360deg); }
+}
 </style>

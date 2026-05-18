@@ -165,7 +165,21 @@
 
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import * as THREE from 'three'
+import {
+  AdditiveBlending,
+  BufferAttribute,
+  BufferGeometry,
+  CylinderGeometry,
+  Group,
+  Mesh,
+  MeshBasicMaterial,
+  PerspectiveCamera,
+  Points,
+  PointsMaterial,
+  Scene,
+  SphereGeometry,
+  WebGLRenderer
+} from 'three'
 
 const props = defineProps({
   treeNodes: { type: Array, required: true },
@@ -202,6 +216,8 @@ defineEmits([
 const dnaCanvas = ref(null)
 let dnaAnimationId = null
 let scene, camera, renderer, helixGroup, particleSystem
+let dnaInitTimer = null
+let dnaInitIdleId = null
 
 const NODE_WIDTH = 110
 const NODE_HEIGHT = 60
@@ -210,48 +226,111 @@ const V_GAP = 100
 const START_X = 80
 const START_Y = 50
 
-const formatNodeDate = (value) => {
-  if (!value) return '暂无时间'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '暂无时间'
-  return date.toLocaleDateString()
+const shouldEnableDNABackground = () => {
+  if (typeof window === 'undefined') return false
+  if (window.innerWidth < 1024) return false
+  return !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
-const initDNAHelix = () => {
+const getDNAQualityProfile = () => {
+  if (typeof window === 'undefined') {
+    return {
+      particleCount: 180,
+      pointsPerTurn: 12,
+      turns: 3,
+      sphereSegments: 10,
+      cylinderSegments: 6
+    }
+  }
+
+  const cores = navigator.hardwareConcurrency || 4
+  const memory = navigator.deviceMemory || 4
+  const compactDevice = window.innerWidth < 1360
+
+  if (cores <= 4 || memory <= 4 || compactDevice) {
+    return {
+      particleCount: 160,
+      pointsPerTurn: 12,
+      turns: 3,
+      sphereSegments: 10,
+      cylinderSegments: 6
+    }
+  }
+
+  return {
+    particleCount: 320,
+    pointsPerTurn: 16,
+    turns: 4,
+    sphereSegments: 14,
+    cylinderSegments: 8
+  }
+}
+
+const cleanupDNABackground = () => {
+  if (dnaAnimationId) {
+    cancelAnimationFrame(dnaAnimationId)
+    dnaAnimationId = null
+  }
+
+  if (dnaInitIdleId != null && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+    window.cancelIdleCallback(dnaInitIdleId)
+    dnaInitIdleId = null
+  }
+
+  if (dnaInitTimer) {
+    clearTimeout(dnaInitTimer)
+    dnaInitTimer = null
+  }
+
+  if (renderer) {
+    renderer.dispose()
+    renderer = null
+  }
+
+  scene = null
+  camera = null
+  helixGroup = null
+  particleSystem = null
+}
+
+const initDNAHelix = async () => {
   if (!dnaCanvas.value) return
+  if (!shouldEnableDNABackground()) return
+  if (renderer) return
   
   try {
     const canvas = dnaCanvas.value
     const width = window.innerWidth
     const height = window.innerHeight
+    const quality = getDNAQualityProfile()
     
     canvas.width = width
     canvas.height = height
     
-    scene = new THREE.Scene()
-    camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
+    scene = new Scene()
+    camera = new PerspectiveCamera(75, width / height, 0.1, 1000)
     camera.position.z = 50
     
-    renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
+    renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' })
     renderer.setSize(width, height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     
-    helixGroup = new THREE.Group()
+    helixGroup = new Group()
     scene.add(helixGroup)
     
-    const strandMaterial1 = new THREE.MeshBasicMaterial({
+    const strandMaterial1 = new MeshBasicMaterial({
       color: 0xffd700,
       transparent: true,
       opacity: 0.6
     })
     
-    const strandMaterial2 = new THREE.MeshBasicMaterial({
+    const strandMaterial2 = new MeshBasicMaterial({
       color: 0xd4a574,
       transparent: true,
       opacity: 0.6
     })
     
-    const basePairMaterial = new THREE.MeshBasicMaterial({
+    const basePairMaterial = new MeshBasicMaterial({
       color: 0xcd7f32,
       transparent: true,
       opacity: 0.3
@@ -259,8 +338,7 @@ const initDNAHelix = () => {
     
     const helixHeight = 200
     const helixRadius = 15
-    const turns = 4
-    const pointsPerTurn = 20
+    const { turns, pointsPerTurn, sphereSegments, cylinderSegments, particleCount } = quality
     
     for (let i = 0; i < turns * pointsPerTurn; i++) {
       const t = i / (turns * pointsPerTurn)
@@ -269,8 +347,8 @@ const initDNAHelix = () => {
       
       const x1 = Math.cos(angle) * helixRadius
       const z1 = Math.sin(angle) * helixRadius
-      const sphere1 = new THREE.Mesh(
-        new THREE.SphereGeometry(1.5, 16, 16),
+      const sphere1 = new Mesh(
+        new SphereGeometry(1.5, sphereSegments, sphereSegments),
         strandMaterial1
       )
       sphere1.position.set(x1, y, z1)
@@ -278,16 +356,16 @@ const initDNAHelix = () => {
       
       const x2 = Math.cos(angle + Math.PI) * helixRadius
       const z2 = Math.sin(angle + Math.PI) * helixRadius
-      const sphere2 = new THREE.Mesh(
-        new THREE.SphereGeometry(1.5, 16, 16),
+      const sphere2 = new Mesh(
+        new SphereGeometry(1.5, sphereSegments, sphereSegments),
         strandMaterial2
       )
       sphere2.position.set(x2, y, z2)
       helixGroup.add(sphere2)
       
       if (i % 3 === 0) {
-        const connectorGeometry = new THREE.CylinderGeometry(0.3, 0.3, helixRadius * 2, 8)
-        const connector = new THREE.Mesh(connectorGeometry, basePairMaterial)
+        const connectorGeometry = new CylinderGeometry(0.3, 0.3, helixRadius * 2, cylinderSegments)
+        const connector = new Mesh(connectorGeometry, basePairMaterial)
         connector.position.set(0, y, 0)
         connector.rotation.z = Math.PI / 2
         connector.rotation.y = -angle
@@ -295,8 +373,7 @@ const initDNAHelix = () => {
       }
     }
     
-    const particleCount = 500
-  const particleGeometry = new THREE.BufferGeometry()
+  const particleGeometry = new BufferGeometry()
   const positions = new Float32Array(particleCount * 3)
   const colors = new Float32Array(particleCount * 3)
   
@@ -321,30 +398,32 @@ const initDNAHelix = () => {
     }
   }
   
-  particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+  particleGeometry.setAttribute('position', new BufferAttribute(positions, 3))
+  particleGeometry.setAttribute('color', new BufferAttribute(colors, 3))
   
-  const particleMaterial = new THREE.PointsMaterial({
+  const particleMaterial = new PointsMaterial({
     size: 1.5,
     vertexColors: true,
     transparent: true,
     opacity: 0.6,
-    blending: THREE.AdditiveBlending
+    blending: AdditiveBlending
   })
   
-  particleSystem = new THREE.Points(particleGeometry, particleMaterial)
+  particleSystem = new Points(particleGeometry, particleMaterial)
     scene.add(particleSystem)
     
     animateDNA()
   } catch (error) {
     console.warn('DNA helix initialization failed:', error)
-    if (renderer) {
-      renderer.dispose()
-    }
+    cleanupDNABackground()
   }
 }
 
 const animateDNA = () => {
+  if (typeof document !== 'undefined' && document.hidden) {
+    dnaAnimationId = null
+    return
+  }
   dnaAnimationId = requestAnimationFrame(animateDNA)
   
   if (helixGroup) {
@@ -365,6 +444,10 @@ const animateDNA = () => {
 }
 
 const handleResize = () => {
+  if (!shouldEnableDNABackground()) {
+    cleanupDNABackground()
+    return
+  }
   if (!dnaCanvas.value || !renderer || !camera) return
   
   const width = window.innerWidth
@@ -375,21 +458,51 @@ const handleResize = () => {
   renderer.setSize(width, height)
 }
 
+const scheduleDNAInit = () => {
+  if (!shouldEnableDNABackground()) return
+
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    dnaInitIdleId = window.requestIdleCallback(() => {
+      dnaInitIdleId = null
+      initDNAHelix()
+    }, { timeout: 1200 })
+    return
+  }
+
+  dnaInitTimer = setTimeout(() => {
+    dnaInitTimer = null
+    initDNAHelix()
+  }, 180)
+}
+
+const handleVisibilityChange = () => {
+  if (typeof document === 'undefined') return
+
+  if (document.hidden) {
+    if (dnaAnimationId) {
+      cancelAnimationFrame(dnaAnimationId)
+      dnaAnimationId = null
+    }
+    return
+  }
+
+  if (renderer && !dnaAnimationId) {
+    animateDNA()
+  }
+}
+
 onMounted(() => {
   if (dnaCanvas.value) {
-    initDNAHelix()
+    scheduleDNAInit()
     window.addEventListener('resize', handleResize)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
   }
 })
 
 onUnmounted(() => {
-  if (dnaAnimationId) {
-    cancelAnimationFrame(dnaAnimationId)
-  }
   window.removeEventListener('resize', handleResize)
-  if (renderer) {
-    renderer.dispose()
-  }
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  cleanupDNABackground()
 })
 
 const graphLayout = computed(() => {
