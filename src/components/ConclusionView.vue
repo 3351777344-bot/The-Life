@@ -522,6 +522,26 @@ const downloadReport = () => {
   line-height: 1.5;
 }
 
+.report-warning-banner {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(212, 165, 116, 0.12);
+  border: 1px solid rgba(212, 165, 116, 0.32);
+  color: var(--color-text-secondary);
+}
+
+.report-warning-banner strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-accent-gold-light);
+}
+
+.report-warning-banner p {
+  margin: 0;
+  line-height: 1.5;
+}
+
 .conclusion-sidebar {
   width: 340px;
   flex-shrink: 0;
@@ -720,22 +740,3 @@ const downloadReport = () => {
   border-color: rgba(212, 165, 116, 0.5);
 }
 </style>
-.report-warning-banner {
-  margin-bottom: 16px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: rgba(212, 165, 116, 0.12);
-  border: 1px solid rgba(212, 165, 116, 0.32);
-  color: var(--color-text-secondary);
-}
-
-.report-warning-banner strong {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--color-accent-gold-light);
-}
-
-.report-warning-banner p {
-  margin: 0;
-  line-height: 1.5;
-}

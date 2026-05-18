@@ -680,6 +680,8 @@ const graphCanvasStyle = computed(() => ({
   gap: 16px;
   align-items: stretch;
   height: 100vh;
+  padding-top: 24px;
+  box-sizing: border-box;
   position: relative;
   z-index: 1;
 }
@@ -693,7 +695,7 @@ const graphCanvasStyle = computed(() => ({
 
 .tree-header {
   margin-bottom: 8px;
-  padding: 12px 0 16px 0;
+  padding: 12px 16px 16px 16px;
   border-bottom: 1px solid rgba(255, 215, 140, 0.4);
   flex: 0 0 auto;
   background: linear-gradient(90deg, rgba(255, 230, 150, 0.1) 0%, rgba(255, 248, 235, 0.05) 50%, rgba(255, 215, 100, 0.08) 100%);

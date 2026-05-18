@@ -1108,7 +1108,24 @@ onMounted(() => {
 
 <style scoped>
 .main-content { padding: var(--space-lg); max-width: 1200px; margin: 0 auto }
-.status-toast { padding: 0.8rem 1rem; background: #f7f7f7; border-radius: 10px; margin-bottom: var(--space-md); box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+.status-toast {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1200;
+  max-width: min(360px, calc(100vw - 48px));
+  padding: 0.65rem 0.9rem;
+  background: rgba(255, 248, 235, 0.96);
+  color: #3b2a18;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 165, 116, 0.35);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+  text-align: center;
+  line-height: 1.4;
+  font-size: 0.88rem;
+  pointer-events: none;
+}
 .status-toast.status-error { background: rgba(255, 107, 107, 0.16); color: #ffd7d7; border: 1px solid rgba(255, 107, 107, 0.4); }
 .status-toast.status-success { background: rgba(0, 208, 132, 0.16); color: #dff9ee; border: 1px solid rgba(0, 208, 132, 0.35); }
 .title { font-size: 1.8rem; margin-bottom: 1rem }
