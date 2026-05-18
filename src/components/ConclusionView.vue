@@ -65,6 +65,7 @@
           <div class="advice-content">
             <p>{{ aiAdvice }}</p>
           </div>
+          <p class="demo-hint">演示建议：这里适合用来收尾，强调产品不是给唯一答案，而是帮助用户对不同人生路径做可视化复盘。</p>
         </div>
 
         <div class="analysis-card glass-card">
@@ -463,6 +464,13 @@ const downloadReport = () => {
   font-size: 0.95rem;
   line-height: 1.7;
   margin: 0;
+}
+
+.demo-hint {
+  margin: 14px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
 }
 
 .analysis-box {

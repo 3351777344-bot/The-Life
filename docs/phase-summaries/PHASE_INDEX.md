@@ -15,6 +15,7 @@
 1. [阶段一：前端接管与状态收口](D:/Desktop/Software/AIGC/The-Life/docs/phase-summaries/phase-01-frontend-takeover.md:1)
 2. [阶段二：命轨页性能优化](D:/Desktop/Software/AIGC/The-Life/docs/phase-summaries/phase-02-destiny-performance.md:1)
 3. [阶段三：接口联调准备与主流程产品化收口](D:/Desktop/Software/AIGC/The-Life/docs/phase-summaries/phase-03-integration-and-flow-polish.md:1)
+4. [阶段四：默认演示路径固化](D:/Desktop/Software/AIGC/The-Life/docs/phase-summaries/phase-04-demo-flow-hardening.md:1)
 
 ## 使用建议
 

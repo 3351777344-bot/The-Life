@@ -110,6 +110,7 @@
 
       <div class="form-section">
         <h2>情境化测评</h2>
+        <p class="demo-hint">演示建议：这里选择“平衡型”更适合后续展示路线差异与终局复盘。</p>
         <div v-if="scenarioError" class="scenario-error">
           <strong>场景生成失败</strong>
           <p>{{ scenarioError }}</p>
@@ -159,6 +160,7 @@ watch(local, (nv) => {
 .form-row { display:flex; gap:16px; margin-top:16px; }
 .form-group { flex:1; }
 .full-width { flex:1 1 100%; }
+.demo-hint { margin-top: 8px; color: var(--color-text-muted); font-size: 0.84rem; line-height: 1.5; }
 
 .card-flip { margin: 12px 0; }
 .card-front, .card-back { padding: 18px; border-radius: 14px; }

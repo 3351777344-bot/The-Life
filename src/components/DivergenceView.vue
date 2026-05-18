@@ -32,6 +32,7 @@
         </div>
         <span class="mode-label" :class="{ active: mode !== 'ai' }">玩家自定义</span>
       </div>
+      <p class="demo-hint">演示建议：优先对比“快速成长路线”和“平衡发展路线”，最容易体现产品价值。</p>
 
       <div class="routes-container" v-if="mode === 'ai'">
         <div v-if="routeGenerationError" class="state-banner error-banner">
@@ -304,6 +305,13 @@ watch(() => localCustom, (v) => {}, { deep: true })
   background: var(--glass-bg);
   border-radius: 50px;
   border: 1px solid var(--glass-border);
+}
+
+.demo-hint {
+  margin: -12px 0 24px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.84rem;
 }
 
 .mode-label {
