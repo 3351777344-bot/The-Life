@@ -18,7 +18,7 @@
 4. [阶段四：默认演示路径固化](D:/Desktop/Software/AIGC/The-Life/docs/phase-summaries/phase-04-demo-flow-hardening.md:1)
 5. [阶段五：答辩展示讲解文档收口](D:/Desktop/Software/AIGC/The-Life/docs/phase-summaries/phase-05-presentation-talk-track.md:1)
 6. [阶段六：联调边界与可维护性](D:/Desktop/Software/AIGC/The-Life/docs/phase-summaries/phase-06-integration-boundaries.md:1)
-7. [阶段七：服务契约与联调交接强化](D:/Desktop/Software/AIGC/The-Life/docs/phase-summaries/phase-07-service-contract-hardening.md:1)
+7. [阶段七：最终收尾与验收](D:/Desktop/Software/AIGC/The-Life/docs/phase-summaries/phase-07-final-polish-and-validation.md:1)
 
 ## 使用建议
 

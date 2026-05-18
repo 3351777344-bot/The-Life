@@ -15,7 +15,8 @@
 
 ## 对应提交
 
-1. 本阶段提交将在当前阶段收口后统一记录
+1. `d3112ef` `feat: formalize integration boundaries and service contracts`
+2. `3b7362d` `feat: strengthen service contracts and handoff docs`
 
 ## 本阶段完成内容
 

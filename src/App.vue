@@ -736,12 +736,34 @@ const selectNode = (n) => { selectedNode.value = n }
 const editNode = (id) => {
   const node = findNode(id)
   if (!node) return
-  const title = window.prompt('编辑节点标题：', node.title)
-  if (!title) return
-  const desc = window.prompt('编辑节点描述：', node.description || '')
-  node.title = title
-  node.description = desc || ''
-  setStatusMessage('节点已更新')
+  inputDialog.value = {
+    title: '编辑节点',
+    message: '请更新节点标题：',
+    placeholder: '输入新的节点标题',
+    defaultValue: node.title,
+    inputType: 'text',
+    onConfirm: (title) => {
+      if (!title) {
+        setStatusMessage('已取消')
+        return
+      }
+
+      inputDialog.value = {
+        title: '编辑节点',
+        message: '请更新节点描述：',
+        placeholder: '输入新的节点描述',
+        defaultValue: node.description || '',
+        inputType: 'text',
+        onConfirm: (desc) => {
+          node.title = title
+          node.description = desc || ''
+          setStatusMessage('节点已更新')
+        }
+      }
+      showInputDialog.value = true
+    }
+  }
+  showInputDialog.value = true
 }
 const deleteNode = (id) => {
   if (id === 'current') {
