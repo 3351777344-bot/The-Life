@@ -5,15 +5,29 @@ const ollamaApi = axios.create({
   timeout: 30000
 })
 
+const parseStructuredResponse = (data, fallbackValue = null) => {
+  if (!data) return fallbackValue
+
+  if (typeof data.response === 'string') {
+    try {
+      return JSON.parse(data.response)
+    } catch {
+      return fallbackValue
+    }
+  }
+
+  return data
+}
+
 export const generateRoute = async (userInfo, context) => {
   try {
     const response = await ollamaApi.post('/generate', {
       model: 'llama3',
-      prompt: `基于用户信息和当前情境，生成3-5条人生路线建议。\n\n用户信息：${JSON.stringify(userInfo)}\n当前情境：${context}\n\n每条路线应包含：\n1. 路线名称\n2. 详细描述\n3. 可行性（0-100%）\n4. 难度等级\n5. 预期收益\n6. 适合的人格类型\n\n请以JSON格式返回结果。`,
+      prompt: `基于用户信息和当前情境，生成3-5条人生路线建议。\n\n用户信息：${JSON.stringify(userInfo, null, 2)}\n当前情境：${JSON.stringify(context, null, 2)}\n\n每条路线应包含：\n1. 路线名称\n2. 详细描述\n3. 可行性（0-100%）\n4. 难度等级\n5. 预期收益\n6. 适合的人格类型\n\n请以JSON格式返回结果。`,
       format: 'json',
       stream: false
     })
-    return response.data
+    return parseStructuredResponse(response.data, { routes: [] })
   } catch (error) {
     console.error('Error generating route:', error)
     // 返回默认路线
@@ -52,10 +66,10 @@ export const getAIAdvice = async (question, context) => {
   try {
     const response = await ollamaApi.post('/generate', {
       model: 'llama3',
-      prompt: `作为人生顾问，回答用户问题：${question}\n\n当前情境：${context}\n\n请提供详细、有深度的建议，结合现实因素和个人发展。`,
+      prompt: `作为人生顾问，回答用户问题：${question}\n\n当前情境：${JSON.stringify(context, null, 2)}\n\n请提供详细、有深度的建议，结合现实因素和个人发展。`,
       stream: false
     })
-    return response.data.response
+    return response?.data?.response || '建议暂不可用，请稍后重试。'
   } catch (error) {
     console.error('Error getting AI advice:', error)
     return '感谢你的问题，我会认真思考并给你最适合的建议。'
@@ -66,11 +80,11 @@ export const generateScenario = async (userInfo) => {
   try {
     const response = await ollamaApi.post('/generate', {
       model: 'llama3',
-      prompt: `基于用户信息生成一个情境化测评场景。\n\n用户信息：${JSON.stringify(userInfo)}\n\n场景应包含：\n1. 具体情境描述\n2. 3-4个选择选项\n3. 每个选项对应的决策风格\n\n请以JSON格式返回结果。`,
+      prompt: `基于用户信息生成一个情境化测评场景。\n\n用户信息：${JSON.stringify(userInfo, null, 2)}\n\n场景应包含：\n1. 具体情境描述\n2. 3-4个选择选项\n3. 每个选项对应的决策风格\n\n请以JSON格式返回结果。`,
       format: 'json',
       stream: false
     })
-    return response.data
+    return parseStructuredResponse(response.data, null)
   } catch (error) {
     console.error('Error generating scenario:', error)
     // 返回默认场景
@@ -102,11 +116,11 @@ export const calculateRegret = async (lifePath) => {
   try {
     const response = await ollamaApi.post('/generate', {
       model: 'llama3',
-      prompt: `基于用户的人生路径计算后悔值。\n\n人生路径：${JSON.stringify(lifePath)}\n\n请计算后悔指数（0-100）并提供详细分析。\n\n请以JSON格式返回结果，包含：\n1. regretLevel: 后悔指数\n2. regretText: 后悔评级文本\n3. analysis: 详细分析\n4. advice: 人生建议`,
+      prompt: `基于用户的人生路径计算后悔值。\n\n人生路径：${JSON.stringify(lifePath, null, 2)}\n\n请计算后悔指数（0-100）并提供详细分析。\n\n请以JSON格式返回结果，包含：\n1. regretLevel: 后悔指数\n2. regretText: 后悔评级文本\n3. analysis: 详细分析\n4. advice: 人生建议`,
       format: 'json',
       stream: false
     })
-    return response.data
+    return parseStructuredResponse(response.data, null)
   } catch (error) {
     console.error('Error calculating regret:', error)
     // 返回默认值

@@ -108,7 +108,8 @@
         </div>
         <div class="form-group full-width">
           <label>上传规划文档</label>
-          <input type="file" class="input" @change="$emit('file-upload', $event)">
+          <input type="file" class="input" accept=".txt,.md,.json,.csv,.tsv,.doc,.docx" @change="$emit('file-upload', $event)">
+          <p v-if="uploadedPlanMeta?.summary" class="upload-summary">{{ uploadedPlanMeta.summary }}</p>
         </div>
         <button class="btn btn-primary" @click="$emit('add-custom-route', localCustom)">添加路线</button>
         <div class="custom-route-list" v-if="customRoutes.length">
@@ -184,6 +185,7 @@ defineProps({
   customRoutes: { type: Array, required: true },
   selectedRoute: { type: Object, required: false },
   generatedMedia: { type: Array, required: true },
+  uploadedPlanMeta: { type: Object, required: false, default: null },
   mode: { type: String, required: true }
 })
 
@@ -540,6 +542,13 @@ watch(() => localCustom, (v) => {}, { deep: true })
 
 .custom-route-list {
   margin-top: 24px;
+}
+
+.upload-summary {
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
 }
 
 .custom-route-list h4 {

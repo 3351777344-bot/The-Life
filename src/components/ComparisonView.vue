@@ -344,6 +344,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import AttributesSidebar from './AttributesSidebar.vue'
+import { getRoutePreviewValues } from '../services/routeStateService'
 
 const props = defineProps({
   routes: {
@@ -402,15 +403,7 @@ const getTagColor = (tag) => {
 }
 
 const getRouteImpacts = (route) => {
-  if (!route) return {}
-  if (route.impacts) return route.impacts
-  return {
-    career: route.feasibility || 0,
-    finance: (route.feasibility * 0.8) || 0,
-    relationship: 50,
-    health: 60,
-    growth: (route.feasibility * 0.9) || 0
-  }
+  return getRoutePreviewValues(route)
 }
 
 const mentorTip = ref('当前的最优选择是平衡职业发展与个人成长的道路')

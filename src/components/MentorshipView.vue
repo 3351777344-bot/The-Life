@@ -237,11 +237,19 @@ const statusText = computed(() => {
 const displayMessages = computed(() => {
   const msgs = Array.isArray(props.chatMessages) ? [...props.chatMessages] : []
   return msgs.map((msg, idx) => {
-    const isAi = idx % 2 === 0
+    if (msg && typeof msg === 'object' && 'content' in msg) {
+      return {
+        role: msg.role === 'user' ? 'user' : 'ai',
+        content: String(msg.content || ''),
+        time: msg.time || '刚刚'
+      }
+    }
+
+    const isAi = idx % 2 === 1
     return {
       role: isAi ? 'ai' : 'user',
       content: msg,
-      time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+      time: '刚刚'
     }
   })
 })
