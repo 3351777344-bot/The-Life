@@ -1,4 +1,5 @@
 import http from 'node:http'
+import { randomUUID } from 'node:crypto'
 
 const PORT = Number(process.env.PORT || 3001)
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/api'
@@ -7,6 +8,19 @@ const BASE_META = {
   source: 'backend',
   mode: 'backend-api',
   modeLabel: '后端 API'
+}
+
+const createRequestId = () => randomUUID().slice(0, 8)
+
+const getRequestLabel = (method, pathname) => `${method} ${pathname}`
+
+const logRequestStart = (requestId, method, pathname) => {
+  console.log(`[${requestId}] -> ${getRequestLabel(method, pathname)}`)
+}
+
+const logRequestEnd = (requestId, method, pathname, statusCode, startedAt, source = 'backend') => {
+  const duration = Date.now() - startedAt
+  console.log(`[${requestId}] <- ${getRequestLabel(method, pathname)} ${statusCode} ${duration}ms source=${source}`)
 }
 
 const fallbackAttributes = {
@@ -57,6 +71,21 @@ const sendJson = (res, statusCode, payload) => {
     'Access-Control-Allow-Headers': 'Content-Type'
   })
   res.end(JSON.stringify(payload))
+}
+
+const sendResponse = (res, requestContext, statusCode, payload) => {
+  const meta = {
+    ...payload.meta,
+    requestId: requestContext.requestId
+  }
+
+  const response = {
+    ...payload,
+    meta
+  }
+
+  sendJson(res, statusCode, response)
+  logRequestEnd(requestContext.requestId, requestContext.method, requestContext.pathname, statusCode, requestContext.startedAt, meta.source || 'backend')
 }
 
 const parseOllamaResponse = async (response) => {
@@ -331,21 +360,23 @@ const buildRegretPrompt = (payload = {}) => `基于用户的人生路径计算�
   "advice": "人生建议"
 }`
 
-const handleRequest = async (req, res) => {
+const handleRequest = async (req, res, requestContext) => {
   const url = new URL(req.url, `http://${req.headers.host}`)
 
+  logRequestStart(requestContext.requestId, requestContext.method, requestContext.pathname)
+
   if (req.method === 'GET' && url.pathname === '/api/health') {
-    sendJson(res, 200, { ok: true, data: { status: 'up' }, error: null, meta: BASE_META })
+    sendResponse(res, requestContext, 200, { ok: true, data: { status: 'up' }, error: null, meta: BASE_META })
     return
   }
 
   if (req.method === 'OPTIONS') {
-    sendJson(res, 204, '')
+    sendResponse(res, requestContext, 204, { ok: true, data: null, error: null, meta: BASE_META })
     return
   }
 
   if (req.method !== 'POST') {
-    sendJson(res, 404, { ok: false, data: null, error: { message: 'Not Found', code: 'NOT_FOUND' }, meta: BASE_META })
+    sendResponse(res, requestContext, 404, { ok: false, data: null, error: { message: 'Not Found', code: 'NOT_FOUND' }, meta: BASE_META })
     return
   }
 
@@ -354,7 +385,7 @@ const handleRequest = async (req, res) => {
   if (url.pathname === '/api/scenario') {
     const modelResult = await callOllamaGenerate(buildScenarioPrompt(body.userInfo), { format: 'json' })
     const scenario = normalizeScenario(modelResult, body.userInfo)
-    sendJson(res, 200, {
+    sendResponse(res, requestContext, 200, {
       ok: true,
       data: scenario,
       error: null,
@@ -368,7 +399,7 @@ const handleRequest = async (req, res) => {
     const routes = Array.isArray(modelResult?.routes) && modelResult.routes.length
       ? modelResult.routes.slice(0, 5).map((route, index) => normalizeGeneratedRoute(route, index))
       : Array.from({ length: 5 }, (_, index) => createRoute(index, body.userInfo, body.context))
-    sendJson(res, 200, {
+    sendResponse(res, requestContext, 200, {
       ok: true,
       data: routes,
       error: null,
@@ -379,7 +410,7 @@ const handleRequest = async (req, res) => {
 
   if (url.pathname === '/api/advisor/reply') {
     const modelResult = await callOllamaGenerate(buildAdvicePrompt(body.question, body.context), { format: 'json' })
-    sendJson(res, 200, {
+    sendResponse(res, requestContext, 200, {
       ok: true,
       data: normalizeAdvice(modelResult, body.question, body.context),
       error: null,
@@ -390,7 +421,7 @@ const handleRequest = async (req, res) => {
 
   if (url.pathname === '/api/regret-report') {
     const modelResult = await callOllamaGenerate(buildRegretPrompt(body), { format: 'json' })
-    sendJson(res, 200, {
+    sendResponse(res, requestContext, 200, {
       ok: true,
       data: normalizeRegretReport(modelResult, body),
       error: null,
@@ -401,7 +432,7 @@ const handleRequest = async (req, res) => {
 
   if (url.pathname === '/api/planning-file/extract') {
     const extraction = buildPlanningExtraction(body)
-    sendJson(res, 200, {
+    sendResponse(res, requestContext, 200, {
       ok: true,
       data: extraction,
       error: null,
@@ -413,12 +444,19 @@ const handleRequest = async (req, res) => {
     return
   }
 
-  sendJson(res, 404, { ok: false, data: null, error: { message: 'Not Found', code: 'NOT_FOUND' }, meta: BASE_META })
+  sendResponse(res, requestContext, 404, { ok: false, data: null, error: { message: 'Not Found', code: 'NOT_FOUND' }, meta: BASE_META })
 }
 
 const server = http.createServer((req, res) => {
-  handleRequest(req, res).catch((error) => {
-    sendJson(res, 500, {
+  const requestContext = {
+    requestId: createRequestId(),
+    method: req.method,
+    pathname: new URL(req.url, `http://${req.headers.host}`).pathname,
+    startedAt: Date.now()
+  }
+
+  handleRequest(req, res, requestContext).catch((error) => {
+    sendResponse(res, requestContext, 500, {
       ok: false,
       data: null,
       error: {
