@@ -216,12 +216,6 @@ const ReflectionView = createAsyncView(() => import('./components/ReflectionView
 const MentorshipView = createAsyncView(() => import('./components/MentorshipView.vue'))
 const ConclusionView = createAsyncView(() => import('./components/ConclusionView.vue'))
 
-const buildSocialFeed = (city = '北京') => ([
-  { id: 'feed_1', source: '国家统计局', text: '青年就业市场回暖，数字服务类岗位增长明显。', date: new Date().toLocaleDateString() },
-  { id: 'feed_2', source: '人社公开数据', text: '一线城市生活成本继续上升，择业需同步评估净收益。', date: new Date().toLocaleDateString() },
-  { id: 'feed_3', source: '行业观察', text: `${city || '目标城市'} 的 AI 应用岗位更看重复合能力与持续学习。`, date: new Date().toLocaleDateString() }
-])
-
 const formatDuration = (durationMs) => {
   const totalMinutes = Math.max(1, Math.round(durationMs / (1000 * 60)))
   if (totalMinutes < 60) return `${totalMinutes}分钟`
@@ -274,45 +268,8 @@ const treeTransformStyle = computed(() => ({
 }))
 const isPanning = ref(false)
 
-const aiRoutes = ref([
-  {
-    id: 'route-growth',
-    title: '快速成长路线',
-    description: '在3-5年内成为行业资深专家，追求职业高度',
-    keyMilestones: ['6个月：确定方向', '1年：升任主管', '3年：升任总监', '5年：成为行业专家'],
-    requiredCapital: '50000-100000',
-    riskLevel: 'medium',
-    impactFactors: { career: 85, growth: 90, health: 60, relationship: 65, finance: 75 }
-  },
-  {
-    id: 'route-balanced',
-    title: '平衡发展路线',
-    description: '在保持工作稳定性的同时，发展副业和个人品牌',
-    keyMilestones: ['3个月：启动副业', '1年：月收入5000', '3年：客户突破100', '5年：年收入翻倍'],
-    requiredCapital: '20000-50000',
-    riskLevel: 'low',
-    impactFactors: { career: 70, growth: 75, health: 80, relationship: 85, finance: 65 }
-  },
-  {
-    id: 'route-entrepreneurship',
-    title: '创业突破路线',
-    description: '在2年内启动创业项目，争取融资和高估值',
-    keyMilestones: ['3个月：确定赛道', '6个月：产品上线', '1年：天使融资', '2年：A轮融资'],
-    requiredCapital: '200000-500000',
-    riskLevel: 'high',
-    impactFactors: { career: 100, growth: 100, health: 50, relationship: 60, finance: 90 }
-  },
-  {
-    id: 'route-freedom',
-    title: '自由职业路线',
-    description: '逐步建立个人品牌，成为行业顾问和讲师',
-    keyMilestones: ['6个月：积累1000粉丝', '1年：首次付费课程', '2年：月收入稳定', '3年：成为行业KOL'],
-    requiredCapital: '10000-30000',
-    riskLevel: 'medium',
-    impactFactors: { career: 80, growth: 85, health: 85, relationship: 75, finance: 70 }
-  }
-])
-const defaultAiRoutes = cloneData(aiRoutes.value)
+const aiRoutes = ref([])
+const defaultAiRoutes = []
 const isGeneratingRoutes = ref(false)
 const isGeneratingAIResponse = ref(false)
 const compareRoutes = ref([])
@@ -369,7 +326,7 @@ const radarPolygon = computed(() => {
     .join(' ')
 })
 const axisLabelMap = ref({ career: '职业', finance: '财务', relationship: '人际', health: '健康', growth: '成长' })
-const socialFeed = ref(buildSocialFeed(userInfo.value.city))
+const socialFeed = ref([])
 
 const chatMessages = ref([])
 const chatInput = ref('')
@@ -1024,17 +981,8 @@ const showTrendChart = () => { currentChart.value = 'trend' }
 const showImpactTrace = () => { currentChart.value = 'impact' }
 
 const refreshSocialData = () => {
-  const samples = [
-    { source: '教育部公开数据', text: '研究生招生结构持续调整，应用型方向名额增加。' },
-    { source: '招聘平台样本', text: 'AI 产品、数据分析、复合型岗位需求增加。' },
-    { source: '城市发展动态', text: `${userInfo.value.city || '目标城市'} 新增人才补贴政策，适合长期规划。` }
-  ]
-  socialFeed.value = samples.map((item, idx) => ({
-    id: `feed_refresh_${Date.now()}_${idx}`,
-    ...item,
-    date: new Date().toLocaleDateString()
-  }))
-  setStatusMessage('社会数据已刷新')
+  socialFeed.value = []
+  setStatusMessage('社会数据已清空')
 }
 
 const restartJourney = async () => {
@@ -1074,7 +1022,6 @@ const restartJourney = async () => {
     regretText,
     regretAnalysis,
     aiAdvice,
-    buildSocialFeed,
     defaultAiRoutes,
     defaultImpactHistory,
     defaultAttributeHistory,
@@ -1101,7 +1048,6 @@ onMounted(() => {
       // ignore invalid backup
     }
   }
-  generateAIRoutes()
   computeRegret()
 })
 </script>

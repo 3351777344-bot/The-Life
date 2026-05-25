@@ -1,7 +1,51 @@
 import http from 'node:http'
+import { existsSync, readFileSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
+import { resolve } from 'node:path'
+
+const loadEnvFile = (filePath) => {
+  if (!existsSync(filePath)) {
+    return
+  }
+
+  const content = readFileSync(filePath, 'utf8')
+
+  for (const line of content.split(/\r?\n/)) {
+    const trimmed = line.trim()
+
+    if (!trimmed || trimmed.startsWith('#')) {
+      continue
+    }
+
+    const equalsIndex = trimmed.indexOf('=')
+
+    if (equalsIndex === -1) {
+      continue
+    }
+
+    const key = trimmed.slice(0, equalsIndex).trim()
+    let value = trimmed.slice(equalsIndex + 1).trim()
+
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith('\'') && value.endsWith('\''))) {
+      value = value.slice(1, -1)
+    }
+
+    if (key && process.env[key] === undefined) {
+      process.env[key] = value
+    }
+  }
+}
+
+loadEnvFile(resolve(process.cwd(), '.env'))
+loadEnvFile(resolve(process.cwd(), 'backend/.env'))
 
 const PORT = Number(process.env.PORT || 3001)
+const LLM_PROVIDER = process.env.LLM_PROVIDER || (process.env.LLM_BASE_URL ? 'openai-compatible' : 'ollama')
+const LLM_CHAT_COMPLETIONS_URL = process.env.LLM_CHAT_COMPLETIONS_URL || process.env.LLM_BASE_URL || 'https://api-ai.vivo.com.cn/v1/chat/completions'
+const LLM_BASE_URL = process.env.LLM_BASE_URL || process.env.OLLAMA_BASE_URL || 'http://localhost:11434/api'
+const LLM_MODEL = process.env.LLM_MODEL || process.env.OLLAMA_MODEL || 'llama3'
+const LLM_APP_ID = process.env.LLM_APP_ID || process.env.APPID || process.env.APP_ID || ''
+const LLM_APP_KEY = process.env.LLM_APP_KEY || process.env.APPKEY || process.env.APP_KEY || ''
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/api'
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3'
 const BASE_META = {
@@ -42,6 +86,36 @@ const buildResultMeta = (source, extra = {}) => ({
   source,
   ...extra
 })
+
+const parseModelContent = (content) => {
+  if (typeof content !== 'string') {
+    return content
+  }
+
+  let text = content.trim()
+
+  if (!text) {
+    return ''
+  }
+
+  // Remove markdown code block wrapping if present
+  if (text.startsWith('```')) {
+    const lines = text.split('\n')
+    if (lines[0].startsWith('```')) {
+      lines.shift()
+    }
+    if (lines[lines.length - 1].startsWith('```')) {
+      lines.pop()
+    }
+    text = lines.join('\n').trim()
+  }
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
+}
 
 const readBody = async (req) => {
   const chunks = []
@@ -96,23 +170,63 @@ const parseOllamaResponse = async (response) => {
   const data = await response.json()
 
   if (typeof data?.response === 'string') {
-    const text = data.response.trim()
-
-    if (!text) {
-      return ''
-    }
-
-    try {
-      return JSON.parse(text)
-    } catch {
-      return text
-    }
+    return parseModelContent(data.response)
   }
 
   return data?.response ?? data
 }
 
+const parseChatCompletionResponse = async (response) => {
+  if (!response.ok) {
+    throw new Error(`Model request failed with status ${response.status}`)
+  }
+
+  const data = await response.json()
+  const content = data?.choices?.[0]?.message?.content ?? data?.choices?.[0]?.text ?? data?.output ?? data?.response
+
+  return parseModelContent(content) ?? data
+}
+
+const buildOpenAICompatibleHeaders = () => {
+  const headers = {
+    'Content-Type': 'application/json'
+  }
+
+  if (LLM_APP_KEY) {
+    headers['Authorization'] = `Bearer ${LLM_APP_KEY}`
+  }
+
+  return headers
+}
+
+const callOpenAICompatibleGenerate = async (prompt, options = {}) => {
+  try {
+    const response = await fetch(LLM_CHAT_COMPLETIONS_URL, {
+      method: 'POST',
+      headers: buildOpenAICompatibleHeaders(),
+      body: JSON.stringify({
+        model: options.model || LLM_MODEL,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        stream: false
+      })
+    })
+
+    return await parseChatCompletionResponse(response)
+  } catch {
+    return null
+  }
+}
+
 const callOllamaGenerate = async (prompt, options = {}) => {
+  if (LLM_PROVIDER === 'openai-compatible') {
+    return callOpenAICompatibleGenerate(prompt, options)
+  }
+
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/generate`, {
       method: 'POST',

@@ -110,25 +110,27 @@
 
       <div class="form-section">
         <h2>情境化测评</h2>
-        <p class="demo-hint">演示建议：这里选择“平衡型”更适合后续展示路线差异与终局复盘。</p>
         <div v-if="scenarioError" class="scenario-error">
           <strong>场景生成失败</strong>
           <p>{{ scenarioError }}</p>
         </div>
         <div class="card-flip" @click="$emit('flip-card')">
           <div class="card-front glass-container">
-            <h3>{{ currentScenario.scenario }}</h3>
-            <p>点击卡片查看选项</p>
+            <h3>{{ currentScenario.scenario || '等待生成场景' }}</h3>
+            <p>{{ currentScenario.scenario ? '点击卡片查看选项' : '先生成场景，再查看选项' }}</p>
           </div>
-          <div class="card-back glass-container" v-if="isCardFlipped">
+          <div class="card-back glass-container" v-if="isCardFlipped && currentScenario.options.length">
             <div class="option" v-for="(option, index) in currentScenario.options" :key="index" @click="$emit('select-option', option.style)">
               <span>{{ option.text }}</span>
               <small>{{ option.style }}</small>
             </div>
           </div>
+          <div class="card-back glass-container" v-else-if="isCardFlipped">
+            <p class="empty-scenario">当前还没有可展示的选项，请先生成新的场景。</p>
+          </div>
         </div>
         <button class="btn btn-secondary" @click="$emit('fetch-scenario')">生成新场景</button>
-        <button class="btn btn-secondary" @click="$emit('skip-scenario')">跳过使用默认模型</button>
+        <button class="btn btn-secondary" @click="$emit('skip-scenario')">暂不生成，继续下一步</button>
       </div>
 
       <button class="btn btn-primary" @click="$emit('start-destiny')">开始探索</button>
