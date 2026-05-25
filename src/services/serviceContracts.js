@@ -1,6 +1,7 @@
 export const SERVICE_SOURCE = {
   MODEL: 'model',
-  FILE: 'file'
+  FILE: 'file',
+  BACKEND: 'backend'
 }
 
 export const SERVICE_ERROR_CODE = {
@@ -17,5 +18,6 @@ export const SERVICE_META_KEY = {
   MODE: 'mode',
   MODE_LABEL: 'modeLabel',
   COUNT: 'count',
-  EXTRACTION_MODE: 'extractionMode'
+  EXTRACTION_MODE: 'extractionMode',
+  REQUEST_ID: 'requestId'
 }
