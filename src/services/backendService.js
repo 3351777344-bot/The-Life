@@ -2,11 +2,12 @@ import axios from 'axios'
 
 const backendApi = axios.create({
   baseURL: 'http://localhost:3001/api',
-  timeout: 30000
+  timeout: 180000
 })
 
 const post = async (path, payload) => {
   const response = await backendApi.post(path, payload)
+  console.log("[DEBUG] backendService post response:", JSON.stringify(response, null, 2))
   return response.data
 }
 

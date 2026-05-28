@@ -13,13 +13,25 @@
       <div class="header-section">
         <div class="header-icon">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="url(#compGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <polyline points="22 4 12 14.01 9 11.01" stroke="url(#compGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path
+              d="M22 11.08V12a10 10 0 1 1-5.93-9.14"
+              stroke="url(#compGrad)"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <polyline
+              points="22 4 12 14.01 9 11.01"
+              stroke="url(#compGrad)"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
             <defs>
               <linearGradient id="compGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ffd700"/>
-                <stop offset="50%" stop-color="#d4a574"/>
-                <stop offset="100%" stop-color="#cd7f32"/>
+                <stop offset="0%" stop-color="#ffd700" />
+                <stop offset="50%" stop-color="#d4a574" />
+                <stop offset="100%" stop-color="#cd7f32" />
               </linearGradient>
             </defs>
           </svg>
@@ -61,7 +73,11 @@
               >
                 ◐ 融合
               </button>
-              <button v-if="selectedRoutes.length >= 2" class="btn btn-small" @click="swapRoutes">
+              <button
+                v-if="selectedRoutes.length >= 2"
+                class="btn btn-small"
+                @click="swapRoutes"
+              >
                 ⇅ 交换
               </button>
             </div>
@@ -77,127 +93,243 @@
               <h4>🔄 切换对比路线</h4>
             </div>
             <div class="selector-grid">
-              <div v-for="(route, idx) in routes" :key="idx" class="route-option">
+              <div
+                v-for="(route, idx) in routes"
+                :key="idx"
+                class="route-option"
+              >
                 <button
                   class="route-btn"
                   :class="{ selected: selectedRoutes.includes(route) }"
                   @click="addRouteToComparison(route)"
                 >
                   <span class="route-name">{{ route.title }}</span>
-                  <span class="route-feasibility">{{ route.feasibility }}%</span>
+                  <span class="route-feasibility"
+                    >{{ route.feasibility }}%</span
+                  >
                 </button>
               </div>
             </div>
           </div>
 
-          <div v-if="comparisonMode === 'side-by-side'" class="comparison-content side-by-side">
+          <div
+            v-if="comparisonMode === 'side-by-side'"
+            class="comparison-content side-by-side"
+          >
             <div class="route-window left-window">
-              <div class="route-card glass-card" @click="expandRoute(selectedRoutes[0])">
+              <div
+                class="route-card glass-card"
+                @click="expandRoute(selectedRoutes[0])"
+              >
                 <div class="expand-hint">点击放大</div>
                 <div class="route-glow"></div>
-                <div class="route-type" :class="selectedRoutes[0]?.type">{{ selectedRoutes[0]?.type }}</div>
+                <div class="route-type" :class="selectedRoutes[0]?.type">
+                  {{ selectedRoutes[0]?.type }}
+                </div>
                 <h3 class="route-title">{{ selectedRoutes[0]?.title }}</h3>
-                <p class="route-description">{{ selectedRoutes[0]?.description }}</p>
+                <p class="route-description">
+                  {{ selectedRoutes[0]?.description }}
+                </p>
                 <div class="metrics">
+                  <div class="metric-item">
+                    <span class="metric-label">生成推演影片</span>
+                    <button
+                      class="btn btn-secondary small"
+                      @click.stop="handleGenerateMedia(selectedRoutes[0])"
+                      :disabled="isGeneratingMedia[selectedRoutes[0]?.id]"
+                    >
+                      {{
+                        isGeneratingMedia[selectedRoutes[0]?.id]
+                          ? "正在由蓝心模型生成中..."
+                          : "🎬 点我生成"
+                      }}
+                    </button>
+                  </div>
+                  <video
+                    v-if="mediaUrls[selectedRoutes[0]?.id]"
+                    :src="mediaUrls[selectedRoutes[0]?.id]"
+                    controls
+                    autoplay
+                    style="width: 100%; border-radius: 8px; margin: 10px 0"
+                  ></video>
+
                   <div class="metric-item">
                     <span class="metric-label">可行性</span>
                     <div class="metric-bar">
-                      <div class="metric-fill" :style="{ width: selectedRoutes[0]?.feasibility + '%' }"></div>
+                      <div
+                        class="metric-fill"
+                        :style="{ width: selectedRoutes[0]?.feasibility + '%' }"
+                      ></div>
                     </div>
-                    <span class="metric-value">{{ selectedRoutes[0]?.feasibility }}%</span>
+                    <span class="metric-value"
+                      >{{ selectedRoutes[0]?.feasibility }}%</span
+                    >
                   </div>
                   <div class="metric-item">
                     <span class="metric-label">难度</span>
-                    <span class="metric-badge" :class="getDifficultyClass(selectedRoutes[0]?.difficulty)">
+                    <span
+                      class="metric-badge"
+                      :class="getDifficultyClass(selectedRoutes[0]?.difficulty)"
+                    >
                       {{ selectedRoutes[0]?.difficulty }}
                     </span>
                   </div>
                   <div class="metric-item">
                     <span class="metric-label">预期收益</span>
-                    <span class="metric-badge benefit">{{ selectedRoutes[0]?.benefit }}</span>
+                    <span class="metric-badge benefit">{{
+                      selectedRoutes[0]?.benefit
+                    }}</span>
                   </div>
                 </div>
                 <div class="attribute-impact">
                   <h4>属性影响</h4>
                   <div class="impact-list">
                     <div
-                      v-for="(impact, attr) in getRouteImpacts(selectedRoutes[0])"
+                      v-for="(impact, attr) in getRouteImpacts(
+                        selectedRoutes[0],
+                      )"
                       :key="attr"
                       class="impact-tag"
                       :class="{ positive: impact >= 0, negative: impact < 0 }"
                     >
-                      {{ attributeLabels[attr] }} {{ impact > 0 ? '+' : '' }}{{ impact }}
+                      {{ attributeLabels[attr] }} {{ impact > 0 ? "+" : ""
+                      }}{{ impact }}
                     </div>
                   </div>
                 </div>
-                <button class="btn btn-primary full-width" @click.stop="selectRoute(selectedRoutes[0])">
+                <button
+                  class="btn btn-primary full-width"
+                  @click.stop="selectRoute(selectedRoutes[0])"
+                >
                   选择此路线
                 </button>
               </div>
             </div>
             <div class="route-window right-window">
-              <div class="route-card glass-card" @click="expandRoute(selectedRoutes[1])">
+              <div
+                class="route-card glass-card"
+                @click="expandRoute(selectedRoutes[1])"
+              >
                 <div class="expand-hint">点击放大</div>
                 <div class="route-glow"></div>
-                <div class="route-type" :class="selectedRoutes[1]?.type">{{ selectedRoutes[1]?.type }}</div>
+                <div class="route-type" :class="selectedRoutes[1]?.type">
+                  {{ selectedRoutes[1]?.type }}
+                </div>
                 <h3 class="route-title">{{ selectedRoutes[1]?.title }}</h3>
-                <p class="route-description">{{ selectedRoutes[1]?.description }}</p>
+                <p class="route-description">
+                  {{ selectedRoutes[1]?.description }}
+                </p>
                 <div class="metrics">
+                  <div class="metric-item">
+                    <span class="metric-label">生成推演影片</span>
+                    <button
+                      class="btn btn-secondary small"
+                      @click.stop="handleGenerateMedia(selectedRoutes[1])"
+                      :disabled="isGeneratingMedia[selectedRoutes[1]?.id]"
+                    >
+                      {{
+                        isGeneratingMedia[selectedRoutes[1]?.id]
+                          ? "正在由蓝心模型生成中..."
+                          : "🎬 点我生成"
+                      }}
+                    </button>
+                  </div>
+                  <video
+                    v-if="mediaUrls[selectedRoutes[1]?.id]"
+                    :src="mediaUrls[selectedRoutes[1]?.id]"
+                    controls
+                    autoplay
+                    style="width: 100%; border-radius: 8px; margin: 10px 0"
+                  ></video>
+
                   <div class="metric-item">
                     <span class="metric-label">可行性</span>
                     <div class="metric-bar">
-                      <div class="metric-fill" :style="{ width: selectedRoutes[1]?.feasibility + '%' }"></div>
+                      <div
+                        class="metric-fill"
+                        :style="{ width: selectedRoutes[1]?.feasibility + '%' }"
+                      ></div>
                     </div>
-                    <span class="metric-value">{{ selectedRoutes[1]?.feasibility }}%</span>
+                    <span class="metric-value"
+                      >{{ selectedRoutes[1]?.feasibility }}%</span
+                    >
                   </div>
                   <div class="metric-item">
                     <span class="metric-label">难度</span>
-                    <span class="metric-badge" :class="getDifficultyClass(selectedRoutes[1]?.difficulty)">
+                    <span
+                      class="metric-badge"
+                      :class="getDifficultyClass(selectedRoutes[1]?.difficulty)"
+                    >
                       {{ selectedRoutes[1]?.difficulty }}
                     </span>
                   </div>
                   <div class="metric-item">
                     <span class="metric-label">预期收益</span>
-                    <span class="metric-badge benefit">{{ selectedRoutes[1]?.benefit }}</span>
+                    <span class="metric-badge benefit">{{
+                      selectedRoutes[1]?.benefit
+                    }}</span>
                   </div>
                 </div>
                 <div class="attribute-impact">
                   <h4>属性影响</h4>
                   <div class="impact-list">
                     <div
-                      v-for="(impact, attr) in getRouteImpacts(selectedRoutes[1])"
+                      v-for="(impact, attr) in getRouteImpacts(
+                        selectedRoutes[1],
+                      )"
                       :key="attr"
                       class="impact-tag"
                       :class="{ positive: impact >= 0, negative: impact < 0 }"
                     >
-                      {{ attributeLabels[attr] }} {{ impact > 0 ? '+' : '' }}{{ impact }}
+                      {{ attributeLabels[attr] }} {{ impact > 0 ? "+" : ""
+                      }}{{ impact }}
                     </div>
                   </div>
                 </div>
-                <button class="btn btn-primary full-width" @click.stop="selectRoute(selectedRoutes[1])">
+                <button
+                  class="btn btn-primary full-width"
+                  @click.stop="selectRoute(selectedRoutes[1])"
+                >
                   选择此路线
                 </button>
               </div>
             </div>
           </div>
 
-          <div v-else-if="comparisonMode === 'slider'" class="comparison-content slider-mode">
+          <div
+            v-else-if="comparisonMode === 'slider'"
+            class="comparison-content slider-mode"
+          >
             <div class="slider-container glass-card">
               <div class="slider-content">
-                <div class="slider-left" :style="{ width: sliderPosition + '%' }">
+                <div
+                  class="slider-left"
+                  :style="{ width: sliderPosition + '%' }"
+                >
                   <div class="route-card glass-card" v-if="selectedRoutes[0]">
                     <div class="route-glow"></div>
-                    <div class="route-type" :class="selectedRoutes[0].type">{{ selectedRoutes[0].type }}</div>
+                    <div class="route-type" :class="selectedRoutes[0].type">
+                      {{ selectedRoutes[0].type }}
+                    </div>
                     <h3 class="route-title">{{ selectedRoutes[0].title }}</h3>
-                    <p class="route-description">{{ selectedRoutes[0].description }}</p>
+                    <p class="route-description">
+                      {{ selectedRoutes[0].description }}
+                    </p>
                   </div>
                 </div>
-                <div class="slider-right" :style="{ width: (100 - sliderPosition) + '%' }">
+                <div
+                  class="slider-right"
+                  :style="{ width: 100 - sliderPosition + '%' }"
+                >
                   <div class="route-card glass-card" v-if="selectedRoutes[1]">
                     <div class="route-glow"></div>
-                    <div class="route-type" :class="selectedRoutes[1].type">{{ selectedRoutes[1].type }}</div>
+                    <div class="route-type" :class="selectedRoutes[1].type">
+                      {{ selectedRoutes[1].type }}
+                    </div>
                     <h3 class="route-title">{{ selectedRoutes[1].title }}</h3>
-                    <p class="route-description">{{ selectedRoutes[1].description }}</p>
+                    <p class="route-description">
+                      {{ selectedRoutes[1].description }}
+                    </p>
                   </div>
                 </div>
                 <div
@@ -215,22 +347,35 @@
                 max="100"
                 v-model="sliderPosition"
                 class="slider-input"
-              >
+              />
             </div>
           </div>
 
-          <div v-else-if="comparisonMode === 'blend'" class="comparison-content blend-mode">
+          <div
+            v-else-if="comparisonMode === 'blend'"
+            class="comparison-content blend-mode"
+          >
             <div class="blend-container">
-              <div v-for="(route, idx) in selectedRoutes" :key="idx" class="blend-layer" :style="{ opacity: 0.5 }">
+              <div
+                v-for="(route, idx) in selectedRoutes"
+                :key="idx"
+                class="blend-layer"
+                :style="{ opacity: 0.5 }"
+              >
                 <div class="route-card glass-card">
                   <div class="route-glow"></div>
-                  <div class="route-type" :class="route.type">{{ route.type }}</div>
+                  <div class="route-type" :class="route.type">
+                    {{ route.type }}
+                  </div>
                   <h3 class="route-title">{{ route.title }}</h3>
                   <div class="metrics">
                     <div class="metric-item">
                       <span class="metric-label">可行性</span>
                       <div class="metric-bar">
-                        <div class="metric-fill" :style="{ width: route.feasibility + '%' }"></div>
+                        <div
+                          class="metric-fill"
+                          :style="{ width: route.feasibility + '%' }"
+                        ></div>
                       </div>
                     </div>
                   </div>
@@ -239,27 +384,36 @@
             </div>
           </div>
 
-          <div class="comparison-analysis glass-card" v-if="selectedRoutes.length === 2">
+          <div
+            class="comparison-analysis glass-card"
+            v-if="selectedRoutes.length === 2"
+          >
             <div class="analysis-header">
               <h4>对比分析</h4>
             </div>
             <div class="analysis-grid">
               <div class="analysis-item">
                 <span class="analysis-label">综合评分差异</span>
-                <span class="analysis-value" :class="getScoreDifference() >= 0 ? 'positive' : 'negative'">
-                  {{ getScoreDifference() > 0 ? '+' : '' }}{{ getScoreDifference() }}
+                <span
+                  class="analysis-value"
+                  :class="getScoreDifference() >= 0 ? 'positive' : 'negative'"
+                >
+                  {{ getScoreDifference() > 0 ? "+" : ""
+                  }}{{ getScoreDifference() }}
                 </span>
               </div>
               <div class="analysis-item">
                 <span class="analysis-label">难度对比</span>
                 <span class="analysis-value">
-                  {{ selectedRoutes[0].difficulty }} vs {{ selectedRoutes[1].difficulty }}
+                  {{ selectedRoutes[0].difficulty }} vs
+                  {{ selectedRoutes[1].difficulty }}
                 </span>
               </div>
               <div class="analysis-item">
                 <span class="analysis-label">收益期望</span>
                 <span class="analysis-value">
-                  {{ selectedRoutes[0].benefit }} vs {{ selectedRoutes[1].benefit }}
+                  {{ selectedRoutes[0].benefit }} vs
+                  {{ selectedRoutes[1].benefit }}
                 </span>
               </div>
             </div>
@@ -272,7 +426,9 @@
               <h3 class="panel-title">社会现实联动</h3>
             </div>
             <div class="social-item" v-for="item in socialData" :key="item.id">
-              <span class="social-tag" :class="item.category">{{ item.category }}</span>
+              <span class="social-tag" :class="item.category">{{
+                item.category
+              }}</span>
               <p class="social-text">{{ item.text }}</p>
             </div>
           </div>
@@ -281,7 +437,11 @@
             <div class="panel-header">
               <h3 class="panel-title">教育/共聚政策</h3>
             </div>
-            <div class="policy-item" v-for="policy in policyData" :key="policy.id">
+            <div
+              class="policy-item"
+              v-for="policy in policyData"
+              :key="policy.id"
+            >
               <h4 class="policy-title">{{ policy.title }}</h4>
               <p class="policy-text">{{ policy.description }}</p>
               <span class="policy-date">{{ policy.date }}</span>
@@ -291,8 +451,16 @@
       </div>
 
       <div class="comparison-footer">
-        <button class="btn btn-secondary" @click="$emit('go-back')">← 返回</button>
-        <button class="btn btn-primary" :disabled="routes.length < 2 && !selectedRoute" @click="$emit('confirm-selection')">确认选择</button>
+        <button class="btn btn-secondary" @click="$emit('go-back')">
+          ← 返回
+        </button>
+        <button
+          class="btn btn-primary"
+          :disabled="routes.length < 2 && !selectedRoute"
+          @click="$emit('confirm-selection')"
+        >
+          确认选择
+        </button>
       </div>
 
       <Teleport to="body">
@@ -300,27 +468,41 @@
           <div class="expanded-content glass-container" @click.stop>
             <button class="expanded-close" @click="closeExpanded">×</button>
             <div class="expanded-header">
-              <div class="route-type" :class="expandedRoute.type">{{ expandedRoute.type }}</div>
+              <div class="route-type" :class="expandedRoute.type">
+                {{ expandedRoute.type }}
+              </div>
               <h2 class="expanded-title">{{ expandedRoute.title }}</h2>
-              <p class="expanded-description">{{ expandedRoute.description }}</p>
+              <p class="expanded-description">
+                {{ expandedRoute.description }}
+              </p>
             </div>
             <div class="expanded-metrics">
               <div class="expanded-metric">
                 <span class="metric-label">可行性</span>
                 <div class="metric-bar large">
-                  <div class="metric-fill" :style="{ width: expandedRoute.feasibility + '%' }"></div>
+                  <div
+                    class="metric-fill"
+                    :style="{ width: expandedRoute.feasibility + '%' }"
+                  ></div>
                 </div>
-                <span class="metric-value">{{ expandedRoute.feasibility }}%</span>
+                <span class="metric-value"
+                  >{{ expandedRoute.feasibility }}%</span
+                >
               </div>
               <div class="expanded-metric">
                 <span class="metric-label">难度</span>
-                <span class="metric-badge large" :class="getDifficultyClass(expandedRoute.difficulty)">
+                <span
+                  class="metric-badge large"
+                  :class="getDifficultyClass(expandedRoute.difficulty)"
+                >
                   {{ expandedRoute.difficulty }}
                 </span>
               </div>
               <div class="expanded-metric">
                 <span class="metric-label">预期收益</span>
-                <span class="metric-badge benefit large">{{ expandedRoute.benefit }}</span>
+                <span class="metric-badge benefit large">{{
+                  expandedRoute.benefit
+                }}</span>
               </div>
             </div>
             <div class="expanded-impacts">
@@ -332,11 +514,15 @@
                   class="impact-tag large"
                   :class="{ positive: impact >= 0, negative: impact < 0 }"
                 >
-                  {{ attributeLabels[attr] }} {{ impact > 0 ? '+' : '' }}{{ impact }}
+                  {{ attributeLabels[attr] }} {{ impact > 0 ? "+" : ""
+                  }}{{ impact }}
                 </div>
               </div>
             </div>
-            <button class="btn btn-primary full-width" @click="selectRoute(expandedRoute)">
+            <button
+              class="btn btn-primary full-width"
+              @click="selectRoute(expandedRoute)"
+            >
               选择此路线
             </button>
           </div>
@@ -347,171 +533,325 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import AttributesSidebar from './AttributesSidebar.vue'
-import { getRoutePreviewValues } from '../services/routeStateService'
+import { ref, computed, watch, reactive } from "vue";
+import AttributesSidebar from "./AttributesSidebar.vue";
+import { getRoutePreviewValues } from "../services/routeStateService";
+import { generateMedia } from "../services/ollamaService";
+
+const showMessage = (message, type = "info") => {
+  alert(message);
+};
 
 const props = defineProps({
   routes: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   selectedRoute: {
     type: Object,
-    default: null
+    default: null,
   },
   attributes: {
     type: Object,
-    default: () => ({})
+    default: () => ({}),
+  },
+  userInfo: {
+    type: Object,
+    default: () => ({}),
+  },
+});
+
+const emit = defineEmits(["go-back", "confirm-selection", "route-selected"]);
+
+const comparisonMode = ref("side-by-side");
+const selectedRoutes = ref([]);
+const sliderPosition = ref(50);
+let isDraggingSlider = false;
+const expandedRoute = ref(null);
+
+const mediaUrls = reactive({});
+const isGeneratingMedia = reactive({});
+const isPollingVideo = reactive({});
+const lastGenerationTime = ref({});
+
+const queryVideoStatus = async (taskId) => {
+  try {
+    const response = await fetch("/api/media/query-video", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ taskId }),
+    });
+    const data = await response.json();
+    return data.data;
+  } catch (err) {
+    console.error("查询视频状态失败:", err);
+    return null;
   }
-})
+};
 
-const emit = defineEmits(['go-back', 'confirm-selection', 'route-selected'])
+const pollVideoResult = async (route, taskId) => {
+  isPollingVideo[route.id] = true;
+  let attempts = 0;
+  const maxAttempts = 30;
+  const delay = 5000;
 
-const comparisonMode = ref('side-by-side')
-const selectedRoutes = ref([])
-const sliderPosition = ref(50)
-let isDraggingSlider = false
-const expandedRoute = ref(null)
+  while (attempts < maxAttempts) {
+    await new Promise((resolve) => setTimeout(resolve, delay));
 
-watch(() => props.routes, (newRoutes) => {
-  if (newRoutes && newRoutes.length >= 2) {
-    selectedRoutes.value = [newRoutes[0], newRoutes[1]]
-  } else if (newRoutes && newRoutes.length === 1) {
-    selectedRoutes.value = [newRoutes[0]]
+    const result = await queryVideoStatus(taskId);
+    if (result) {
+      if (result.status === "succeeded" && result.content?.video_url) {
+        mediaUrls[route.id] = result.content.video_url;
+        break;
+      } else if (result.status === "failed") {
+        console.error("视频生成失败:", result.error);
+        break;
+      }
+    }
+    attempts++;
   }
-}, { immediate: true, deep: true })
+
+  isPollingVideo[route.id] = false;
+};
+
+const buildVideoPrompt = (route, user) => {
+  const protagonist = {
+    name: user?.name || "主人公",
+    age: user?.age || "",
+    occupation: user?.occupation || "待定",
+    city: user?.city || "某城市",
+    personality: route?.personality || "积极进取",
+  };
+
+  const stages = Array.isArray(route?.stages) ? route.stages : [];
+  const milestones = Array.isArray(route?.milestones) ? route.milestones : [];
+  const opportunities = Array.isArray(route?.opportunities)
+    ? route.opportunities
+    : [];
+  const risks = Array.isArray(route?.risks) ? route.risks : [];
+
+  const stageDescriptions = stages
+    .map((s, i) => `阶段${i + 1}「${s.phase}」：${s.focus}（${s.duration}）`)
+    .join("；");
+
+  const milestoneDescriptions =
+    milestones.length > 0
+      ? `关键成就：${milestones.slice(0, 3).join("、")}。`
+      : "";
+
+  const opportunityDescriptions =
+    opportunities.length > 0
+      ? `可能机遇：${opportunities.slice(0, 2).join("、")}。`
+      : "";
+
+  const riskDescriptions =
+    risks.length > 0 ? `潜在挑战：${risks.slice(0, 2).join("、")}。` : "";
+
+  const prompt = `电影级人生纪录片，4K高清，多个连贯镜头，时长约30秒。
+
+【主人公】
+${protagonist.name}，${protagonist.age}岁，${protagonist.occupation}，生活在${protagonist.city}。性格特点：${protagonist.personality}。
+
+【人生路线】
+「${route?.title}」：${route?.description}
+
+【发展轨迹】
+${stageDescriptions}
+
+${milestoneDescriptions}
+${opportunityDescriptions}
+${riskDescriptions}
+
+【拍摄要求】
+1. 开场：清晨城市街景，主人公出门上班/上学的场景，展现${protagonist.city}的城市氛围
+2. 中段：按照路线发展阶段展开，包含日常工作/学习场景、人际交往场景、日常生活场景
+3. 高潮：展现关键里程碑达成时刻，如获得证书、升职、结婚等人生重要节点
+4. 结尾：展望未来3-5年后的生活状态，暗示美好前景
+
+【风格】
+真实自然光摄影，温暖色调，贴近生活的细节捕捉，展现普通人追求幸福的真实故事。
+
+请生成一个完整连贯的人生推演视频，时长约30秒。`;
+
+  return prompt;
+};
+
+const handleGenerateMedia = async (route) => {
+  isGeneratingMedia[route.id] = true;
+  try {
+    const user = props.userInfo || {};
+    const prompt = buildVideoPrompt(route, user);
+    const result = await generateMedia(prompt, "video");
+
+    if (result && result.length) {
+      const mediaItem = result[0];
+      if (mediaItem.url) {
+        mediaUrls[route.id] = mediaItem.url;
+      } else if (mediaItem.taskId && mediaItem.status === "pending") {
+        pollVideoResult(route, mediaItem.taskId);
+      } else if (mediaItem) {
+        mediaUrls[route.id] = mediaItem;
+      }
+    } else {
+      showMessage("视频生成失败，请稍后重试");
+    }
+  } catch (err) {
+    console.error("媒体生成失败:", err);
+    const errorMsg = err?.message || "Unknown error";
+    if (errorMsg.includes("Rate limit")) {
+      showMessage("视频生成请求过于频繁，请稍后再试（速率限制）");
+    } else {
+      showMessage(`视频生成失败: ${errorMsg}`);
+    }
+  } finally {
+    isGeneratingMedia[route.id] = false;
+  }
+};
+
+watch(
+  () => props.routes,
+  (newRoutes) => {
+    if (newRoutes && newRoutes.length >= 2) {
+      selectedRoutes.value = [newRoutes[0], newRoutes[1]];
+    } else if (newRoutes && newRoutes.length === 1) {
+      selectedRoutes.value = [newRoutes[0]];
+    }
+  },
+  { immediate: true, deep: true },
+);
 
 const expandRoute = (route) => {
   if (route) {
-    expandedRoute.value = route
+    expandedRoute.value = route;
   }
-}
+};
 
 const closeExpanded = () => {
-  expandedRoute.value = null
-}
+  expandedRoute.value = null;
+};
 
 const attributeLabels = {
-  career: '职业发展',
-  finance: '财务状况',
-  relationship: '人际关系',
-  health: '健康状态',
-  growth: '个人成长'
-}
+  career: "职业发展",
+  finance: "财务状况",
+  relationship: "人际关系",
+  health: "健康状态",
+  growth: "个人成长",
+};
 
 const getTagColor = (tag) => {
   const colors = {
-    'AI科技': 'tag-ai',
-    '创业': 'tag-startup',
-    '体制': 'tag-system',
-    '艺术': 'tag-art',
-    '自由职业': 'tag-freelance'
-  }
-  return colors[tag] || 'tag-default'
-}
+    AI科技: "tag-ai",
+    创业: "tag-startup",
+    体制: "tag-system",
+    艺术: "tag-art",
+    自由职业: "tag-freelance",
+  };
+  return colors[tag] || "tag-default";
+};
 
 const getRouteImpacts = (route) => {
-  return getRoutePreviewValues(route)
-}
+  return getRoutePreviewValues(route);
+};
 
-const mentorTip = ref('当前的最优选择是平衡职业发展与个人成长的道路')
+const mentorTip = ref("当前的最优选择是平衡职业发展与个人成长的道路");
 
 const socialData = [
   {
     id: 1,
-    category: '行业',
-    text: '2025年AI行业增速预计20.3%，投融资超6000亿'
+    category: "行业",
+    text: "2025年AI行业增速预计20.3%，投融资超6000亿",
   },
   {
     id: 2,
-    category: '政策',
-    text: '国家发布《十四五数字经济发展规划》支持新兴产业'
+    category: "政策",
+    text: "国家发布《十四五数字经济发展规划》支持新兴产业",
   },
   {
     id: 3,
-    category: '数据',
-    text: '互联网行业平均薪资同比增长22.3%'
-  }
-]
+    category: "数据",
+    text: "互联网行业平均薪资同比增长22.3%",
+  },
+];
 
 const policyData = [
   {
     id: 1,
-    title: '教育支持政策',
-    description: '国家继续教育计划支持职业技能提升',
-    date: '2025年1月'
+    title: "教育支持政策",
+    description: "国家继续教育计划支持职业技能提升",
+    date: "2025年1月",
   },
   {
     id: 2,
-    title: '创业扶持政策',
-    description: '创新创业基金增加到100亿元规模',
-    date: '2025年1月'
-  }
-]
+    title: "创业扶持政策",
+    description: "创新创业基金增加到100亿元规模",
+    date: "2025年1月",
+  },
+];
 
 const getAttributeClass = (value) => {
-  if (value >= 80) return 'high'
-  if (value >= 60) return 'medium'
-  return 'low'
-}
+  if (value >= 80) return "high";
+  if (value >= 60) return "medium";
+  return "low";
+};
 
 const getDifficultyClass = (difficulty) => {
-  const map = { '低': 'easy', '中等': 'medium', '高': 'hard' }
-  return map[difficulty] || 'medium'
-}
+  const map = { 低: "easy", 中等: "medium", 高: "hard" };
+  return map[difficulty] || "medium";
+};
 
 const getScoreDifference = () => {
-  if (selectedRoutes.value.length < 2) return 0
-  const score1 = selectedRoutes.value[0].feasibility || 0
-  const score2 = selectedRoutes.value[1].feasibility || 0
-  return score1 - score2
-}
+  if (selectedRoutes.value.length < 2) return 0;
+  const score1 = selectedRoutes.value[0].feasibility || 0;
+  const score2 = selectedRoutes.value[1].feasibility || 0;
+  return score1 - score2;
+};
 
 const swapRoutes = () => {
   if (selectedRoutes.value.length >= 2) {
-    const temp = selectedRoutes.value[0]
-    selectedRoutes.value[0] = selectedRoutes.value[1]
-    selectedRoutes.value[1] = temp
+    const temp = selectedRoutes.value[0];
+    selectedRoutes.value[0] = selectedRoutes.value[1];
+    selectedRoutes.value[1] = temp;
   }
-}
+};
 
 const replaceRoute = (slot, route) => {
-  selectedRoutes.value[slot] = route
-}
+  selectedRoutes.value[slot] = route;
+};
 
 const addRouteToComparison = (route) => {
   if (selectedRoutes.value.length < 2) {
-    selectedRoutes.value.push(route)
+    selectedRoutes.value.push(route);
   } else {
-    selectedRoutes.value[1] = route
+    selectedRoutes.value[1] = route;
   }
-}
+};
 
 const selectRoute = (route) => {
-  emit('route-selected', route)
-}
+  emit("route-selected", route);
+};
 
 const startSliderDrag = (e) => {
-  isDraggingSlider = true
-  document.addEventListener('mousemove', handleSliderMove)
-  document.addEventListener('mouseup', endSliderDrag)
-}
+  isDraggingSlider = true;
+  document.addEventListener("mousemove", handleSliderMove);
+  document.addEventListener("mouseup", endSliderDrag);
+};
 
 const handleSliderMove = (e) => {
-  if (!isDraggingSlider) return
-  const container = document.querySelector('.slider-container')
-  if (!container) return
-  const rect = container.getBoundingClientRect()
-  const pos = ((e.clientX - rect.left) / rect.width) * 100
-  sliderPosition.value = Math.max(0, Math.min(100, pos))
-}
+  if (!isDraggingSlider) return;
+  const container = document.querySelector(".slider-container");
+  if (!container) return;
+  const rect = container.getBoundingClientRect();
+  const pos = ((e.clientX - rect.left) / rect.width) * 100;
+  sliderPosition.value = Math.max(0, Math.min(100, pos));
+};
 
 const endSliderDrag = () => {
-  isDraggingSlider = false
-  document.removeEventListener('mousemove', handleSliderMove)
-  document.removeEventListener('mouseup', endSliderDrag)
-}
+  isDraggingSlider = false;
+  document.removeEventListener("mousemove", handleSliderMove);
+  document.removeEventListener("mouseup", endSliderDrag);
+};
 </script>
 
 <style scoped>
@@ -537,20 +877,48 @@ const endSliderDrag = () => {
   height: 100%;
   pointer-events: none;
   z-index: 0;
-  background: linear-gradient(270deg, transparent, rgba(212, 165, 116, 0.12), rgba(255, 215, 100, 0.2), rgba(212, 165, 116, 0.12), transparent);
+  background: linear-gradient(
+    270deg,
+    transparent,
+    rgba(212, 165, 116, 0.12),
+    rgba(255, 215, 100, 0.2),
+    rgba(212, 165, 116, 0.12),
+    transparent
+  );
   animation: beam-flow 12s linear infinite;
   opacity: 0.4;
 }
 
-.beam-1 { animation-delay: 0s; top: 5%; }
-.beam-2 { animation-delay: -4s; top: 35%; opacity: 0.25; }
-.beam-3 { animation-delay: -8s; top: 65%; opacity: 0.15; }
+.beam-1 {
+  animation-delay: 0s;
+  top: 5%;
+}
+.beam-2 {
+  animation-delay: -4s;
+  top: 35%;
+  opacity: 0.25;
+}
+.beam-3 {
+  animation-delay: -8s;
+  top: 65%;
+  opacity: 0.15;
+}
 
 @keyframes beam-flow {
-  0% { transform: translateX(-50%) skewX(-15deg); opacity: 0; }
-  10% { opacity: 0.4; }
-  90% { opacity: 0.4; }
-  100% { transform: translateX(50%) skewX(-15deg); opacity: 0; }
+  0% {
+    transform: translateX(-50%) skewX(-15deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.4;
+  }
+  90% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateX(50%) skewX(-15deg);
+    opacity: 0;
+  }
 }
 
 .beam-accent {
@@ -566,25 +934,41 @@ const endSliderDrag = () => {
 .beam-accent.top-left {
   top: -30px;
   left: -30px;
-  background: radial-gradient(circle, rgba(255, 215, 100, 0.5) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 215, 100, 0.5) 0%,
+    transparent 70%
+  );
 }
 
 .beam-accent.top-right {
   top: -30px;
   right: -30px;
-  background: radial-gradient(circle, rgba(212, 165, 116, 0.5) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(212, 165, 116, 0.5) 0%,
+    transparent 70%
+  );
 }
 
 .beam-accent.bottom-left {
   bottom: -30px;
   left: -30px;
-  background: radial-gradient(circle, rgba(205, 127, 50, 0.4) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(205, 127, 50, 0.4) 0%,
+    transparent 70%
+  );
 }
 
 .beam-accent.bottom-right {
   bottom: -30px;
   right: -30px;
-  background: radial-gradient(circle, rgba(255, 191, 0, 0.4) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 191, 0, 0.4) 0%,
+    transparent 70%
+  );
 }
 
 .header-section {
@@ -801,8 +1185,12 @@ const endSliderDrag = () => {
   opacity: 0;
 }
 
-.left-window { animation-delay: 0s; }
-.right-window { animation-delay: 0.15s; }
+.left-window {
+  animation-delay: 0s;
+}
+.right-window {
+  animation-delay: 0.15s;
+}
 
 @keyframes slideInUp {
   from {
@@ -828,7 +1216,11 @@ const endSliderDrag = () => {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle at center, rgba(212, 165, 116, 0.08) 0%, transparent 50%);
+  background: radial-gradient(
+    circle at center,
+    rgba(212, 165, 116, 0.08) 0%,
+    transparent 50%
+  );
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
@@ -1241,8 +1633,12 @@ const endSliderDrag = () => {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .expanded-content {
@@ -1352,8 +1748,13 @@ const endSliderDrag = () => {
 }
 
 @keyframes float-gentle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @media (max-width: 1200px) {

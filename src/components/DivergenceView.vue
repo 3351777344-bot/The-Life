@@ -11,12 +11,18 @@
       <div class="divergence-header">
         <div class="header-icon">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="url(#divGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path
+              d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
+              stroke="url(#divGrad)"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
             <defs>
               <linearGradient id="divGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ffd700"/>
-                <stop offset="50%" stop-color="#d4a574"/>
-                <stop offset="100%" stop-color="#cd7f32"/>
+                <stop offset="0%" stop-color="#ffd700" />
+                <stop offset="50%" stop-color="#d4a574" />
+                <stop offset="100%" stop-color="#cd7f32" />
               </linearGradient>
             </defs>
           </svg>
@@ -26,22 +32,38 @@
       </div>
 
       <div class="mode-switch">
-        <span class="mode-label" :class="{ active: mode === 'ai' }">AI智能生成</span>
-        <div class="toggle" :class="{ active: mode === 'ai' }" @click="$emit('toggle-mode')">
+        <span class="mode-label" :class="{ active: mode === 'ai' }"
+          >AI智能生成</span
+        >
+        <div
+          class="toggle"
+          :class="{ active: mode === 'ai' }"
+          @click="$emit('toggle-mode')"
+        >
           <div class="toggle-thumb"></div>
         </div>
-        <span class="mode-label" :class="{ active: mode !== 'ai' }">玩家自定义</span>
+        <span class="mode-label" :class="{ active: mode !== 'ai' }"
+          >玩家自定义</span
+        >
       </div>
       <div class="routes-container" v-if="mode === 'ai'">
         <div v-if="routeGenerationError" class="state-banner error-banner">
           <strong>路线生成出现问题</strong>
           <p>{{ routeGenerationError }}</p>
         </div>
-        <div v-else-if="!isGenerating && aiRoutes.length === 0" class="state-banner empty-banner">
+        <div
+          v-else-if="!isGenerating && aiRoutes.length === 0"
+          class="state-banner empty-banner"
+        >
           <strong>暂时还没有路线</strong>
           <p>可以重新触发 AI 生成，或切换到自定义模式先录入你的路线想法。</p>
         </div>
-        <div class="route-card glass-card fade-in-up" v-for="(route, index) in aiRoutes" :key="index" :style="{ animationDelay: (index * 0.1) + 's' }">
+        <div
+          class="route-card glass-card fade-in-up"
+          v-for="(route, index) in aiRoutes"
+          :key="index"
+          :style="{ animationDelay: index * 0.1 + 's' }"
+        >
           <div class="route-glow"></div>
           <div class="route-header">
             <h3>{{ route.title }}</h3>
@@ -52,7 +74,10 @@
             <div class="meta-item">
               <span class="meta-label">可行性</span>
               <div class="meta-bar">
-                <div class="meta-fill" :style="{ width: route.feasibility + '%' }"></div>
+                <div
+                  class="meta-fill"
+                  :style="{ width: route.feasibility + '%' }"
+                ></div>
               </div>
               <span class="meta-value">{{ route.feasibility }}%</span>
             </div>
@@ -62,15 +87,40 @@
             </div>
           </div>
           <div class="route-actions">
-            <button class="btn btn-secondary small" @click="$emit('refine-route', index)">细化路线</button>
-            <button class="btn btn-secondary small" @click="$emit('replace-route', index)">替换路线</button>
-            <button class="btn btn-secondary small" :class="{ selected: compareRoutes.includes(route) }" @click="$emit('toggle-compare', route)">{{ compareRoutes.includes(route) ? '取消对比' : '加入对比' }}</button>
-            <button class="btn btn-primary small" @click="$emit('select-route', route)">选择路线</button>
+            <button
+              class="btn btn-secondary small"
+              @click="$emit('refine-route', index)"
+            >
+              细化路线
+            </button>
+            <button
+              class="btn btn-secondary small"
+              @click="$emit('replace-route', index)"
+            >
+              替换路线
+            </button>
+            <button
+              class="btn btn-secondary small"
+              :class="{ selected: compareRoutes.includes(route) }"
+              @click="$emit('toggle-compare', route)"
+            >
+              {{ compareRoutes.includes(route) ? "取消对比" : "加入对比" }}
+            </button>
+            <button
+              class="btn btn-primary small"
+              @click="$emit('select-route', route)"
+            >
+              选择路线
+            </button>
           </div>
         </div>
-        <button class="btn btn-primary generate-btn" @click="$emit('generate-ai-routes')" :disabled="isGenerating">
+        <button
+          class="btn btn-primary generate-btn"
+          @click="$emit('generate-ai-routes')"
+          :disabled="isGenerating"
+        >
           <span class="btn-glow"></span>
-          {{ isGenerating ? '生成中...' : '重新生成路线' }}
+          {{ isGenerating ? "生成中..." : "重新生成路线" }}
         </button>
       </div>
 
@@ -81,11 +131,21 @@
         <div class="form-row">
           <div class="form-group">
             <label>路线名称</label>
-            <input type="text" v-model="localCustom.title" class="input" placeholder="路线名称">
+            <input
+              type="text"
+              v-model="localCustom.title"
+              class="input"
+              placeholder="路线名称"
+            />
           </div>
           <div class="form-group">
             <label>可行性</label>
-            <input type="number" v-model="localCustom.feasibility" class="input" placeholder="0-100%">
+            <input
+              type="number"
+              v-model="localCustom.feasibility"
+              class="input"
+              placeholder="0-100%"
+            />
           </div>
         </div>
         <div class="form-row">
@@ -111,17 +171,38 @@
         </div>
         <div class="form-group full-width">
           <label>路线描述</label>
-          <textarea v-model="localCustom.description" class="input" rows="3" placeholder="路线描述"></textarea>
+          <textarea
+            v-model="localCustom.description"
+            class="input"
+            rows="3"
+            placeholder="路线描述"
+          ></textarea>
         </div>
         <div class="form-group full-width">
           <label>上传规划文档</label>
-          <input type="file" class="input" accept=".txt,.md,.json,.csv,.tsv,.doc,.docx" @change="$emit('file-upload', $event)">
-          <p v-if="uploadedPlanMeta?.summary" class="upload-summary">{{ uploadedPlanMeta.summary }}</p>
+          <input
+            type="file"
+            class="input"
+            accept=".txt,.md,.json,.csv,.tsv,.doc,.docx"
+            @change="$emit('file-upload', $event)"
+          />
+          <p v-if="uploadedPlanMeta?.summary" class="upload-summary">
+            {{ uploadedPlanMeta.summary }}
+          </p>
         </div>
-        <button class="btn btn-primary" @click="$emit('add-custom-route', localCustom)">添加路线</button>
+        <button
+          class="btn btn-primary"
+          @click="$emit('add-custom-route', localCustom)"
+        >
+          添加路线
+        </button>
         <div class="custom-route-list" v-if="customRoutes.length">
           <h4>我的路线</h4>
-          <div class="custom-route-card glass-card" v-for="(route, index) in customRoutes" :key="route.id">
+          <div
+            class="custom-route-card glass-card"
+            v-for="(route, index) in customRoutes"
+            :key="route.id"
+          >
             <div class="custom-route-main">
               <div>
                 <strong>{{ route.title }}</strong>
@@ -134,8 +215,18 @@
               </div>
             </div>
             <div class="custom-route-actions">
-              <button class="btn btn-secondary small" @click="$emit('select-route', route)">选择</button>
-              <button class="btn btn-secondary small" @click="$emit('remove-custom-route', index)">删除</button>
+              <button
+                class="btn btn-secondary small"
+                @click="$emit('select-route', route)"
+              >
+                选择
+              </button>
+              <button
+                class="btn btn-secondary small"
+                @click="$emit('remove-custom-route', index)"
+              >
+                删除
+              </button>
             </div>
           </div>
         </div>
@@ -146,9 +237,15 @@
           <h3>多模态素材</h3>
         </div>
         <div class="multimedia-options">
-          <button class="btn btn-secondary" @click="$emit('generate-comic')">生成漫画</button>
-          <button class="btn btn-secondary" @click="$emit('generate-video')">生成短视频</button>
-          <button class="btn btn-secondary" @click="$emit('generate-poster')">生成海报</button>
+          <button class="btn btn-secondary" @click="$emit('generate-comic')">
+            生成漫画
+          </button>
+          <button class="btn btn-secondary" @click="$emit('generate-video')">
+            生成短视频
+          </button>
+          <button class="btn btn-secondary" @click="$emit('generate-poster')">
+            生成海报
+          </button>
         </div>
         <div class="style-selector">
           <label>风格选择</label>
@@ -159,7 +256,11 @@
           </select>
         </div>
         <div class="media-gallery" v-if="generatedMedia.length">
-          <div class="media-card glass-card" v-for="media in generatedMedia" :key="media.id">
+          <div
+            class="media-card glass-card"
+            v-for="media in generatedMedia"
+            :key="media.id"
+          >
             <div class="media-thumb" :class="media.type"></div>
             <div class="media-info">
               <strong>{{ media.title }}</strong>
@@ -171,8 +272,14 @@
       </div>
 
       <div class="divergence-controls">
-        <button class="btn btn-secondary" @click="$emit('go-to-destiny')">返回</button>
-        <button v-if="compareRoutes.length >= 2" class="btn btn-primary" @click="$emit('go-to-comparison')">
+        <button class="btn btn-secondary" @click="$emit('go-to-destiny')">
+          返回
+        </button>
+        <button
+          v-if="compareRoutes.length >= 2"
+          class="btn btn-primary"
+          @click="$emit('go-to-comparison')"
+        >
           <span class="btn-icon">🔄</span>开启双窗对比
         </button>
         <button class="btn btn-primary" @click="$emit('go-to-reflection')">
@@ -184,7 +291,7 @@
 </template>
 
 <script setup>
-import { reactive, toRefs, watch } from 'vue'
+import { reactive, ref, toRefs, watch } from "vue";
 defineProps({
   aiRoutes: { type: Array, required: true },
   isGenerating: { type: Boolean, required: true },
@@ -192,17 +299,43 @@ defineProps({
   customRoutes: { type: Array, required: true },
   selectedRoute: { type: Object, required: false },
   generatedMedia: { type: Array, required: true },
-  routeGenerationError: { type: String, required: false, default: '' },
+  routeGenerationError: { type: String, required: false, default: "" },
   uploadedPlanMeta: { type: Object, required: false, default: null },
-  mode: { type: String, required: true }
-})
+  mode: { type: String, required: true },
+});
 
-const emit = defineEmits(['generate-ai-routes','refine-route','replace-route','toggle-compare','select-route','add-custom-route','remove-custom-route','file-upload','generate-comic','generate-video','generate-poster','go-to-destiny','go-to-comparison','go-to-reflection','toggle-mode'])
+const emit = defineEmits([
+  "generate-ai-routes",
+  "refine-route",
+  "replace-route",
+  "toggle-compare",
+  "select-route",
+  "add-custom-route",
+  "remove-custom-route",
+  "file-upload",
+  "generate-comic",
+  "generate-video",
+  "generate-poster",
+  "go-to-destiny",
+  "go-to-comparison",
+  "go-to-reflection",
+  "toggle-mode",
+]);
 
-const localCustom = reactive({ title: '', description: '', feasibility: '', difficulty: '', benefit: '' })
-const localStyle = reactive('治愈')
+const localCustom = reactive({
+  title: "",
+  description: "",
+  feasibility: "",
+  difficulty: "",
+  benefit: "",
+});
+const localStyle = ref("治愈");
 
-watch(() => localCustom, (v) => {}, { deep: true })
+watch(
+  () => localCustom,
+  (v) => {},
+  { deep: true },
+);
 </script>
 
 <style scoped>
@@ -228,20 +361,48 @@ watch(() => localCustom, (v) => {}, { deep: true })
   height: 100%;
   pointer-events: none;
   z-index: 0;
-  background: linear-gradient(270deg, transparent, rgba(212, 165, 116, 0.15), rgba(255, 215, 100, 0.25), rgba(212, 165, 116, 0.15), transparent);
+  background: linear-gradient(
+    270deg,
+    transparent,
+    rgba(212, 165, 116, 0.15),
+    rgba(255, 215, 100, 0.25),
+    rgba(212, 165, 116, 0.15),
+    transparent
+  );
   animation: beam-flow 10s linear infinite;
   opacity: 0.5;
 }
 
-.beam-1 { animation-delay: 0s; top: 10%; }
-.beam-2 { animation-delay: -3.3s; top: 40%; opacity: 0.3; }
-.beam-3 { animation-delay: -6.6s; top: 70%; opacity: 0.2; }
+.beam-1 {
+  animation-delay: 0s;
+  top: 10%;
+}
+.beam-2 {
+  animation-delay: -3.3s;
+  top: 40%;
+  opacity: 0.3;
+}
+.beam-3 {
+  animation-delay: -6.6s;
+  top: 70%;
+  opacity: 0.2;
+}
 
 @keyframes beam-flow {
-  0% { transform: translateX(-50%) skewX(-15deg); opacity: 0; }
-  10% { opacity: 0.5; }
-  90% { opacity: 0.5; }
-  100% { transform: translateX(50%) skewX(-15deg); opacity: 0; }
+  0% {
+    transform: translateX(-50%) skewX(-15deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.5;
+  }
+  90% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateX(50%) skewX(-15deg);
+    opacity: 0;
+  }
 }
 
 .beam-accent {
@@ -257,13 +418,21 @@ watch(() => localCustom, (v) => {}, { deep: true })
 .beam-accent.top-left {
   top: -20px;
   left: -20px;
-  background: radial-gradient(circle, rgba(255, 215, 100, 0.6) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 215, 100, 0.6) 0%,
+    transparent 70%
+  );
 }
 
 .beam-accent.top-right {
   top: -20px;
   right: -20px;
-  background: radial-gradient(circle, rgba(212, 165, 116, 0.6) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(212, 165, 116, 0.6) 0%,
+    transparent 70%
+  );
 }
 
 .divergence-header {
@@ -410,7 +579,11 @@ watch(() => localCustom, (v) => {}, { deep: true })
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle at center, rgba(212, 165, 116, 0.1) 0%, transparent 50%);
+  background: radial-gradient(
+    circle at center,
+    rgba(212, 165, 116, 0.1) 0%,
+    transparent 50%
+  );
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
@@ -542,7 +715,12 @@ watch(() => localCustom, (v) => {}, { deep: true })
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
   animation: shimmer 3s linear infinite;
 }
 
@@ -685,9 +863,27 @@ watch(() => localCustom, (v) => {}, { deep: true })
   margin-bottom: 8px;
 }
 
-.media-thumb.comic { background: linear-gradient(135deg, rgba(255, 191, 0, 0.2), rgba(255, 107, 107, 0.2)); }
-.media-thumb.video { background: linear-gradient(135deg, rgba(0, 208, 132, 0.2), rgba(74, 158, 255, 0.2)); }
-.media-thumb.poster { background: linear-gradient(135deg, rgba(212, 165, 116, 0.2), rgba(205, 127, 50, 0.2)); }
+.media-thumb.comic {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 191, 0, 0.2),
+    rgba(255, 107, 107, 0.2)
+  );
+}
+.media-thumb.video {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 208, 132, 0.2),
+    rgba(74, 158, 255, 0.2)
+  );
+}
+.media-thumb.poster {
+  background: linear-gradient(
+    135deg,
+    rgba(212, 165, 116, 0.2),
+    rgba(205, 127, 50, 0.2)
+  );
+}
 
 .media-info strong {
   display: block;
@@ -727,13 +923,22 @@ watch(() => localCustom, (v) => {}, { deep: true })
 }
 
 @keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 @keyframes float-gentle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 .fade-in-up {

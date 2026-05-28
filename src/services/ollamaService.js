@@ -5,6 +5,11 @@ const ollamaApi = axios.create({
   timeout: 30000
 })
 
+const backendApi = axios.create({
+  baseURL: 'http://localhost:3001/api',
+  timeout: 180000
+})
+
 const parseStructuredResponse = (data, fallbackValue = null) => {
   if (!data) return fallbackValue
 
@@ -130,5 +135,23 @@ export const calculateRegret = async (lifePath) => {
       analysis: '你的人生路径整体较为平衡，虽然有些小的遗憾，但总体方向正确。',
       advice: '继续保持当前的平衡状态，同时勇于尝试新的机会。'
     }
+  }
+}
+
+export const generateMedia = async (prompt, type = 'comic') => {
+  try {
+    const response = await backendApi.post('/media/generate', {
+      prompt,
+      type
+    })
+    const data = response.data
+    if (data?.ok === false) {
+      const errorMsg = data?.error?.message || 'Media generation failed'
+      throw new Error(errorMsg)
+    }
+    return data?.data || null
+  } catch (error) {
+    console.error('Error generating media from backend:', error)
+    throw error
   }
 }
