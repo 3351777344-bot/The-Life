@@ -29,18 +29,7 @@
       <div v-if="currentView === 'genesis'">
         <GenesisView
           :userInfo="userInfo"
-          :isCardFlipped="isCardFlipped"
-          :currentScenario="currentScenario"
-          :statusMessage="statusMessage"
-          :scenarioError="scenarioError"
           @update:userInfo="(v) => (userInfo = v)"
-          @fetch-scenario="fetchScenario"
-          @flip-card="flipCard"
-          @select-option="selectOption"
-          @skip-scenario="skipScenario"
-          @mark-edit="markDataEditable"
-          @backup="backupLocalData"
-          @clear="clearLocalData"
           @start-destiny="goToDestinyTree"
         />
       </div>
@@ -194,7 +183,6 @@ import {
   resetJourneyState,
 } from "./services/journeyStateService";
 import {
-  requestScenario,
   requestRoutes,
   requestAdvisorReply,
   requestRegretReport,
@@ -250,7 +238,6 @@ const currentView = ref("genesis");
 const statusMessage = ref("");
 const statusType = ref("info");
 const routeGenerationError = ref("");
-const scenarioError = ref("");
 const reportError = ref("");
 const advisorError = ref("");
 
@@ -601,40 +588,6 @@ const goToConclusion = async () => {
 const goToGenesis = () => (currentView.value = "genesis");
 
 // Genesis handlers
-const fetchScenario = async () => {
-  scenarioError.value = "";
-  const result = await requestScenario(userInfo.value);
-  if (
-    result.ok &&
-    result.data?.scenario &&
-    Array.isArray(result.data?.options)
-  ) {
-    currentScenario.value = result.data;
-    setStatusMessage("新场景已生成");
-  } else if (!result.ok) {
-    scenarioError.value = result.error?.message || "场景生成失败，请稍后重试。";
-    setStatusMessage(scenarioError.value, "error");
-  }
-};
-const flipCard = () => (isCardFlipped.value = !isCardFlipped.value);
-const selectOption = (opt) => {
-  userInfo.value.decisionStyle = opt;
-  isCardFlipped.value = false;
-
-  // Apply attribute changes based on selected style
-  const styleImpacts = {
-    风险偏好型: { career: 10, finance: 5, growth: 15, health: -5 },
-    风险规避型: { career: 0, finance: 5, health: 10, relationship: 5 },
-    平衡型: { career: 5, finance: 8, relationship: 5, growth: 5, health: 5 },
-  };
-
-  const impacts = styleImpacts[opt] || {};
-  applyAttributeChanges(`选择决策风格：${opt}`, impacts);
-  incrementDecisionCount();
-
-  setStatusMessage(`决策风格已记录：${opt}`);
-};
-const skipScenario = () => setStatusMessage("已跳过场景");
 const markDataEditable = () => setStatusMessage("可以修改信息");
 const backupLocalData = () => {
   localStorage.setItem(

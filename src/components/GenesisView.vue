@@ -108,31 +108,6 @@
         </div>
       </div>
 
-      <div class="form-section">
-        <h2>情境化测评</h2>
-        <div v-if="scenarioError" class="scenario-error">
-          <strong>场景生成失败</strong>
-          <p>{{ scenarioError }}</p>
-        </div>
-        <div class="card-flip" @click="$emit('flip-card')">
-          <div class="card-front glass-container">
-            <h3>{{ currentScenario.scenario || '等待生成场景' }}</h3>
-            <p>{{ currentScenario.scenario ? '点击卡片查看选项' : '先生成场景，再查看选项' }}</p>
-          </div>
-          <div class="card-back glass-container" v-if="isCardFlipped && currentScenario.options.length">
-            <div class="option" v-for="(option, index) in currentScenario.options" :key="index" @click="$emit('select-option', option.style)">
-              <span>{{ option.text }}</span>
-              <small>{{ option.style }}</small>
-            </div>
-          </div>
-          <div class="card-back glass-container" v-else-if="isCardFlipped">
-            <p class="empty-scenario">当前还没有可展示的选项，请先生成新的场景。</p>
-          </div>
-        </div>
-        <button class="btn btn-secondary" @click="$emit('fetch-scenario')">生成新场景</button>
-        <button class="btn btn-secondary" @click="$emit('skip-scenario')">暂不生成，继续下一步</button>
-      </div>
-
       <button class="btn btn-primary" @click="$emit('start-destiny')">开始探索</button>
     </div>
   </div>
@@ -140,8 +115,8 @@
 
 <script setup>
 import { reactive, watch } from 'vue'
-const props = defineProps(['userInfo','isCardFlipped','currentScenario','statusMessage','scenarioError'])
-const emit = defineEmits(['update:userInfo','fetch-scenario','flip-card','select-option','skip-scenario','mark-edit','backup','clear','start-destiny'])
+const props = defineProps(['userInfo'])
+const emit = defineEmits(['update:userInfo','start-destiny'])
 
 const local = reactive({ ...props.userInfo })
 
@@ -162,12 +137,4 @@ watch(local, (nv) => {
 .form-row { display:flex; gap:16px; margin-top:16px; }
 .form-group { flex:1; }
 .full-width { flex:1 1 100%; }
-.demo-hint { margin-top: 8px; color: var(--color-text-muted); font-size: 0.84rem; line-height: 1.5; }
-
-.card-flip { margin: 12px 0; }
-.card-front, .card-back { padding: 18px; border-radius: 14px; }
-.card-back .option { display:flex; justify-content:space-between; gap:12px; padding: 10px; margin-bottom: 8px; border-radius: 10px; cursor: pointer; }
-.scenario-error { margin: 12px 0; padding: 12px 14px; border-radius: 12px; background: rgba(255, 107, 107, 0.12); border: 1px solid rgba(255, 107, 107, 0.35); }
-.scenario-error strong { display:block; margin-bottom: 6px; }
-.scenario-error p { margin: 0; line-height: 1.5; }
 </style>
