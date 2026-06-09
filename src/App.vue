@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="app">
     <div class="starfield" aria-hidden="true"></div>
     <div class="main-content">
@@ -130,7 +130,7 @@
           :chatMessages="chatMessages"
           :isGeneratingAIResponse="isGeneratingAIResponse"
           :chatInput="chatInput"
-          :currentAI角色="currentAIRole"
+          :currentAI瑙掕壊="currentAIRole"
           :currentAIDescription="currentAIDescription"
           :selectedRoute="selectedRoute"
           :advisorError="advisorError"
@@ -189,9 +189,11 @@ import {
   requestPlanningFileExtraction,
   resolveRouteAttributeDeltas,
 } from "./services/lifeJourneyFacade";
+import { SERVICE_META_KEY, SERVICE_SOURCE } from "./services/serviceContracts";
 
-const DEFAULT_AI_ROLE = "人生规划师";
-const DEFAULT_AI_DESCRIPTION = "擅长把你的现实约束和长期目标转成可执行建议。";
+const DEFAULT_AI_ROLE = "Life Planner";
+const DEFAULT_AI_DESCRIPTION =
+  "Turns constraints and long-term goals into executable advice.";
 
 import LoadingView from "./components/LoadingView.vue";
 
@@ -226,11 +228,11 @@ const ConclusionView = createAsyncView(
 
 const formatDuration = (durationMs) => {
   const totalMinutes = Math.max(1, Math.round(durationMs / (1000 * 60)));
-  if (totalMinutes < 60) return `${totalMinutes}分钟`;
+  if (totalMinutes < 60) return `${totalMinutes}鍒嗛挓`;
 
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  return minutes > 0 ? `${hours}小时${minutes}分钟` : `${hours}小时`;
+  return minutes > 0 ? `${hours}灏忔椂${minutes}鍒嗛挓` : `${hours}灏忔椂`;
 };
 
 // Minimal reactive state to keep components running
@@ -244,8 +246,8 @@ const advisorError = ref("");
 // Dialog state
 const showInputDialog = ref(false);
 const inputDialog = ref({
-  title: "输入信息",
-  message: "请输入",
+  title: "Input",
+  message: "Please enter a value",
   placeholder: "",
   defaultValue: "",
   onConfirm: null,
@@ -301,11 +303,11 @@ const impactHistory = ref(createDefaultImpactHistory());
 const defaultImpactHistory = cloneData(impactHistory.value);
 const currentChart = ref("radar");
 const radarAxes = ref([
-  { key: "career", label: "职业" },
-  { key: "finance", label: "财务" },
-  { key: "relationship", label: "人际" },
-  { key: "health", label: "健康" },
-  { key: "growth", label: "成长" },
+  { key: "career", label: "鑱屼笟" },
+  { key: "finance", label: "璐㈠姟" },
+  { key: "relationship", label: "浜洪檯" },
+  { key: "health", label: "鍋ュ悍" },
+  { key: "growth", label: "鎴愰暱" },
 ]);
 const radarAxisPoints = computed(() => {
   const centerX = 120;
@@ -340,34 +342,34 @@ const radarPolygon = computed(() => {
     .join(" ");
 });
 const axisLabelMap = ref({
-  career: "职业",
-  finance: "财务",
-  relationship: "人际",
-  health: "健康",
-  growth: "成长",
+  career: "鑱屼笟",
+  finance: "璐㈠姟",
+  relationship: "浜洪檯",
+  health: "鍋ュ悍",
+  growth: "鎴愰暱",
 });
 const socialFeed = ref([]);
 
 const roleGreetingsInit = {
-  职场导师:
-    "你好！我是你的职场导师。专注于职业规划、晋升策略和职场沟通。无论是职业选择、技能提升还是职场关系，我都能为你提供专业的建议。",
-  情感顾问:
-    "您好！我是你的情感顾问。关注人际关系、情感疏导和心理建设。如果你在感情、家庭或社交方面有困惑，随时可以和我聊聊。",
-  创业前辈:
-    "嗨！我是你的创业前辈。经历过多次创业，熟悉商业模式、融资策略和团队管理。无论你是想创业还是已经在创业路上，我都能给你实用的建议。",
-  人生规划师:
-    "你好！我是你的人生规划师。帮助你平衡职业、财务、关系、健康与成长，制定长期的人生规划。让我们一起探索更美好的未来。",
+  "Career Mentor":
+    "Hi, I am your career mentor. I can help with career planning, promotion strategy, skills growth, and workplace communication.",
+  "Relationship Advisor":
+    "Hi, I am your relationship advisor. I can help you think through family, social, and emotional decisions.",
+  "Startup Coach":
+    "Hi, I am your startup coach. I can help with business models, financing strategy, team building, and practical experiments.",
+  "Life Planner":
+    "Hi, I am your life planner. I can help balance career, finance, relationships, health, and long-term growth.",
 };
 
 const chatMessagesByRole = ref({
-  职场导师: [],
-  情感顾问: [],
-  创业前辈: [],
-  人生规划师: [
+  "Career Mentor": [],
+  "Relationship Advisor": [],
+  "Startup Coach": [],
+  "Life Planner": [
     {
       id: `ai_init_${Date.now()}`,
       role: "ai",
-      content: roleGreetingsInit["人生规划师"],
+      content: roleGreetingsInit["Life Planner"],
       time: new Date().toLocaleTimeString("zh-CN", {
         hour: "2-digit",
         minute: "2-digit",
@@ -386,18 +388,18 @@ const chatMessages = computed(
 
 const savedPaths = ref([]);
 const regretLevel = ref(20);
-const regretText = ref("暂无");
-const regretAnalysis = ref("暂无");
+const regretText = ref("鏆傛棤");
+const regretAnalysis = ref("鏆傛棤");
 const aiAdvice = ref("");
 const journeyStartedAt = ref(Date.now());
 const decisionCount = ref(0);
 const restartCount = ref(0);
 
 const roleDescMap = {
-  职场导师: "聚焦职业路径、能力成长和岗位决策。",
-  情感顾问: "关注关系边界、沟通方式与情绪支持。",
-  创业前辈: "强调资源配置、风险管理和验证节奏。",
-  人生规划师: "平衡职业、财务、关系、健康与成长。",
+  "Career Mentor": "Career path, skills growth, and workplace decisions.",
+  "Relationship Advisor": "Relationship boundaries, communication, and emotional support.",
+  "Startup Coach": "Resources, risk management, and experiment cadence.",
+  "Life Planner": "Career, finance, relationships, health, and growth balance.",
 };
 
 const totalSelections = computed(() => decisionCount.value);
@@ -494,8 +496,8 @@ const handleInputConfirm = (value) => {
 const computeRegret = () => {
   if (!attributeHistory.value.length) {
     regretLevel.value = 5;
-    regretText.value = "未开始模拟";
-    regretAnalysis.value = "无历史数据";
+    regretText.value = "Not started";
+    regretAnalysis.value = "No history data yet";
     return;
   }
   // measure recent volatility across attributes
@@ -515,12 +517,12 @@ const computeRegret = () => {
   const base = Math.max(0, 100 - Math.round(avgNow));
   const computed = Math.min(100, Math.round(base + vol));
   regretLevel.value = computed;
-  regretText.value = computed > 60 ? "存在较高后悔风险" : "后悔风险可控";
-  regretAnalysis.value = `最近波动总和 ${Math.round(vol)}, 属性平均值 ${Math.round(avgNow)}。建议关注降低短期波动，平衡长期目标。`;
+  regretText.value = computed > 60 ? "瀛樺湪杈冮珮鍚庢倲椋庨櫓" : "鍚庢倲椋庨櫓鍙帶";
+  regretAnalysis.value = `Recent volatility total ${Math.round(vol)}, attribute average ${Math.round(avgNow)}. Keep short-term changes lower and balance long-term goals.`;
   aiAdvice.value =
     regretLevel.value > 60
-      ? "建议分散投入、提升抗压能力与延迟满足训练。"
-      : "保持当前节奏，逐步验证小规模决策。";
+      ? "Diversify effort, improve stress tolerance, and delay gratification."
+      : "Keep the current pace and validate smaller decisions step by step.";
 };
 
 const findNode = (id) => treeNodes.value.find((n) => n.id === id);
@@ -547,6 +549,136 @@ const applyAttributeChanges = (title, impacts = {}) => {
   }
 };
 
+const getStableRouteId = (route) =>
+  String(route?.id || `${route?.title || "route"}_${route?.feasibility || 0}`);
+
+const getRouteBranchKey = (routeId, parentId) => `${parentId || "current"}::${routeId}`;
+
+const hashString = (value) => {
+  let hash = 0;
+  const text = String(value);
+  for (let index = 0; index < text.length; index += 1) {
+    hash = (hash << 5) - hash + text.charCodeAt(index);
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36);
+};
+
+const createTreeSafeId = (prefix, value) =>
+  `${prefix}_${hashString(value)}_${Date.now().toString(36)}_${Math.random()
+    .toString(36)
+    .slice(2, 7)}`;
+
+const buildRouteNodeDescription = (route) => {
+  const parts = [
+    route?.description,
+    route?.meta?.selectedNodeTitle ? `琛嶇敓鑷細${route.meta.selectedNodeTitle}` : "",
+    route?.feasibility != null ? `鍙鎬э細${route.feasibility}%` : "",
+    route?.difficulty ? `闅惧害锛?{route.difficulty}` : "",
+    route?.benefit ? `棰勬湡鏀剁泭锛?{route.benefit}` : "",
+  ];
+  return parts.filter(Boolean).join("\n");
+};
+
+const findRouteNode = (routeId, parentId = null) =>
+  treeNodes.value.find(
+    (node) =>
+      node.nodeType === "route" &&
+      node.routeId === routeId &&
+      (parentId == null || node.parentId === parentId),
+  );
+
+const ensureRouteNode = (route, options = {}) => {
+  if (!route) return null;
+
+  const routeId = getStableRouteId(route);
+  const parentId = options.parentId || selectedNode.value || "current";
+  const parent = findNode(parentId) || findNode("current");
+  if (!parent) return null;
+  const routeBranchKey = getRouteBranchKey(routeId, parent.id);
+
+  const existingNode = findRouteNode(routeId, parent.id);
+  if (existingNode) {
+    existingNode.title = route.title || existingNode.title;
+    existingNode.description = buildRouteNodeDescription(route);
+    existingNode.route = cloneData(route);
+    existingNode.routeBranchKey = routeBranchKey;
+    existingNode.updatedAt = new Date().toISOString();
+    if (options.select) selectedNode.value = existingNode.id;
+    return existingNode;
+  }
+
+  const nodeId = createTreeSafeId("route", routeBranchKey);
+  const newNode = {
+    id: nodeId,
+    parentId: parent.id,
+    title: route.title || "Untitled route",
+    description: buildRouteNodeDescription(route),
+    depth: (parent.depth || 1) + 1,
+    timeline: new Date().toISOString(),
+    children: [],
+    nodeType: "route",
+    routeId,
+    routeBranchKey,
+    source: options.source || "divergence",
+    route: cloneData(route),
+  };
+
+  parent.children = Array.from(new Set([...(parent.children || []), nodeId]));
+  treeNodes.value.push(newNode);
+  if (options.select) selectedNode.value = nodeId;
+  return newNode;
+};
+
+const syncRoutesToTree = (routes, options = {}) => {
+  const parentId = options.parentId || selectedNode.value || "current";
+  const routeNodes = (Array.isArray(routes) ? routes : [])
+    .map((route) => ensureRouteNode(route, { ...options, parentId }))
+    .filter(Boolean);
+  selectedNode.value = parentId;
+  return routeNodes;
+};
+
+const pruneRouteStateForRemovedNodes = (nodeIds) => {
+  const removedRouteIds = treeNodes.value
+    .filter((node) => nodeIds.includes(node.id) && node.nodeType === "route")
+    .map((node) => node.routeId);
+
+  savedPaths.value = savedPaths.value.filter(
+    (savedRoute) =>
+      !nodeIds.includes(savedRoute.nodeId) &&
+      !removedRouteIds.includes(getStableRouteId(savedRoute.route)),
+  );
+
+  if (
+    selectedRoute.value &&
+    removedRouteIds.includes(getStableRouteId(selectedRoute.value))
+  ) {
+    selectedRoute.value = null;
+  }
+};
+
+const removeRouteNode = (route) => {
+  const routeId = getStableRouteId(route);
+  const node = findRouteNode(routeId);
+  if (!node || node.id === "current") return null;
+
+  const parent = findNode(node.parentId);
+  const idsToRemove = collectSubtreeIds(node.id);
+  pruneRouteStateForRemovedNodes(idsToRemove);
+  treeNodes.value = treeNodes.value.filter((candidate) => !idsToRemove.includes(candidate.id));
+
+  if (parent) {
+    parent.children = (parent.children || []).filter((childId) => childId !== node.id);
+  }
+
+  if (idsToRemove.includes(selectedNode.value)) {
+    selectedNode.value = parent?.id || "current";
+  }
+
+  return parent?.id || "current";
+};
+
 // Navigation
 const goToDestinyTree = () => (currentView.value = "destiny");
 const goToDivergence = () => (currentView.value = "divergence");
@@ -566,7 +698,7 @@ const goToConclusion = async () => {
   };
 
   reportError.value = "";
-  setStatusMessage("正在生成终局报告...");
+  setStatusMessage("姝ｅ湪鐢熸垚缁堝眬鎶ュ憡...");
 
   const reportResult = await requestRegretReport(reportPayload);
   if (reportResult.ok) {
@@ -578,7 +710,7 @@ const goToConclusion = async () => {
     if (report?.advice) aiAdvice.value = report.advice;
   } else {
     reportError.value =
-      reportResult.error?.message || "终局报告生成失败，请稍后重试。";
+      reportResult.error?.message || "Final report generation failed. Please try again later.";
     computeRegret();
     setStatusMessage(reportError.value, "error");
   }
@@ -588,17 +720,17 @@ const goToConclusion = async () => {
 const goToGenesis = () => (currentView.value = "genesis");
 
 // Genesis handlers
-const markDataEditable = () => setStatusMessage("可以修改信息");
+const markDataEditable = () => setStatusMessage("鍙互淇敼淇℃伅");
 const backupLocalData = () => {
   localStorage.setItem(
     "life_local_backup",
     JSON.stringify({ userInfo: userInfo.value }),
   );
-  setStatusMessage("已备份");
+  setStatusMessage("Backup saved");
 };
 const clearLocalData = () => {
   localStorage.removeItem("life_local_backup");
-  setStatusMessage("已清除");
+  setStatusMessage("Cleared");
 };
 
 // Simple chat
@@ -608,8 +740,8 @@ const sendMessage = (text) => {
   isGeneratingAIResponse.value = true;
   const context = {
     role: currentAIRole.value,
-    selectedRoute: selectedRoute.value?.title || "未选择路线",
-    selectedNode: selectedNodeData.value?.title || "当前人生节点",
+    selectedRoute: selectedRoute.value?.title || "鏈€夋嫨璺嚎",
+    selectedNode: selectedNodeData.value?.title || "褰撳墠浜虹敓鑺傜偣",
     attributes: attributes.value,
     recentImpacts: impactHistory.value.slice(0, 3),
   };
@@ -617,11 +749,11 @@ const sendMessage = (text) => {
   requestAdvisorReply(text, context)
     .then((result) => {
       if (result.ok) {
-        appendChatMessage("ai", result.data || "建议暂不可用，请稍后重试。");
+        appendChatMessage("ai", result.data || "Advice is temporarily unavailable. Please try again later.");
         return;
       }
       advisorError.value =
-        result.error?.message || "顾问暂时无法回复，请稍后重试。";
+        result.error?.message || "Advisor is temporarily unavailable. Please try again later.";
       appendChatMessage("ai", advisorError.value);
       setStatusMessage(advisorError.value, "error");
     })
@@ -634,7 +766,7 @@ const selectAIRole = (role) => {
   const previousRole = currentAIRole.value;
   currentAIRole.value = role;
   currentAIDescription.value =
-    roleDescMap[role] || "为你提供基于当前节点的决策建议。";
+    roleDescMap[role] || "Decision advice based on the current node.";
 
   if (previousRole !== role && chatMessagesByRole.value[role].length === 0) {
     chatMessagesByRole.value[role].push({
@@ -650,7 +782,7 @@ const selectAIRole = (role) => {
 };
 const toggleVoiceInput = () => {
   isListening.value = !isListening.value;
-  setStatusMessage(isListening.value ? "开始语音" : "停止语音");
+  setStatusMessage(isListening.value ? "Voice input started" : "Voice input stopped");
 };
 
 // Minimal tree helpers
@@ -660,24 +792,24 @@ const addNode = () => {
   if (!parent) return;
 
   // Step 1: Get title
-  const defaultTitle = `分支-${(parent.children?.length || 0) + 1}`;
+  const defaultTitle = `鍒嗘敮-${(parent.children?.length || 0) + 1}`;
   inputDialog.value = {
-    title: "新增节点",
-    message: "请输入节点标题：",
-    placeholder: "例如：考虑创业",
+    title: "鏂板鑺傜偣",
+    message: "璇疯緭鍏ヨ妭鐐规爣棰橈細",
+    placeholder: "渚嬪锛氳€冭檻鍒涗笟",
     defaultValue: defaultTitle,
     inputType: "text",
     onConfirm: (title) => {
       if (!title) {
-        setStatusMessage("已取消");
+        setStatusMessage("Cancelled");
         return;
       }
       // Step 2: Get description
       inputDialog.value = {
-        title: "新增节点",
-        message: "请输入节点描述：",
-        placeholder: "例如：在现有工作基础上探索新方向",
-        defaultValue: "一次新的关键选择",
+        title: "鏂板鑺傜偣",
+        message: "璇疯緭鍏ヨ妭鐐规弿杩帮細",
+        placeholder: "渚嬪锛氬湪鐜版湁宸ヤ綔鍩虹涓婃帰绱㈡柊鏂瑰悜",
+        defaultValue: "涓€娆℃柊鐨勫叧閿€夋嫨",
         inputType: "text",
         onConfirm: (desc) => {
           const nodeId = `node_${Date.now()}`;
@@ -685,7 +817,7 @@ const addNode = () => {
             id: nodeId,
             parentId,
             title,
-            description: desc || "一次新的关键选择",
+            description: desc || "涓€娆℃柊鐨勫叧閿€夋嫨",
             depth: (parent.depth || 1) + 1,
             timeline: new Date().toISOString(),
             children: [],
@@ -695,7 +827,7 @@ const addNode = () => {
           selectedNode.value = nodeId;
           recordAttributeHistory();
           incrementDecisionCount();
-          setStatusMessage("已新增节点");
+          setStatusMessage("Node added");
         },
       };
       showInputDialog.value = true;
@@ -730,22 +862,22 @@ const exportTree = () => {
   a.download = "life_tree_export.json";
   a.click();
   URL.revokeObjectURL(url);
-  setStatusMessage("已导出图谱");
+  setStatusMessage("Tree exported");
 };
 const resetTree = () => {
   treeNodes.value = [
     {
       id: "current",
       parentId: null,
-      title: "当前人生节点",
-      description: "从你的基础建模出发，展开关键选择。",
+      title: "褰撳墠浜虹敓鑺傜偣",
+      description: "Start from your baseline model and explore key choices.",
       depth: 1,
       timeline: new Date().toISOString(),
       children: [],
     },
   ];
   selectedNode.value = "current";
-  setStatusMessage("树状图已重置");
+  setStatusMessage("鏍戠姸鍥惧凡閲嶇疆");
 };
 const startPan = (e) => {
   isPanning.value = true;
@@ -766,32 +898,36 @@ const endPan = () => {
 };
 const selectNode = (n) => {
   selectedNode.value = n;
+  const node = findNode(n);
+  if (node?.nodeType === "route" && node.route) {
+    selectedRoute.value = node.route;
+  }
 };
 const editNode = (id) => {
   const node = findNode(id);
   if (!node) return;
   inputDialog.value = {
-    title: "编辑节点",
-    message: "请更新节点标题：",
-    placeholder: "输入新的节点标题",
+    title: "缂栬緫鑺傜偣",
+    message: "璇锋洿鏂拌妭鐐规爣棰橈細",
+    placeholder: "杈撳叆鏂扮殑鑺傜偣鏍囬",
     defaultValue: node.title,
     inputType: "text",
     onConfirm: (title) => {
       if (!title) {
-        setStatusMessage("已取消");
+        setStatusMessage("Cancelled");
         return;
       }
 
       inputDialog.value = {
-        title: "编辑节点",
-        message: "请更新节点描述：",
-        placeholder: "输入新的节点描述",
+        title: "缂栬緫鑺傜偣",
+        message: "璇锋洿鏂拌妭鐐规弿杩帮細",
+        placeholder: "杈撳叆鏂扮殑鑺傜偣鎻忚堪",
         defaultValue: node.description || "",
         inputType: "text",
         onConfirm: (desc) => {
           node.title = title;
           node.description = desc || "";
-          setStatusMessage("节点已更新");
+          setStatusMessage("Node updated");
         },
       };
       showInputDialog.value = true;
@@ -801,27 +937,28 @@ const editNode = (id) => {
 };
 const deleteNode = (id) => {
   if (id === "current") {
-    setStatusMessage("根节点不可删除");
+    setStatusMessage("Root node cannot be deleted");
     return;
   }
   const node = findNode(id);
   if (!node) return;
   const idsToRemove = collectSubtreeIds(id);
+  pruneRouteStateForRemovedNodes(idsToRemove);
   treeNodes.value = treeNodes.value.filter((n) => !idsToRemove.includes(n.id));
   const parent = findNode(node.parentId);
   if (parent)
     parent.children = (parent.children || []).filter((cid) => cid !== id);
   if (selectedNode.value === id) selectedNode.value = parent?.id || "current";
-  setStatusMessage("节点及其子分支已删除");
+  setStatusMessage("鑺傜偣鍙婂叾瀛愬垎鏀凡鍒犻櫎");
 };
 const extendBranch = (id) => {
   const parent = findNode(id);
   if (!parent) return;
 
   inputDialog.value = {
-    title: "延伸分支",
-    message: "请输入要生成的分支数量（2-5）：",
-    placeholder: "输入数字",
+    title: "寤朵几鍒嗘敮",
+    message: "璇疯緭鍏ヨ鐢熸垚鐨勫垎鏀暟閲忥紙2-5锛夛細",
+    placeholder: "杈撳叆鏁板瓧",
     defaultValue: "2",
     inputType: "number",
     onConfirm: (value) => {
@@ -835,8 +972,8 @@ const extendBranch = (id) => {
         const node = {
           id: nodeId,
           parentId: id,
-          title: `${parent.title}-分支${i}`,
-          description: `基于 ${parent.title} 的分支方案 ${i}`,
+          title: `${parent.title}-鍒嗘敮${i}`,
+          description: `鍩轰簬 ${parent.title} 鐨勫垎鏀柟妗?${i}`,
           depth: (parent.depth || 1) + 1,
           timeline: new Date().toISOString(),
           children: [],
@@ -847,7 +984,7 @@ const extendBranch = (id) => {
       parent.children = [...(parent.children || []), ...createdIds];
       recordAttributeHistory();
       incrementDecisionCount(branchCount);
-      setStatusMessage(`已延伸 ${branchCount} 个分支`);
+      setStatusMessage(`Extended ${branchCount} branches`);
     },
   };
   showInputDialog.value = true;
@@ -868,12 +1005,22 @@ const generateAIRoutes = async () => {
     const result = await requestRoutes(userInfo.value, context);
     if (result.ok) {
       aiRoutes.value = result.data;
-      setStatusMessage("AI 路线已生成");
+      const routeSource = result.meta?.[SERVICE_META_KEY.SOURCE];
+      const sourceLabel =
+        routeSource === SERVICE_SOURCE.MODEL
+          ? "AI routes generated"
+          : "Model unavailable, backend fallback routes used";
+      const routeNodes = syncRoutesToTree(result.data, {
+        parentId: selectedNode.value || "current",
+        source: "ai",
+      });
+      setStatusMessage(`AI 璺嚎宸茬敓鎴愶紝骞跺悓姝ヤ负 ${routeNodes.length} 涓爲鑺傜偣`);
+      setStatusMessage(`${sourceLabel}; synced ${routeNodes.length} tree nodes`);
       return;
     }
 
     routeGenerationError.value =
-      result.error?.message || "路线生成失败，请稍后重试。";
+      result.error?.message || "Route generation failed. Please try again later.";
     setStatusMessage(routeGenerationError.value, "error");
   } finally {
     isGeneratingRoutes.value = false;
@@ -883,6 +1030,11 @@ const generateAIRoutes = async () => {
 const selectRoute = (route) => {
   if (!route) return;
   selectedRoute.value = route;
+  const routeNode = ensureRouteNode(route, {
+    parentId: selectedNode.value || "current",
+    source: route.id?.startsWith("custom_") ? "custom" : "ai",
+    select: true,
+  });
 
   const routeId = route.id || `path_${Date.now()}`;
   const existingIndex = savedPaths.value.findIndex(
@@ -895,6 +1047,7 @@ const selectRoute = (route) => {
     id: routeId,
     title: route.title,
     route,
+    nodeId: routeNode?.id || null,
     date: new Date().toLocaleString(),
   });
   if (savedPaths.value.length > 12) savedPaths.value.pop();
@@ -912,32 +1065,34 @@ const selectRoute = (route) => {
   });
 
   if (Object.keys(changes).length) {
-    recordImpact(`选择路线：${route.title}`, changes);
+    recordImpact(`閫夋嫨璺嚎锛?{route.title}`, changes);
     recordAttributeHistory();
   }
   incrementDecisionCount();
 
-  setStatusMessage(`已选择路线：${route.title}`);
+  setStatusMessage(`宸查€夋嫨璺嚎锛?{route.title}锛屽苟瀹氫綅鍒版爲鑺傜偣`);
 };
 
 const refineRoute = (index) => {
   const route = aiRoutes.value[index];
   if (!route) return;
-  route.description = `${route.description}（细化：拆解为季度行动里程碑，并设置可验证指标。）`;
+  route.description = `${route.description}锛堢粏鍖栵細鎷嗚В涓哄搴﹁鍔ㄩ噷绋嬬锛屽苟璁剧疆鍙獙璇佹寚鏍囥€傦級`;
   route.feasibility = Math.min(100, Number(route.feasibility || 60) + 5);
-  setStatusMessage(`已细化路线：${route.title}`);
+  ensureRouteNode(route, { source: "ai" });
+  setStatusMessage(`宸茬粏鍖栬矾绾匡細${route.title}`);
 };
 const replaceRoute = (index) => {
   const route = aiRoutes.value[index];
   if (!route) return;
+  const parentId = removeRouteNode(route) || selectedNode.value || "current";
   const replacement = {
     id: `ai_route_replace_${Date.now()}`,
-    title: `${route.title}-替代方案`,
-    description: "以更低风险执行同类目标，分阶段验证后再扩大投入。",
+    title: `${route.title}-鏇夸唬鏂规`,
+    description: "A lower-risk alternative for the same goal, validated in stages before expanding investment.",
     feasibility: Math.max(45, Number(route.feasibility || 60) - 8),
-    difficulty: "中等",
-    benefit: route.benefit || "中",
-    tag: "替代",
+    difficulty: "涓瓑",
+    benefit: route.benefit || "Balanced",
+    tag: "鏇夸唬",
     tagColor: "mid",
     attributeDeltaMap: {
       career: Math.round(Math.random() * 12 - 2),
@@ -949,7 +1104,8 @@ const replaceRoute = (index) => {
     impacts: null,
   };
   aiRoutes.value.splice(index, 1, replacement);
-  setStatusMessage("路线已替换");
+  ensureRouteNode(replacement, { parentId, source: "ai" });
+  setStatusMessage("Route replaced");
 };
 const toggleCompare = (route) => {
   const idx = compareRoutes.value.findIndex((r) => r.id === route.id);
@@ -965,15 +1121,15 @@ const toggleCompare = (route) => {
     const deltas = Object.keys(attributes.value).map((k) => {
       const va = Number(getRoutePreviewValues(a)?.[k] || 0);
       const vb = Number(getRoutePreviewValues(b)?.[k] || 0);
-      return `${axisLabelMap.value[k]}:${va >= vb ? `${a.title}优(+${va - vb})` : `${b.title}优(+${vb - va})`}`;
+      return `${axisLabelMap.value[k]}:${va >= vb ? `${a.title}浼?+${va - vb})` : `${b.title}浼?+${vb - va})`}`;
     });
-    setStatusMessage(`双路径对比：${deltas.join(" / ")}`);
+    setStatusMessage(`鍙岃矾寰勫姣旓細${deltas.join(" / ")}`);
   }
 };
 const addCustomRoute = (route) => {
   const title = String(route?.title || "").trim();
   if (!title) {
-    setStatusMessage("请先填写路线名称");
+    setStatusMessage("璇峰厛濉啓璺嚎鍚嶇О");
     return;
   }
   const desc = String(route?.description || "").trim();
@@ -987,11 +1143,11 @@ const addCustomRoute = (route) => {
     description:
       desc ||
       (uploadedDocText.value
-        ? `文档摘要：${uploadedDocText.value.slice(0, 80)}...`
-        : "自定义路线"),
+        ? `鏂囨。鎽樿锛?{uploadedDocText.value.slice(0, 80)}...`
+        : "Custom route"),
     feasibility,
-    difficulty: route?.difficulty || "中等",
-    benefit: route?.benefit || "中等",
+    difficulty: route?.difficulty || "涓瓑",
+    benefit: route?.benefit || "涓瓑",
     attributeDeltaMap: {
       career: Math.round((feasibility - 50) / 8),
       finance: Math.round((feasibility - 50) / 10),
@@ -1003,11 +1159,18 @@ const addCustomRoute = (route) => {
     sourceFile: uploadedPlanMeta.value?.name || null,
   };
   customRoutes.value.unshift(custom);
-  setStatusMessage("自定义路线已添加");
+  const routeNode = ensureRouteNode(custom, {
+    parentId: selectedNode.value || "current",
+    source: "custom",
+  });
+  setStatusMessage(
+    routeNode ? "鑷畾涔夎矾绾垮凡娣诲姞锛屽苟鍚屾鍒拌妭鐐规爲" : "鑷畾涔夎矾绾垮凡娣诲姞",
+  );
 };
 const removeCustomRoute = (index) => {
-  customRoutes.value.splice(index, 1);
-  setStatusMessage("已删除自定义路线");
+  const [removedRoute] = customRoutes.value.splice(index, 1);
+  removeRouteNode(removedRoute);
+  setStatusMessage("宸插垹闄よ嚜瀹氫箟璺嚎");
 };
 const handleFileUpload = async (event) => {
   const file = event?.target?.files?.[0];
@@ -1019,7 +1182,7 @@ const handleFileUpload = async (event) => {
       uploadedDocText.value = "";
       uploadedPlanMeta.value = null;
       setStatusMessage(
-        result.error?.message || "文件读取失败，请更换文件后重试。",
+        result.error?.message || "File reading failed. Please try another file.",
         "error",
       );
       return;
@@ -1028,7 +1191,7 @@ const handleFileUpload = async (event) => {
     const { text, meta } = result.data;
     uploadedDocText.value = text;
     uploadedPlanMeta.value = meta;
-    setStatusMessage(`已接入文件：${file.name}`);
+    setStatusMessage(`宸叉帴鍏ユ枃浠讹細${file.name}`);
   } finally {
     if (event?.target) {
       event.target.value = "";
@@ -1039,20 +1202,20 @@ const buildMedia = (type, title) => ({
   id: `${type}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
   type,
   title,
-  description: `基于「${selectedRoute.value?.title || "当前路线"}」生成`,
+  description: `Based on ${selectedRoute.value?.title || "current route"}`,
   time: new Date().toLocaleString(),
 });
 const generateComic = () => {
-  generatedMedia.value.unshift(buildMedia("comic", "人生分支漫画"));
-  setStatusMessage("漫画素材已生成");
+  generatedMedia.value.unshift(buildMedia("comic", "浜虹敓鍒嗘敮婕敾"));
+  setStatusMessage("Comic material generated");
 };
 const generateVideo = () => {
-  generatedMedia.value.unshift(buildMedia("video", "15秒分支短视频"));
-  setStatusMessage("短视频素材已生成");
+  generatedMedia.value.unshift(buildMedia("video", "15绉掑垎鏀煭瑙嗛"));
+  setStatusMessage("鐭棰戠礌鏉愬凡鐢熸垚");
 };
 const generatePoster = () => {
-  generatedMedia.value.unshift(buildMedia("poster", "时间轴海报"));
-  setStatusMessage("海报素材已生成");
+  generatedMedia.value.unshift(buildMedia("poster", "Timeline poster"));
+  setStatusMessage("Poster material generated");
 };
 const toggleMode = () => {
   mode.value = mode.value === "ai" ? "custom" : "ai";
@@ -1087,7 +1250,7 @@ const showImpactTrace = () => {
 
 const refreshSocialData = () => {
   socialFeed.value = [];
-  setStatusMessage("社会数据已清空");
+  setStatusMessage("Social data cleared");
 };
 
 const restartJourney = async () => {
@@ -1138,7 +1301,7 @@ const restartJourney = async () => {
     userCity: userInfo.value.city,
   });
   computeRegret();
-  setStatusMessage("已重新开始新一轮人生旅程");
+  setStatusMessage("Started a new journey");
 
   await generateAIRoutes();
 };

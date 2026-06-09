@@ -1,7 +1,8 @@
 export const SERVICE_SOURCE = {
   MODEL: 'model',
   FILE: 'file',
-  BACKEND: 'backend'
+  BACKEND: 'backend',
+  FALLBACK: 'fallback'
 }
 
 export const SERVICE_ERROR_CODE = {

@@ -88,7 +88,10 @@
                   v-for="node in graphLayout.nodes"
                   :key="node.id"
                   class="graph-node"
-                  :class="[{ active: selectedNode === node.id, root: !node.parentId }, `depth-${Math.min(node.depth, 6)}`]"
+                  :class="[
+                    { active: selectedNode === node.id, root: !node.parentId, route: node.nodeType === 'route' },
+                    `depth-${Math.min(node.depth, 6)}`
+                  ]"
                   :style="{ left: `${node.x}px`, top: `${node.y}px` }"
                   @click.stop="$emit('select-node', node.id)"
                 >
@@ -129,6 +132,11 @@
         <div class="node-preview">
           <strong>{{ selectedNodeData?.title || '未选择节点' }}</strong>
           <p>{{ selectedNodeData?.description || '请在图谱上选择节点，查看详情与操作' }}</p>
+          <div v-if="selectedNodeData?.nodeType === 'route'" class="route-node-meta">
+            <span v-if="selectedNodeData.route?.feasibility != null">可行性 {{ selectedNodeData.route.feasibility }}%</span>
+            <span v-if="selectedNodeData.route?.difficulty">难度 {{ selectedNodeData.route.difficulty }}</span>
+            <span v-if="selectedNodeData.route?.benefit">收益 {{ selectedNodeData.route.benefit }}</span>
+          </div>
         </div>
         <div class="node-stats">
           <div class="stat-card">
@@ -1089,6 +1097,26 @@ const graphCanvasStyle = computed(() => ({
     inset 0 1px 0 rgba(255, 215, 140, 0.3);
 }
 
+.graph-node.route .graph-node-frame {
+  border-color: rgba(74, 158, 255, 0.55);
+  background: linear-gradient(135deg,
+    rgba(74, 158, 255, 0.16) 0%,
+    rgba(0, 208, 132, 0.08) 45%,
+    rgba(53, 42, 32, 0.52) 100%);
+  box-shadow:
+    0 10px 34px rgba(74, 158, 255, 0.16),
+    inset 0 1px 0 rgba(210, 235, 255, 0.18);
+}
+
+.graph-node.route .graph-node-frame::before {
+  background: linear-gradient(90deg, transparent, rgba(74, 158, 255, 0.8), transparent);
+}
+
+.graph-node.route h3 {
+  color: #d8ecff;
+  text-shadow: 0 0 10px rgba(74, 158, 255, 0.55), 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
 .graph-node.depth-2 .graph-node-frame,
 .graph-node.depth-3 .graph-node-frame,
 .graph-node.depth-4 .graph-node-frame,
@@ -1202,6 +1230,24 @@ const graphCanvasStyle = computed(() => ({
   margin: 0;
   line-height: 1.5;
   word-break: break-word;
+  white-space: pre-line;
+}
+
+.route-node-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.route-node-meta span {
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: rgba(74, 158, 255, 0.12);
+  border: 1px solid rgba(74, 158, 255, 0.28);
+  color: #d8ecff;
+  font-size: 0.72rem;
+  line-height: 1.3;
 }
 
 .node-stats {

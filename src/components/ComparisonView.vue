@@ -136,10 +136,14 @@
                     <button
                       class="btn btn-secondary small"
                       @click.stop="handleGenerateMedia(selectedRoutes[0])"
-                      :disabled="isGeneratingMedia[selectedRoutes[0]?.id]"
+                      :disabled="
+                        isGeneratingMedia[selectedRoutes[0]?.id] ||
+                        isPollingVideo[selectedRoutes[0]?.id]
+                      "
                     >
                       {{
-                        isGeneratingMedia[selectedRoutes[0]?.id]
+                        isGeneratingMedia[selectedRoutes[0]?.id] ||
+                        isPollingVideo[selectedRoutes[0]?.id]
                           ? "正在由蓝心模型生成中..."
                           : "🎬 点我生成"
                       }}
@@ -225,10 +229,14 @@
                     <button
                       class="btn btn-secondary small"
                       @click.stop="handleGenerateMedia(selectedRoutes[1])"
-                      :disabled="isGeneratingMedia[selectedRoutes[1]?.id]"
+                      :disabled="
+                        isGeneratingMedia[selectedRoutes[1]?.id] ||
+                        isPollingVideo[selectedRoutes[1]?.id]
+                      "
                     >
                       {{
-                        isGeneratingMedia[selectedRoutes[1]?.id]
+                        isGeneratingMedia[selectedRoutes[1]?.id] ||
+                        isPollingVideo[selectedRoutes[1]?.id]
                           ? "正在由蓝心模型生成中..."
                           : "🎬 点我生成"
                       }}
@@ -573,6 +581,65 @@ const mediaUrls = reactive({});
 const isGeneratingMedia = reactive({});
 const isPollingVideo = reactive({});
 const lastGenerationTime = ref({});
+const lastVideoRequestAt = ref(0);
+const VIDEO_REQUEST_COOLDOWN_MS = 60 * 1000;
+
+const normalizeTaskStatus = (status) =>
+  String(status || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "");
+
+const isFinishedStatus = (status) =>
+  ["succeeded", "success", "done", "finished", "completed", "complete"].includes(
+    normalizeTaskStatus(status),
+  );
+
+const isFailedStatus = (status) =>
+  ["failed", "fail", "error", "canceled", "cancelled"].includes(
+    normalizeTaskStatus(status),
+  );
+
+const extractVideoUrl = (value, seen = new Set()) => {
+  if (!value) return "";
+
+  if (typeof value === "string") {
+    return /^https?:\/\//i.test(value) ? value : "";
+  }
+
+  if (typeof value !== "object" || seen.has(value)) {
+    return "";
+  }
+
+  seen.add(value);
+
+  const directUrl =
+    value.video_url ||
+    value.videoUrl ||
+    value.videoURL ||
+    value.url ||
+    value.fileUrl ||
+    value.file_url ||
+    value.downloadUrl ||
+    value.download_url;
+
+  if (typeof directUrl === "string" && /^https?:\/\//i.test(directUrl)) {
+    return directUrl;
+  }
+
+  for (const item of Object.values(value)) {
+    const nestedUrl = extractVideoUrl(item, seen);
+    if (nestedUrl) return nestedUrl;
+  }
+
+  return "";
+};
+
+const getTaskId = (mediaItem) =>
+  mediaItem?.taskId || mediaItem?.task_id || mediaItem?.id || mediaItem?.data?.id;
+
+const getTaskStatus = (task) =>
+  task?.status || task?.task_status || task?.state || task?.data?.status;
 
 const queryVideoStatus = async (taskId) => {
   try {
@@ -584,7 +651,11 @@ const queryVideoStatus = async (taskId) => {
       body: JSON.stringify({ taskId }),
     });
     const data = await response.json();
-    return data.data;
+    if (!response.ok || data?.ok === false) {
+      console.error("鏌ヨ瑙嗛鐘舵€佸け璐?", data?.error || data);
+      return null;
+    }
+    return data.data || data;
   } catch (err) {
     console.error("查询视频状态失败:", err);
     return null;
@@ -602,6 +673,17 @@ const pollVideoResult = async (route, taskId) => {
 
     const result = await queryVideoStatus(taskId);
     if (result) {
+      const videoUrl = extractVideoUrl(result);
+      const status = getTaskStatus(result);
+      if (videoUrl && (!status || isFinishedStatus(status))) {
+        mediaUrls[route.id] = videoUrl;
+        break;
+      }
+      if (isFailedStatus(status)) {
+        console.error("Video generation failed:", result.error || result);
+        showMessage("视频生成失败，请稍后重试");
+        break;
+      }
       if (result.status === "succeeded" && result.content?.video_url) {
         mediaUrls[route.id] = result.content.video_url;
         break;
@@ -614,6 +696,7 @@ const pollVideoResult = async (route, taskId) => {
   }
 
   isPollingVideo[route.id] = false;
+  return !!mediaUrls[route.id];
 };
 
 const buildVideoPrompt = (route, user) => {
@@ -649,7 +732,7 @@ const buildVideoPrompt = (route, user) => {
   const riskDescriptions =
     risks.length > 0 ? `潜在挑战：${risks.slice(0, 2).join("、")}。` : "";
 
-  const prompt = `电影级人生纪录片，4K高清，多个连贯镜头，时长约30秒。
+  const prompt = `电影级人生纪录片，4K高清，多个连贯镜头，时长约5秒。
 
 【主人公】
 ${protagonist.name}，${protagonist.age}岁，${protagonist.occupation}，生活在${protagonist.city}。性格特点：${protagonist.personality}。
@@ -673,17 +756,49 @@ ${riskDescriptions}
 【风格】
 真实自然光摄影，温暖色调，贴近生活的细节捕捉，展现普通人追求幸福的真实故事。
 
-请生成一个完整连贯的人生推演视频，时长约30秒。`;
+请生成一个完整连贯的人生推演短视频，时长约5秒。`;
 
   return prompt;
 };
 
 const handleGenerateMedia = async (route) => {
+  if (!route?.id) return;
+
+  const now = Date.now();
+  const lastTime = Math.max(
+    lastGenerationTime.value[route.id] || 0,
+    lastVideoRequestAt.value || 0,
+  );
+  if (now - lastTime < VIDEO_REQUEST_COOLDOWN_MS) {
+    const waitSeconds = Math.ceil((VIDEO_REQUEST_COOLDOWN_MS - (now - lastTime)) / 1000);
+    showMessage(`视频生成请求过于频繁，请 ${waitSeconds} 秒后再试。`);
+    return;
+  }
+
   isGeneratingMedia[route.id] = true;
+  lastGenerationTime.value = {
+    ...lastGenerationTime.value,
+    [route.id]: now,
+  };
+  lastVideoRequestAt.value = now;
   try {
     const user = props.userInfo || {};
     const prompt = buildVideoPrompt(route, user);
     const result = await generateMedia(prompt, "video");
+    const normalizedMediaItem = Array.isArray(result) ? result[0] : result;
+    const videoUrl = extractVideoUrl(normalizedMediaItem);
+    const taskId = getTaskId(normalizedMediaItem);
+    const status = getTaskStatus(normalizedMediaItem);
+
+    if (videoUrl) {
+      mediaUrls[route.id] = videoUrl;
+      return;
+    }
+
+    if (taskId && !isFailedStatus(status)) {
+      await pollVideoResult(route, taskId);
+      return;
+    }
 
     if (result && result.length) {
       const mediaItem = result[0];
@@ -691,7 +806,7 @@ const handleGenerateMedia = async (route) => {
         mediaUrls[route.id] = mediaItem.url;
       } else if (mediaItem.taskId && mediaItem.status === "pending") {
         pollVideoResult(route, mediaItem.taskId);
-      } else if (mediaItem) {
+      } else if (typeof mediaItem === "string") {
         mediaUrls[route.id] = mediaItem;
       }
     } else {
@@ -700,6 +815,10 @@ const handleGenerateMedia = async (route) => {
   } catch (err) {
     console.error("媒体生成失败:", err);
     const errorMsg = err?.message || "Unknown error";
+    if (errorMsg.includes("Rate limit")) {
+      showMessage("视频生成请求触发接口限流了，请等待 1-2 分钟后再试。");
+      return;
+    }
     if (errorMsg.includes("Rate limit")) {
       showMessage("视频生成请求过于频繁，请稍后再试（速率限制）");
     } else {

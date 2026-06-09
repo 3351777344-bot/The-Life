@@ -7,7 +7,6 @@ const backendApi = axios.create({
 
 const post = async (path, payload) => {
   const response = await backendApi.post(path, payload)
-  console.log("[DEBUG] backendService post response:", JSON.stringify(response, null, 2))
   return response.data
 }
 

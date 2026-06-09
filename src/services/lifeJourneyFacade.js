@@ -13,6 +13,7 @@ import {
 } from "./backendService";
 import { extractPlanningFileContent } from "./planningFileService";
 import {
+  buildClientFallbackRoutes,
   getRouteAttributeDeltas,
   normalizeGeneratedRoute,
 } from "./routeStateService";
@@ -45,6 +46,17 @@ const normalizeBackendResult = (result, fallbackMessage, errorCode) => {
   return createErrorResult(result?.error?.message || fallbackMessage, {
     code: result?.error?.code || errorCode,
     ...(result?.meta || {}),
+  });
+};
+
+const createFallbackRoutesResult = (userInfo, context, reason = "") => {
+  const routes = buildClientFallbackRoutes(userInfo, context);
+  return createSuccessResult(routes, {
+    [SERVICE_META_KEY.SOURCE]: SERVICE_SOURCE.FALLBACK,
+    [SERVICE_META_KEY.COUNT]: routes.length,
+    [SERVICE_META_KEY.MODE]: activeServiceMode,
+    [SERVICE_META_KEY.MODE_LABEL]: getServiceModeLabel(),
+    fallbackReason: reason,
   });
 };
 
@@ -105,20 +117,33 @@ export const requestRoutes = async (userInfo, context) => {
           const normalizedRoutes = routesArray
             .slice(0, 5)
             .map((route, index) => normalizeGeneratedRoute(route, index));
+          const backendSource =
+            response?.meta?.[SERVICE_META_KEY.SOURCE] || SERVICE_SOURCE.MODEL;
           return createSuccessResult(normalizedRoutes, {
-            [SERVICE_META_KEY.SOURCE]: SERVICE_SOURCE.MODEL,
+            ...(response?.meta || {}),
+            [SERVICE_META_KEY.SOURCE]: backendSource,
             [SERVICE_META_KEY.COUNT]: normalizedRoutes.length,
             [SERVICE_META_KEY.MODE]: activeServiceMode,
             [SERVICE_META_KEY.MODE_LABEL]: getServiceModeLabel(),
           });
         }
       }
+      return createFallbackRoutesResult(
+        userInfo,
+        context,
+        response?.error?.message || "backend returned no routes",
+      );
       return normalizeBackendResult(
         response,
         "路线生成失败，请稍后重试。",
         SERVICE_ERROR_CODE.ROUTE_REQUEST_FAILED,
       );
     } catch (error) {
+      return createFallbackRoutesResult(
+        userInfo,
+        context,
+        error?.message || SERVICE_ERROR_CODE.ROUTE_REQUEST_FAILED,
+      );
       return createErrorResult("路线生成失败，请稍后重试。", {
         code: SERVICE_ERROR_CODE.ROUTE_REQUEST_FAILED,
         [SERVICE_META_KEY.MODE]: activeServiceMode,
@@ -130,6 +155,9 @@ export const requestRoutes = async (userInfo, context) => {
   try {
     const response = await generateRoute(userInfo, context);
     const routes = Array.isArray(response?.routes) ? response.routes : [];
+    if (routes.length === 0) {
+      return createFallbackRoutesResult(userInfo, context, "model returned no routes");
+    }
     return createSuccessResult(
       routes
         .slice(0, 5)

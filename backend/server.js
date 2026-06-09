@@ -50,6 +50,7 @@ const LLM_CHAT_COMPLETIONS_URL =
 const LLM_BASE_URL =
   process.env.LLM_BASE_URL || "https://api-ai.vivo.com.cn/v1/chat/completions";
 const LLM_MODEL = process.env.LLM_MODEL || "vivo-BlueLM-TB";
+const LLM_ROUTE_MODEL = process.env.LLM_ROUTE_MODEL || LLM_MODEL;
 const LLM_APP_ID =
   process.env.LLM_APP_ID ||
   process.env.APPID ||
@@ -69,11 +70,14 @@ const VIDEO_GENERATE_URL =
 const VIDEO_QUERY_URL =
   process.env.VIDEO_QUERY_URL ||
   "https://api-ai.vivo.com.cn/api/v1/query_task";
+const VIDEO_MODEL = process.env.VIDEO_MODEL || "Doubao-Seedance-1.0-pro";
+const VIDEO_RATIO = process.env.VIDEO_RATIO || "16:9";
+const VIDEO_DURATION_SECONDS = Number(process.env.VIDEO_DURATION_SECONDS || 5);
 const OLLAMA_BASE_URL =
   process.env.OLLAMA_BASE_URL || "http://localhost:11434/api";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3";
 const LLM_REQUEST_TIMEOUT_MS = Number(
-  process.env.LLM_REQUEST_TIMEOUT_MS || 8000,
+  process.env.LLM_REQUEST_TIMEOUT_MS || 30000,
 );
 const BASE_META = {
   source: "backend",
@@ -237,7 +241,7 @@ const parseChatCompletionResponse = async (response) => {
 
 const buildOpenAICompatibleHeaders = () => {
   const headers = {
-    "Content-Type": "application/json",
+    "Content-Type": "application/json; charset=utf-8",
   };
 
   if (LLM_APP_KEY) {
@@ -245,6 +249,13 @@ const buildOpenAICompatibleHeaders = () => {
   }
 
   return headers;
+};
+
+const buildOpenAICompatibleUrl = () => {
+  const url = new URL(LLM_CHAT_COMPLETIONS_URL);
+  const requestId = generateUUID();
+  url.searchParams.set("request_id", requestId);
+  return { url, requestId };
 };
 
 const assertModelCredentials = (featureName) => {
@@ -292,7 +303,8 @@ const fetchWithTimeout = async (
 
 const callOpenAICompatibleGenerate = async (prompt, options = {}) => {
   const requestFn = async () => {
-    const response = await fetchWithTimeout(LLM_CHAT_COMPLETIONS_URL, {
+    const { url, requestId } = buildOpenAICompatibleUrl();
+    const response = await fetchWithTimeout(url.toString(), {
       method: "POST",
       headers: buildOpenAICompatibleHeaders(),
       body: JSON.stringify({
@@ -304,11 +316,16 @@ const callOpenAICompatibleGenerate = async (prompt, options = {}) => {
           },
         ],
         stream: false,
+        temperature: options.temperature ?? 0.7,
+        max_tokens: options.maxTokens ?? 4096,
       }),
     }, options.timeoutMs);
 
     if (!response.ok) {
-      throw new Error(`LLM request failed with status ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(
+        `LLM request failed with status ${response.status}, request_id=${requestId}: ${errorText.slice(0, 300)}`,
+      );
     }
 
     return await parseChatCompletionResponse(response);
@@ -374,16 +391,11 @@ const generateUUID = () => {
 const callMediaGenerate = async (prompt, type = "comic") => {
   const isVideo = type === "video";
 
-  try {
-    if (isVideo) {
-      return await callVideoGenerate(prompt);
-    } else {
-      return await callImageGenerate(prompt);
-    }
-  } catch (error) {
-    console.error("Error generating media:", error);
-    return null;
+  if (isVideo) {
+    return await callVideoGenerate(prompt);
   }
+
+  return await callImageGenerate(prompt);
 };
 
 const callImageGenerate = async (prompt) => {
@@ -442,25 +454,28 @@ const callVideoGenerate = async (prompt) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 180000);
 
-    const response = await fetch(url.toString(), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${LLM_APP_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "Doubao-Seedance-1.0-pro",
-        content: [
-          {
-            type: "text",
-            text: `${prompt} --ratio 16:9 --duration 30`,
-          },
-        ],
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
+    let response;
+    try {
+      response = await fetch(url.toString(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${LLM_APP_KEY}`,
+        },
+        body: JSON.stringify({
+          model: VIDEO_MODEL,
+          content: [
+            {
+              type: "text",
+              text: `${prompt} --ratio ${VIDEO_RATIO} --dur ${VIDEO_DURATION_SECONDS}`,
+            },
+          ],
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -470,15 +485,19 @@ const callVideoGenerate = async (prompt) => {
     const data = await response.json();
 
     if (data.code !== 0) {
+      const rateLimit = data?.data?.rate_limit;
+      const limitDetail = rateLimit
+        ? ` daily_remaining=${rateLimit.daily_remaining}, total_remaining=${rateLimit.total_remaining}`
+        : "";
       throw new Error(
-        `Video generation API error: ${data.message || "Unknown error"}`,
+        `Video generation API error: ${data.message || "Unknown error"}${limitDetail}`,
       );
     }
 
     return parseVideoResponse(data);
   };
 
-  return await callWithRetry(requestFn, 5, 5000);
+  return await requestFn();
 };
 
 const parseImageResponse = (data) => {
@@ -527,14 +546,14 @@ const queryVideoTask = async (taskId) => {
   url.searchParams.set("system_time", systemTime);
   url.searchParams.set("module", "aigc");
 
-  try {
-    const response = await fetch(url.toString(), {
+  const requestFn = async () => {
+    const response = await fetchWithTimeout(url.toString(), {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${LLM_APP_KEY}`,
       },
-    });
+    }, 30000);
 
     if (!response.ok) {
       throw new Error(`Query task failed with status ${response.status}`);
@@ -547,6 +566,10 @@ const queryVideoTask = async (taskId) => {
     }
 
     return data.data;
+  };
+
+  try {
+    return await callWithRetry(requestFn, 2, 3000);
   } catch (error) {
     console.error("Error querying video task:", error);
     return null;
@@ -594,6 +617,112 @@ const createRoute = (index, userInfo = {}, context = {}) => {
     },
     meta: {
       contextSnapshot: context?.scenario || null,
+    },
+  };
+};
+
+const createContextualRoute = (index, userInfo = {}, context = {}) => {
+  const selectedNode = context?.selectedNode || {};
+  const allNodes = Array.isArray(context?.treeNodes) ? context.treeNodes : [];
+  const selectedNodeId = selectedNode.id || "current";
+  const selectedNodeTitle = selectedNode.title || "当前节点";
+  const selectedDepth = Number(selectedNode.depth || 1);
+  const childCount = allNodes.filter((node) => node.parentId === selectedNodeId).length;
+  const city = userInfo?.city || context?.city || "当前城市";
+  const goal = userInfo?.lifeGoals || context?.goals || "长期目标";
+  const occupation = userInfo?.occupation || "当前职业";
+  const feasibilityOffset = (selectedDepth * 3 + childCount * 5) % 13;
+  const feasibility = Math.max(
+    35,
+    Math.min(
+      92,
+      84 - index * 9 - selectedDepth * 2 + feasibilityOffset + Number(userInfo?.riskPreference === "high") * 6,
+    ),
+  );
+  const routeTypes = [
+    {
+      title: "稳态深化",
+      difficulty: "中等",
+      benefit: "稳定提升",
+      personality: "稳健型",
+      focus: `保留${occupation}的主线优势，在${city}围绕“${selectedNodeTitle}”继续积累资源和确定性。`,
+      milestones: ["定义下一阶段指标", "完成一次能力补强", "获得关键反馈"],
+      opportunities: ["风险较低", "资源连续性强"],
+      risks: ["节奏可能偏慢", "容易被惯性限制"],
+      delta: { career: 7, finance: 5, relationship: 2, health: 1, growth: 6 },
+    },
+    {
+      title: "跃迁试探",
+      difficulty: "中高",
+      benefit: "高成长",
+      personality: "进取型",
+      focus: `从“${selectedNodeTitle}”向外寻找更高平台、跨领域项目或关键合作，用更密集的行动换取成长速度。`,
+      milestones: ["筛选三个外部机会", "完成一次作品展示", "决定是否放大投入"],
+      opportunities: ["打开新资源面", "成长速度更快"],
+      risks: ["短期压力上升", "结果不确定性较高"],
+      delta: { career: 12, finance: 4, relationship: 4, health: -3, growth: 13 },
+    },
+    {
+      title: "低成本实验",
+      difficulty: "中等",
+      benefit: "弹性收益",
+      personality: "平衡型",
+      focus: `把“${selectedNodeTitle}”拆成小实验，先验证副业、学习、作品、访谈或城市机会，再决定是否转向。`,
+      milestones: ["设计两周实验", "记录投入产出", "选择保留、放大或放弃"],
+      opportunities: ["回撤成本低", "能积累真实反馈"],
+      risks: ["前期收益不明显", "需要持续复盘"],
+      delta: { career: 6, finance: 2, relationship: 3, health: 0, growth: 10 },
+    },
+    {
+      title: "关系资源扩展",
+      difficulty: "中等",
+      benefit: "资源增益",
+      personality: "协作型",
+      focus: `围绕“${selectedNodeTitle}”建立新的支持网络，把目标“${goal}”转化为可被他人理解和支持的合作议题。`,
+      milestones: ["列出十个关键联系人", "完成三次深度沟通", "形成一个合作试点"],
+      opportunities: ["获得外部支持", "降低单人决策盲区"],
+      risks: ["沟通成本增加", "需要管理预期"],
+      delta: { career: 5, finance: 3, relationship: 10, health: 1, growth: 7 },
+    },
+    {
+      title: "生活结构重排",
+      difficulty: "中高",
+      benefit: "长期平衡",
+      personality: "平衡型",
+      focus: `不只追求路径结果，也重排时间、健康、收入和关系结构，让“${selectedNodeTitle}”能支撑更长周期的${goal}。`,
+      milestones: ["审视时间分配", "设定健康底线", "形成月度复盘机制"],
+      opportunities: ["可持续性更强", "减少后悔风险"],
+      risks: ["短期推进变慢", "需要放弃部分机会"],
+      delta: { career: 3, finance: 2, relationship: 4, health: 9, growth: 8 },
+    },
+  ];
+  const routeType = routeTypes[(index + selectedDepth + childCount) % routeTypes.length];
+  const clamp = (value) => Math.max(0, Math.min(100, value));
+
+  return {
+    id: `backend_route_${selectedNodeId}_${childCount}_${index + 1}_${Date.now()}`,
+    title: routeType.title,
+    description: `${routeType.focus} 当前处在第 ${selectedDepth} 层分支，已有 ${childCount} 条后续尝试；这条路线建议用 4-8 周做一次可回撤验证，再根据结果决定是否继续扩展。`,
+    feasibility,
+    difficulty: routeType.difficulty,
+    benefit: routeType.benefit,
+    personality: routeType.personality,
+    impactFactors: {
+      career: clamp(fallbackAttributes.career + routeType.delta.career + index),
+      finance: clamp(fallbackAttributes.finance + routeType.delta.finance + index),
+      relationship: clamp(fallbackAttributes.relationship + routeType.delta.relationship - index),
+      health: clamp(fallbackAttributes.health + routeType.delta.health - index),
+      growth: clamp(fallbackAttributes.growth + routeType.delta.growth + selectedDepth),
+    },
+    milestones: routeType.milestones,
+    opportunities: routeType.opportunities,
+    risks: routeType.risks,
+    meta: {
+      contextSnapshot: context?.scenario || null,
+      selectedNodeId,
+      selectedNodeTitle,
+      selectedDepth,
+      childCount,
     },
   };
 };
@@ -954,7 +1083,7 @@ const handleRequest = async (req, res, requestContext) => {
   if (url.pathname === "/api/routes") {
     const modelResult = await callOllamaGenerate(
       buildRoutesPrompt(body.userInfo, body.context),
-      { format: "json" },
+      { format: "json", model: LLM_ROUTE_MODEL, timeoutMs: 60000 },
     );
     console.log(
       "[DEBUG] /api/routes modelResult:",
@@ -966,7 +1095,7 @@ const handleRequest = async (req, res, requestContext) => {
             .slice(0, 5)
             .map((route, index) => normalizeGeneratedRoute(route, index))
         : Array.from({ length: 5 }, (_, index) =>
-            createRoute(index, body.userInfo, body.context),
+            createContextualRoute(index, body.userInfo, body.context),
           );
     sendResponse(res, requestContext, 200, {
       ok: true,
@@ -1021,15 +1150,27 @@ const handleRequest = async (req, res, requestContext) => {
   }
 
   if (url.pathname === "/api/media/generate") {
-    const mediaResult = await callMediaGenerate(body.prompt, body.type);
-    sendResponse(res, requestContext, 200, {
-      ok: !!mediaResult,
-      data: mediaResult,
-      error: mediaResult
-        ? null
-        : { message: "Media generation failed", code: "MEDIA_REQUEST_FAILED" },
-      meta: buildResultMeta(mediaResult ? "model" : "backend"),
-    });
+    try {
+      const mediaResult = await callMediaGenerate(body.prompt, body.type);
+      sendResponse(res, requestContext, 200, {
+        ok: !!mediaResult,
+        data: mediaResult,
+        error: mediaResult
+          ? null
+          : { message: "Media generation failed", code: "MEDIA_REQUEST_FAILED" },
+        meta: buildResultMeta(mediaResult ? "model" : "backend"),
+      });
+    } catch (error) {
+      sendResponse(res, requestContext, 200, {
+        ok: false,
+        data: null,
+        error: {
+          message: error?.message || "Media generation failed",
+          code: "MEDIA_REQUEST_FAILED",
+        },
+        meta: buildResultMeta("backend"),
+      });
+    }
     return;
   }
 
