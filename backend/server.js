@@ -72,6 +72,9 @@ const VIDEO_QUERY_URL =
 const OLLAMA_BASE_URL =
   process.env.OLLAMA_BASE_URL || "http://localhost:11434/api";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3";
+const LLM_REQUEST_TIMEOUT_MS = Number(
+  process.env.LLM_REQUEST_TIMEOUT_MS || 8000,
+);
 const BASE_META = {
   source: "backend",
   mode: "backend-api",
@@ -269,9 +272,27 @@ const callWithRetry = async (fn, retries = 2, delayMs = 1500) => {
   return null;
 };
 
+const fetchWithTimeout = async (
+  url,
+  options = {},
+  timeoutMs = LLM_REQUEST_TIMEOUT_MS,
+) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: options.signal || controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 const callOpenAICompatibleGenerate = async (prompt, options = {}) => {
   const requestFn = async () => {
-    const response = await fetch(LLM_CHAT_COMPLETIONS_URL, {
+    const response = await fetchWithTimeout(LLM_CHAT_COMPLETIONS_URL, {
       method: "POST",
       headers: buildOpenAICompatibleHeaders(),
       body: JSON.stringify({
@@ -284,7 +305,7 @@ const callOpenAICompatibleGenerate = async (prompt, options = {}) => {
         ],
         stream: false,
       }),
-    });
+    }, options.timeoutMs);
 
     if (!response.ok) {
       throw new Error(`LLM request failed with status ${response.status}`);
@@ -294,7 +315,11 @@ const callOpenAICompatibleGenerate = async (prompt, options = {}) => {
   };
 
   try {
-    return await callWithRetry(requestFn);
+    return await callWithRetry(
+      requestFn,
+      options.retries ?? 1,
+      options.delayMs ?? 800,
+    );
   } catch (err) {
     console.error("LLM Request Error after retries:", err);
     return null;
@@ -307,7 +332,7 @@ const callOllamaGenerate = async (prompt, options = {}) => {
   }
 
   const requestFn = async () => {
-    const response = await fetch(`${OLLAMA_BASE_URL}/generate`, {
+    const response = await fetchWithTimeout(`${OLLAMA_BASE_URL}/generate`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -318,7 +343,7 @@ const callOllamaGenerate = async (prompt, options = {}) => {
         stream: false,
         ...(options.format ? { format: options.format } : {}),
       }),
-    });
+    }, options.timeoutMs);
 
     if (!response.ok) {
       throw new Error(`Ollama request failed with status ${response.status}`);
@@ -328,7 +353,11 @@ const callOllamaGenerate = async (prompt, options = {}) => {
   };
 
   try {
-    return await callWithRetry(requestFn);
+    return await callWithRetry(
+      requestFn,
+      options.retries ?? 1,
+      options.delayMs ?? 800,
+    );
   } catch {
     return null;
   }
